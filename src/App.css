@@ -1,42 +1,29 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+@import "tailwindcss";
+
+:root { --radius: 14px; --gap: 14px; }
+body { margin:0; font-family: sans-serif; background:#0b1020; color:#e8ecf1; }
+.container { max-width: 1100px; margin: 28px auto; padding: 0 16px; }
+
+.header { display:flex; justify-content:space-between; margin-bottom:18px; }
+.badge { font-size: 12px; opacity: 0.8; padding: 6px 10px; border: 1px solid #334; border-radius: 999px; background: #121935; }
+
+.card { background: #0f1630; border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
+.form { display:grid; gap: var(--gap); }
+.field { display:grid; gap: 6px; }
+label { font-size: 12px; opacity: 0.85; }
+input, textarea {
+  width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #334;
+  background: #0b122b; color: #e8ecf1;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+.actions { display:flex; gap: 10px; flex-wrap: wrap; }
+button {
+  border: 1px solid #2d6; background: #18a; color: white; padding: 10px 14px; border-radius: 12px;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
+button.secondary { background: #1a2a53; }
+button.ghost { background: transparent; border-color: #345; }
+button.danger { background: #a22626; }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
+.table-wrap { overflow: auto; border: 1px solid #223; border-radius: 12px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px 12px; border-bottom: 1px solid #223; }
