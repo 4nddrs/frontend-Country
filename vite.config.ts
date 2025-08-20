@@ -9,11 +9,9 @@ export default defineConfig({
     // Configura el proxy
     proxy: {
       '/api': {
-        // La URL de tu backend en Render
         target: 'https://backend-country-nnxe.onrender.com',
-        // Esto cambia el encabezado del Host para que coincida con el target
         changeOrigin: true,
-        // Reescribe el camino para eliminar /api cuando la petición llegue al servidor
+        secure: false,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },

@@ -1,4 +1,3 @@
-// src/App.tsx
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import {
@@ -10,20 +9,20 @@ import {
   X,
 } from 'lucide-react';
 
-// Modelo de Producto para tipado, ahora sin la descripción
+// Modelo de Producto para tipado
 interface Product {
   id?: number;
   name: string;
 }
 
-const App = () => {
+// ⚠️ Usamos una URL relativa para que el proxy de Vite la intercepte
+const API_URL = '/api/products';
+
+const ProductManagement = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [newProduct, setNewProduct] = useState<Product>({ name: '' });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-
-  // Usa la variable de entorno para la URL base de tu API
-  const API_URL = import.meta.env.VITE_API_URL + '/products';
 
   // Obtener todos los productos
   const fetchProducts = async () => {
@@ -214,4 +213,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default ProductManagement;
