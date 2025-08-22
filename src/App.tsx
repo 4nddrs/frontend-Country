@@ -15,8 +15,8 @@ interface Product {
   name: string;
 }
 
-// ⚠️ Usamos una URL relativa para que el proxy de Vite la intercepte
-const API_URL = '/api/products';
+// Usa la URL real de tu API en Render
+const API_URL = 'https://backend-country-nnxe.onrender.com/products';
 
 const ProductManagement = () => {
   const [products, setProducts] = useState<Product[]>([]);

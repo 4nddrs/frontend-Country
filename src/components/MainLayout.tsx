@@ -2,15 +2,24 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
-// Importa tus componentes de página
-import Sidebar from './Sidebar';
+import Sidebar from '../components/Sidebar';
 import Dashboard from '../pages/Dashboard';
 import Employees from '../pages/Employee';
-import ProductManagement from '../App'; // Asegúrate de que el nombre del componente coincida
+import ProductManagement from '../App';
 
-// ⚠️ Usamos un nuevo componente para la gestión de productos,
-// y separamos la lógica de Employees en su propio archivo
-// para tener un código más limpio y modular.
+import PositionManagement from '../pages/PositionManagment'; 
+import RoleManagement from '../pages/RoleManagment';        
+import FoodProvidersManagement from '../pages/FoodProviders';
+import FoodStocksManagement from '../pages/FoodStocks';
+import VaccinesManagement from '../pages/Vaccines';
+import OwnersManagement from '../pages/Owners';
+import RacesManagement from '../pages/Races';
+import HorsesManagement from '../pages/Horses';
+import NutritionalPlansManagement from '../pages/NutritionalPlans';
+import NutritionalPlanHorsesManagement from '../pages/NutritionalPlanHorses';
+import NutritionalPlanDetailsManagement from '../pages/NutritionalPlanDetails';
+import TaskCategoriesManagement from '../pages/TaskCategories';
+import TasksManagement from '../pages/Tasks';
 
 const MainLayout = () => {
   return (
@@ -19,13 +28,24 @@ const MainLayout = () => {
       <main className="flex-1 p-4 lg:p-8">
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          {/* ⚠️ Aquí renderizamos el componente de productos */}
           <Route path="/crud" element={<ProductManagement />} />
-          {/* ⚠️ Y aquí el de empleados */}
           <Route path="/employee" element={<Employees />} />
+          <Route path="/positions" element={<PositionManagement />} />
+          <Route path="/roles" element={<RoleManagement />} />
+          <Route path="/food-providers" element={<FoodProvidersManagement />} />
+          <Route path="/food-stocks" element={<FoodStocksManagement />} />
+          <Route path="/vaccines" element={<VaccinesManagement />} />
+          <Route path="/owners" element={<OwnersManagement />} />
+          <Route path="/races" element={<RacesManagement />} />
+          <Route path="/horses" element={<HorsesManagement />} />
+          <Route path="/nutritional-plans" element={<NutritionalPlansManagement />} />
+          <Route path="/nutritional-plan-horses" element={<NutritionalPlanHorsesManagement />} />
+          <Route path="/nutritional-plan-details" element={<NutritionalPlanDetailsManagement />} />
+          <Route path="/task-categories" element={<TaskCategoriesManagement />} />
+          <Route path="/tasks" element={<TasksManagement />} />
+          {/* Agrega aquí más rutas si tienes más páginas */}
         </Routes>
       </main>
-      {/* ⚠️ El Toaster debe estar fuera de las rutas para que sea accesible en toda la aplicación */}
       <Toaster position="bottom-right" />
     </div>
   );

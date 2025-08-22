@@ -1,0 +1,157 @@
+import React, { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
+import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+
+const API_URL = 'https://backend-country-nnxe.onrender.com/races/';
+
+interface Race {
+  idRace?: number;
+  nameRace: string;
+}
+
+const RacesManagement = () => {
+  const [races, setRaces] = useState<Race[]>([]);
+  const [newRace, setNewRace] = useState<Race>({ nameRace: '' });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const fetchRaces = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error('Error al obtener razas');
+      const data = await res.json();
+      setRaces(data);
+    } catch {
+      toast.error('No se pudo cargar razas.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRaces();
+  }, []);
+
+  const createRace = async () => {
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newRace),
+      });
+      if (!res.ok) throw new Error('Error al crear raza');
+      toast.success('Raza creada!');
+      setNewRace({ nameRace: '' });
+      fetchRaces();
+    } catch {
+      toast.error('No se pudo crear raza.');
+    }
+  };
+
+  const updateRace = async (id: number, updatedRace: Race) => {
+    try {
+      const res = await fetch(`${API_URL}${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedRace),
+      });
+      if (!res.ok) throw new Error('Error al actualizar raza');
+      toast.success('Raza actualizada!');
+      setEditingId(null);
+      fetchRaces();
+    } catch {
+      toast.error('No se pudo actualizar raza.');
+    }
+  };
+
+  const deleteRace = async (id: number) => {
+    try {
+      const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Error al eliminar raza');
+      toast.success('Raza eliminada!');
+      fetchRaces();
+    } catch {
+      toast.error('No se pudo eliminar raza.');
+    }
+  };
+
+  return (
+    <div className="container mx-auto p-4 text-white">
+      <h1 className="text-3xl font-bold mb-6 text-center">Gestión de Razas</h1>
+      <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
+        <h2 className="text-xl font-semibold mb-4">Agregar Nueva Raza</h2>
+        <div className="flex gap-4">
+          <input
+            type="text"
+            name="nameRace"
+            placeholder="Nombre de la raza"
+            value={newRace.nameRace}
+            onChange={e => setNewRace({ nameRace: e.target.value })}
+            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+          />
+          <button onClick={createRace} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
+            <Plus size={20} /> Agregar
+          </button>
+        </div>
+      </div>
+      <div className="bg-gray-800 p-6 rounded-lg shadow-md">
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
+            <Loader size={24} className="animate-spin" />Cargando razas...
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {races.map(race => (
+              <div key={race.idRace} className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between">
+                {editingId === race.idRace ? (
+                  <>
+                    <input
+                      type="text"
+                      defaultValue={race.nameRace}
+                      onChange={e => setNewRace({ nameRace: e.target.value })}
+                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => updateRace(race.idRace!, { nameRace: newRace.nameRace || race.nameRace })}
+                        className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center gap-1"
+                      >
+                        <Save size={16} /> Guardar
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
+                      >
+                        <X size={16} /> Cancelar
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-lg font-semibold">{race.nameRace}</h3>
+                    <div className="flex justify-end gap-2 mt-2">
+                      <button
+                        onClick={() => { setEditingId(race.idRace!); setNewRace(race); }}
+                        className="bg-yellow-600 hover:bg-yellow-700 text-white p-2 rounded-md flex items-center gap-1"
+                      >
+                        <Edit size={16} /> Editar
+                      </button>
+                      <button
+                        onClick={() => deleteRace(race.idRace!)}
+                        className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
+                      >
+                        <Trash2 size={16} /> Eliminar
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+export default RacesManagement;

@@ -1,20 +1,46 @@
-// src/components/Sidebar.jsx
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   Home,
   Menu,
   X,
   ClipboardList,
   User,
+  Briefcase,
+  Shield,
+  Package,
+  Book,
+  Layers,
+  Flag,
+  List,
+  Calendar,
 } from 'lucide-react';
+
+// Incluye todos los CRUDs generados
+const menuItems = [
+  { label: 'Dashboard', icon: <Home size={20} />, path: '/' },
+  { label: 'CRUD', icon: <ClipboardList size={20} />, path: '/crud' },
+  { label: 'CRUD de Empleados', icon: <User size={20} />, path: '/employee' },
+  { label: 'CRUD de Posiciones', icon: <Briefcase size={20} />, path: '/positions' },
+  { label: 'CRUD de Roles', icon: <Shield size={20} />, path: '/roles' },
+  { label: 'Proveedores de Comida', icon: <Package size={20} />, path: '/food-providers' },
+  { label: 'Stock de Comida', icon: <ClipboardList size={20} />, path: '/food-stocks' },
+  { label: 'Vacunas', icon: <Shield size={20} />, path: '/vaccines' },
+  { label: 'Propietarios', icon: <User size={20} />, path: '/owners' },
+  { label: 'Razas', icon: <Layers size={20} />, path: '/races' },
+  { label: 'Caballos', icon: <Flag size={20} />, path: '/horses' },
+  { label: 'Planes Nutricionales', icon: <Book size={20} />, path: '/nutritional-plans' },
+  { label: 'Plan Nutricional - Caballos', icon: <List size={20} />, path: '/nutritional-plan-horses' },
+  { label: 'Detalles Plan Nutricional', icon: <List size={20} />, path: '/nutritional-plan-details' },
+  { label: 'Categorías de Tareas', icon: <List size={20} />, path: '/task-categories' },
+  { label: 'Tareas', icon: <Calendar size={20} />, path: '/tasks' },
+];
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
 
-  const closeSidebar = () => {
-    setIsOpen(false);
-  };
+  const closeSidebar = () => setIsOpen(false);
 
   return (
     <>
@@ -32,51 +58,36 @@ const Sidebar = () => {
         className={`fixed inset-y-0 left-0 w-64 bg-gray-800 text-white shadow-xl transform transition-transform duration-300 ease-in-out z-40
         ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 lg:flex-shrink-0`}
       >
-        <nav className="p-4">
-          <div className="flex items-center justify-between mb-8 lg:block">
-            <h1 className="text-2xl font-bold">Admin Panel</h1>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="lg:hidden p-2 text-white bg-gray-700 rounded-md"
-            >
-              <X size={24} />
-            </button>
-          </div>
+        <div className="flex items-center justify-between h-20 px-4 border-b border-gray-700 lg:block">
+          <span className="text-2xl font-bold tracking-wide">Admin Panel</span>
+          <button
+            onClick={closeSidebar}
+            className="lg:hidden p-2 text-white bg-gray-700 rounded-md"
+          >
+            <X size={24} />
+          </button>
+        </div>
+        <nav className="flex-1 py-4">
           <ul className="space-y-2">
-            <li>
-              {/* Este enlace ahora va a la ruta principal, que es el Dashboard */}
-              <Link
-                to="/"
-                onClick={closeSidebar}
-                className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-700 transition"
-              >
-                <Home size={20} />
-                <span>Dashboard</span>
-              </Link>
-            </li>
-            <li>
-              {/* Este enlace va a la ruta /crud */}
-              <Link
-                to="/crud"
-                onClick={closeSidebar}
-                className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-700 transition"
-              >
-                <ClipboardList size={20} />
-                <span>CRUD</span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/employee"
-                onClick={closeSidebar}
-                className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-700 transition"
-              >
-                <User size={20} />
-                <span>CRUD de Empleados</span>
-              </Link>
-            </li>
+            {menuItems.map(item => (
+              <li key={item.path}>
+                <Link
+                  to={item.path}
+                  onClick={closeSidebar}
+                  className={`flex items-center gap-3 px-6 py-3 rounded-md hover:bg-gray-700 transition ${
+                    location.pathname === item.path ? 'bg-gray-700 font-semibold' : ''
+                  }`}
+                >
+                  {item.icon}
+                  {item.label}
+                </Link>
+              </li>
+            ))}
           </ul>
         </nav>
+        <div className="mt-auto p-4 text-xs text-gray-400 border-t border-gray-700">
+          &copy; {new Date().getFullYear()} Admin Panel
+        </div>
       </aside>
 
       {/* Overlay para cerrar el menú en móviles */}
