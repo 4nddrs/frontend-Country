@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import { toBase64 } from '../utils/imageHelpers';
 
-const API_URL = 'https://backend-country-nnxe.onrender.com/horses/';
+const API_URL = "https://backend-country-nnxe.onrender.com/horses/";
 
 interface Horse {
   idHorse?: number;
@@ -15,7 +16,7 @@ interface Horse {
   fk_idRace: number;
   fk_idEmployee: number;
   fk_idVaccine?: number;
-  horsePhoto?: string; // base64 or binary, if used
+  horsePhoto?: string | null; // base64 or binary, if used
 }
 
 const HorsesManagement = () => {
@@ -34,11 +35,41 @@ const HorsesManagement = () => {
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null); // Nuevo estado
+  // Maneja la conversión a base64 y setea el campo horsePhoto
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setNewHorse(prev => ({
+        ...prev,
+        horsePhoto: reader.result as string,
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Para edición: si quieres editar la foto, usa este handler también
+  const handleEditImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setNewHorse(prev => ({
+        ...prev,
+        horsePhoto: reader.result as string,
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
 
   const fetchHorses = async () => {
     setLoading(true);
     try {
       const res = await fetch(API_URL);
+      console.log("STATUS:", res.status);
+      console.log("HEADERS:", [...res.headers.entries()]);
       if (!res.ok) throw new Error('Error al obtener caballos');
       const data = await res.json();
       setHorses(data);
@@ -109,7 +140,6 @@ const HorsesManagement = () => {
 
   function getImageSrc(photo?: string): string | undefined {
     if (!photo) return undefined;
-    // Si ya es un data:image... base64, úsalo
     if (photo.startsWith('data:image')) return photo;
     return `data:image/png;base64,${photo}`;
   }
@@ -192,7 +222,20 @@ const HorsesManagement = () => {
             onChange={e => setNewHorse({ ...newHorse, fk_idVaccine: Number(e.target.value) || undefined })}
             className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
           />
-          {/* Si quieres permitir subir foto, puedes agregar input tipo file y convertir a base64 */}
+          {/* Campo para subir la imagen */}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+          />
+          {newHorse.horsePhoto && (
+            <img
+              src={getImageSrc(newHorse.horsePhoto)}
+              alt="Foto de caballo"
+              className="h-16 w-16 object-cover rounded-md mt-1"
+            />
+          )}
           <button onClick={createHorse} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
             <Plus size={20} /> Agregar
           </button>
@@ -263,6 +306,20 @@ const HorsesManagement = () => {
                       onChange={e => setNewHorse({ ...newHorse, fk_idVaccine: Number(e.target.value) || undefined })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
                     />
+                    {/* Campo para editar imagen */}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleEditImageChange}
+                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                    />
+                    {newHorse.horsePhoto && (
+                      <img
+                        src={getImageSrc(newHorse.horsePhoto)}
+                        alt="Foto de caballo"
+                        className="h-16 w-16 object-cover rounded-md mb-2"
+                      />
+                    )}
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => updateHorse(horse.idHorse!, {

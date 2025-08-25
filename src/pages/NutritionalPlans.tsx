@@ -2,198 +2,127 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
 
-const API_URL = 'https://backend-country-nnxe.onrender.com/horses/';
+const API_URL = 'https://backend-country-nnxe.onrender.com/nutritional-plans/';
 
-interface Horse {
-  idHorse?: number;
-  horseName: string;
-  dirthDate: string; // ISO string
-  sex: string;
-  color: string;
-  generalDescription: string;
-  fk_idOwner: number;
-  fk_idRace: number;
-  fk_idEmployee: number;
-  fk_idVaccine?: number;
-  horsePhoto?: string; // base64 or binary, if used
+interface NutritionalPlan {
+  idNutritionalPlan?: number;
+  name: string;
+  startDate: string; // ISO date string
+  endDate: string;   // ISO date string
+  description?: string;
 }
 
-const HorsesManagement = () => {
-  const [horses, setHorses] = useState<Horse[]>([]);
-  const [newHorse, setNewHorse] = useState<Horse>({
-    horseName: '',
-    dirthDate: '',
-    sex: '',
-    color: '',
-    generalDescription: '',
-    fk_idOwner: 1,
-    fk_idRace: 1,
-    fk_idEmployee: 1,
-    fk_idVaccine: undefined,
-    horsePhoto: '',
+const NutritionalPlansManagement = () => {
+  const [plans, setPlans] = useState<NutritionalPlan[]>([]);
+  const [newPlan, setNewPlan] = useState<NutritionalPlan>({
+    name: '',
+    startDate: '',
+    endDate: '',
+    description: '',
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const fetchHorses = async () => {
+  const fetchPlans = async () => {
     setLoading(true);
     try {
       const res = await fetch(API_URL);
-      if (!res.ok) throw new Error('Error al obtener caballos');
+      if (!res.ok) throw new Error('Error al obtener planes nutricionales');
       const data = await res.json();
-      setHorses(data);
+      setPlans(data);
     } catch {
-      toast.error('No se pudo cargar caballos.');
+      toast.error('No se pudo cargar planes nutricionales.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchHorses();
+    fetchPlans();
   }, []);
 
-  const createHorse = async () => {
+  const createPlan = async () => {
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newHorse),
+        body: JSON.stringify(newPlan),
       });
-      if (!res.ok) throw new Error('Error al crear caballo');
-      toast.success('Caballo creado!');
-      setNewHorse({
-        horseName: '',
-        dirthDate: '',
-        sex: '',
-        color: '',
-        generalDescription: '',
-        fk_idOwner: 1,
-        fk_idRace: 1,
-        fk_idEmployee: 1,
-        fk_idVaccine: undefined,
-        horsePhoto: '',
-      });
-      fetchHorses();
+      if (!res.ok) throw new Error('Error al crear plan');
+      toast.success('Plan creado!');
+      setNewPlan({ name: '', startDate: '', endDate: '', description: '' });
+      fetchPlans();
     } catch {
-      toast.error('No se pudo crear caballo.');
+      toast.error('No se pudo crear plan.');
     }
   };
 
-  const updateHorse = async (id: number, updatedHorse: Horse) => {
+  const updatePlan = async (id: number, updatedPlan: NutritionalPlan) => {
     try {
       const res = await fetch(`${API_URL}${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedHorse),
+        body: JSON.stringify(updatedPlan),
       });
-      if (!res.ok) throw new Error('Error al actualizar caballo');
-      toast.success('Caballo actualizado!');
+      if (!res.ok) throw new Error('Error al actualizar plan');
+      toast.success('Plan actualizado!');
       setEditingId(null);
-      fetchHorses();
+      fetchPlans();
     } catch {
-      toast.error('No se pudo actualizar caballo.');
+      toast.error('No se pudo actualizar plan.');
     }
   };
 
-  const deleteHorse = async (id: number) => {
+  const deletePlan = async (id: number) => {
     try {
       const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Error al eliminar caballo');
-      toast.success('Caballo eliminado!');
-      fetchHorses();
+      if (!res.ok) throw new Error('Error al eliminar plan');
+      toast.success('Plan eliminado!');
+      fetchPlans();
     } catch {
-      toast.error('No se pudo eliminar caballo.');
+      toast.error('No se pudo eliminar plan.');
     }
   };
-
-  function getImageSrc(photo?: string): string | undefined {
-    if (!photo) return undefined;
-    // Si ya es un data:image... base64, úsalo
-    if (photo.startsWith('data:image')) return photo;
-    return `data:image/png;base64,${photo}`;
-  }
 
   return (
     <div className="container mx-auto p-4 text-white">
-      <h1 className="text-3xl font-bold mb-6 text-center">Gestión de Caballos</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center">Gestión de Planes Nutricionales</h1>
       <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
-        <h2 className="text-xl font-semibold mb-4">Agregar Nuevo Caballo</h2>
+        <h2 className="text-xl font-semibold mb-4">Agregar Nuevo Plan</h2>
         <div className="flex gap-4 flex-wrap">
           <input
             type="text"
-            name="horseName"
-            placeholder="Nombre del caballo"
-            value={newHorse.horseName}
-            onChange={e => setNewHorse({ ...newHorse, horseName: e.target.value })}
+            name="name"
+            placeholder="Nombre del plan"
+            value={newPlan.name}
+            onChange={e => setNewPlan({ ...newPlan, name: e.target.value })}
             className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
           />
           <input
             type="date"
-            name="dirthDate"
-            placeholder="Fecha de nacimiento"
-            value={newHorse.dirthDate}
-            onChange={e => setNewHorse({ ...newHorse, dirthDate: e.target.value })}
+            name="startDate"
+            placeholder="Fecha inicio"
+            value={newPlan.startDate}
+            onChange={e => setNewPlan({ ...newPlan, startDate: e.target.value })}
+            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+          />
+          <input
+            type="date"
+            name="endDate"
+            placeholder="Fecha fin"
+            value={newPlan.endDate}
+            onChange={e => setNewPlan({ ...newPlan, endDate: e.target.value })}
             className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
           />
           <input
             type="text"
-            name="sex"
-            placeholder="Sexo"
-            value={newHorse.sex}
-            onChange={e => setNewHorse({ ...newHorse, sex: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
-          <input
-            type="text"
-            name="color"
-            placeholder="Color"
-            value={newHorse.color}
-            onChange={e => setNewHorse({ ...newHorse, color: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
-          <input
-            type="text"
-            name="generalDescription"
+            name="description"
             placeholder="Descripción"
-            value={newHorse.generalDescription}
-            onChange={e => setNewHorse({ ...newHorse, generalDescription: e.target.value })}
+            value={newPlan.description}
+            onChange={e => setNewPlan({ ...newPlan, description: e.target.value })}
             className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
           />
-          <input
-            type="number"
-            name="fk_idOwner"
-            placeholder="ID Propietario"
-            value={newHorse.fk_idOwner}
-            onChange={e => setNewHorse({ ...newHorse, fk_idOwner: Number(e.target.value) })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
-          <input
-            type="number"
-            name="fk_idRace"
-            placeholder="ID Raza"
-            value={newHorse.fk_idRace}
-            onChange={e => setNewHorse({ ...newHorse, fk_idRace: Number(e.target.value) })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
-          <input
-            type="number"
-            name="fk_idEmployee"
-            placeholder="ID Empleado"
-            value={newHorse.fk_idEmployee}
-            onChange={e => setNewHorse({ ...newHorse, fk_idEmployee: Number(e.target.value) })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
-          <input
-            type="number"
-            name="fk_idVaccine"
-            placeholder="ID Vacuna"
-            value={newHorse.fk_idVaccine || ''}
-            onChange={e => setNewHorse({ ...newHorse, fk_idVaccine: Number(e.target.value) || undefined })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
-          {/* Si quieres permitir subir foto, puedes agregar input tipo file y convertir a base64 */}
-          <button onClick={createHorse} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
+          <button onClick={createPlan} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
             <Plus size={20} /> Agregar
           </button>
         </div>
@@ -201,73 +130,45 @@ const HorsesManagement = () => {
       <div className="bg-gray-800 p-6 rounded-lg shadow-md">
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
-            <Loader size={24} className="animate-spin" />Cargando caballos...
+            <Loader size={24} className="animate-spin" />Cargando planes...
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {horses.map(horse => (
-              <div key={horse.idHorse} className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between">
-                {editingId === horse.idHorse ? (
+            {plans.map(plan => (
+              <div key={plan.idNutritionalPlan} className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between">
+                {editingId === plan.idNutritionalPlan ? (
                   <>
                     <input
                       type="text"
-                      defaultValue={horse.horseName}
-                      onChange={e => setNewHorse({ ...newHorse, horseName: e.target.value })}
+                      defaultValue={plan.name}
+                      onChange={e => setNewPlan({ ...newPlan, name: e.target.value })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
                     />
                     <input
                       type="date"
-                      defaultValue={horse.dirthDate?.slice(0, 10)}
-                      onChange={e => setNewHorse({ ...newHorse, dirthDate: e.target.value })}
+                      defaultValue={plan.startDate?.slice(0,10)}
+                      onChange={e => setNewPlan({ ...newPlan, startDate: e.target.value })}
+                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                    />
+                    <input
+                      type="date"
+                      defaultValue={plan.endDate?.slice(0,10)}
+                      onChange={e => setNewPlan({ ...newPlan, endDate: e.target.value })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
                     />
                     <input
                       type="text"
-                      defaultValue={horse.sex}
-                      onChange={e => setNewHorse({ ...newHorse, sex: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="text"
-                      defaultValue={horse.color}
-                      onChange={e => setNewHorse({ ...newHorse, color: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="text"
-                      defaultValue={horse.generalDescription}
-                      onChange={e => setNewHorse({ ...newHorse, generalDescription: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="number"
-                      defaultValue={horse.fk_idOwner}
-                      onChange={e => setNewHorse({ ...newHorse, fk_idOwner: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="number"
-                      defaultValue={horse.fk_idRace}
-                      onChange={e => setNewHorse({ ...newHorse, fk_idRace: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="number"
-                      defaultValue={horse.fk_idEmployee}
-                      onChange={e => setNewHorse({ ...newHorse, fk_idEmployee: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="number"
-                      defaultValue={horse.fk_idVaccine || ''}
-                      onChange={e => setNewHorse({ ...newHorse, fk_idVaccine: Number(e.target.value) || undefined })}
+                      defaultValue={plan.description}
+                      onChange={e => setNewPlan({ ...newPlan, description: e.target.value })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
                     />
                     <div className="flex justify-end gap-2">
                       <button
-                        onClick={() => updateHorse(horse.idHorse!, {
-                          ...horse,
-                          ...newHorse,
+                        onClick={() => updatePlan(plan.idNutritionalPlan!, {
+                          name: newPlan.name || plan.name,
+                          startDate: newPlan.startDate || plan.startDate,
+                          endDate: newPlan.endDate || plan.endDate,
+                          description: newPlan.description || plan.description,
                         })}
                         className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center gap-1"
                       >
@@ -283,31 +184,19 @@ const HorsesManagement = () => {
                   </>
                 ) : (
                   <>
-                    <h3 className="text-lg font-semibold">{horse.horseName}</h3>
-                    <p>Fecha nacimiento: {horse.dirthDate?.slice(0,10)}</p>
-                    <p>Sexo: {horse.sex}</p>
-                    <p>Color: {horse.color}</p>
-                    <p>Descripción: {horse.generalDescription}</p>
-                    <p>ID Propietario: {horse.fk_idOwner}</p>
-                    <p>ID Raza: {horse.fk_idRace}</p>
-                    <p>ID Empleado: {horse.fk_idEmployee}</p>
-                    <p>ID Vacuna: {horse.fk_idVaccine || '-'}</p>
-                    {horse.horsePhoto && (
-                      <img
-                        src={getImageSrc(horse.horsePhoto)}
-                        alt={`Foto de ${horse.horseName}`}
-                        className="w-16 h-16 rounded-full object-cover mb-2"
-                      />
-                    )}
+                    <h3 className="text-lg font-semibold">{plan.name}</h3>
+                    <p>Inicio: {plan.startDate?.slice(0,10)}</p>
+                    <p>Fin: {plan.endDate?.slice(0,10)}</p>
+                    <p>{plan.description}</p>
                     <div className="flex justify-end gap-2 mt-2">
                       <button
-                        onClick={() => { setEditingId(horse.idHorse!); setNewHorse(horse); }}
+                        onClick={() => { setEditingId(plan.idNutritionalPlan!); setNewPlan(plan); }}
                         className="bg-yellow-600 hover:bg-yellow-700 text-white p-2 rounded-md flex items-center gap-1"
                       >
                         <Edit size={16} /> Editar
                       </button>
                       <button
-                        onClick={() => deleteHorse(horse.idHorse!)}
+                        onClick={() => deletePlan(plan.idNutritionalPlan!)}
                         className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
                       >
                         <Trash2 size={16} /> Eliminar
@@ -324,4 +213,4 @@ const HorsesManagement = () => {
   );
 };
 
-export default HorsesManagement;
+export default NutritionalPlansManagement;
