@@ -1,22 +1,42 @@
-// Convierte la cadena hexadecimal (con prefijo \x) a texto base64 normal
-export function decodeBackendImage(hexString: string | null | undefined): string | undefined {
-  if (!hexString) return undefined;
-  // Elimina el prefijo \x si existe
-  if (hexString.startsWith('\\x')) hexString = hexString.slice(2);
-  // Convierte hexadecimal a string normal
-  let result = '';
-  for (let i = 0; i < hexString.length; i += 2) {
-    result += String.fromCharCode(parseInt(hexString.substr(i, 2), 16));
-  }
-  return result;
-}
+// Convierte lo que devuelve el backend (hex, base64, dataURL, Buffer) en un dataURL válido
+export function decodeBackendImage(photoData: string | any): string | undefined {
+  if (!photoData) return undefined;
 
-// NUEVA FUNCIÓN: Convierte un archivo de imagen a una cadena Base64
-export function toBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file); // esto incluye el prefijo 'data:image/...'
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = error => reject(error);
-  });
+  try {
+    // 📌 Caso 1: Hexadecimal (con prefijo \x)
+    if (typeof photoData === "string" && photoData.startsWith("\\x")) {
+      const hex = photoData.slice(2);
+      let result = "";
+      for (let i = 0; i < hex.length; i += 2) {
+        result += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+      }
+      return result.startsWith("data:image")
+        ? result
+        : `data:image/jpeg;base64,${btoa(result)}`;
+    }
+
+    // 📌 Caso 2: Ya es un dataURL válido
+    if (typeof photoData === "string" && photoData.startsWith("data:image")) {
+      return photoData;
+    }
+
+    // 📌 Caso 3: Base64 puro sin prefijo
+    if (typeof photoData === "string" && /^[A-Za-z0-9+/=]+$/.test(photoData)) {
+      return `data:image/jpeg;base64,${photoData}`;
+    }
+
+    // 📌 Caso 4: Buffer (Node.js / Supabase en ciertos casos)
+    if (typeof photoData === "object" && photoData?.type === "Buffer" && Array.isArray(photoData.data)) {
+      const uint8Array = new Uint8Array(photoData.data);
+      let binary = "";
+      for (let i = 0; i < uint8Array.length; i++) {
+        binary += String.fromCharCode(uint8Array[i]);
+      }
+      return `data:image/jpeg;base64,${btoa(binary)}`;
+    }
+  } catch (err) {
+    console.error("❌ Error al decodificar imagen:", err);
+  }
+
+  return undefined;
 }
