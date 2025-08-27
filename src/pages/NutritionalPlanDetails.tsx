@@ -24,6 +24,8 @@ const NutritionalPlanDetailsManagement = () => {
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [foods, setFoods] = useState<any[]>([]);
+  const [nutritionalPlans, setNutritionalPlans] = useState<any[]>([]);
 
   const fetchDetails = async () => {
     setLoading(true);
@@ -39,8 +41,34 @@ const NutritionalPlanDetailsManagement = () => {
     }
   };
 
+  const fetchFoods = async () => {
+  try {
+    const res = await fetch("https://backend-country-nnxe.onrender.com/food-stocks/");
+    if (!res.ok) throw new Error("Error al obtener comidas");
+    const data = await res.json();
+    console.log("Comidas:", data); // para debug
+    setFoods(data);
+  } catch {
+    toast.error("No se pudieron cargar comidas");
+  }
+};
+
+const fetchNutritionalPlans = async () => {
+  try {
+    const res = await fetch("https://backend-country-nnxe.onrender.com/nutritional-plans/");
+    if (!res.ok) throw new Error("Error al obtener planes nutricionales");
+    const data = await res.json();
+    console.log("Planes nutricionales:", data); // para debug
+    setNutritionalPlans(data);
+  } catch {
+    toast.error("No se pudieron cargar planes nutricionales");
+  }
+};
+
   useEffect(() => {
     fetchDetails();
+    fetchFoods();
+    fetchNutritionalPlans();
   }, []);
 
   const createDetail = async () => {
@@ -122,22 +150,34 @@ const NutritionalPlanDetailsManagement = () => {
             onChange={e => setNewDetail({ ...newDetail, schedule: e.target.value })}
             className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
           />
-          <input
-            type="number"
+          <select
             name="fk_idFood"
-            placeholder="ID Comida"
             value={newDetail.fk_idFood}
             onChange={e => setNewDetail({ ...newDetail, fk_idFood: Number(e.target.value) })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
-          <input
-            type="number"
+            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+          >
+            <option value="">-- Selecciona una comida --</option>
+            {foods.map(food => (
+              <option key={food.idFood} value={food.idFood}>
+                {food.foodName}
+              </option>
+            ))}
+          </select>
+
+          <select
             name="fk_idNutritionalPlan"
-            placeholder="ID Plan Nutricional"
             value={newDetail.fk_idNutritionalPlan || ''}
             onChange={e => setNewDetail({ ...newDetail, fk_idNutritionalPlan: Number(e.target.value) || undefined })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
+            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+          >
+            <option value="">-- Selecciona un plan nutricional --</option>
+            {nutritionalPlans.map(plan => (
+              <option key={plan.idNutritionalPlan} value={plan.idNutritionalPlan}>
+                {plan.name}
+              </option>
+            ))}
+          </select>
+
           <button onClick={createDetail} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
             <Plus size={20} /> Agregar
           </button>
@@ -172,18 +212,28 @@ const NutritionalPlanDetailsManagement = () => {
                       onChange={e => setNewDetail({ ...newDetail, schedule: e.target.value })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
                     />
-                    <input
-                      type="number"
-                      defaultValue={detail.fk_idFood}
+                    <select
+                      value={newDetail.fk_idFood}
                       onChange={e => setNewDetail({ ...newDetail, fk_idFood: Number(e.target.value) })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="number"
-                      defaultValue={detail.fk_idNutritionalPlan || ''}
+                    >
+                      {foods.map(food => (
+                        <option key={food.idFood} value={food.idFood}>
+                          {food.foodName}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={newDetail.fk_idNutritionalPlan || ''}
                       onChange={e => setNewDetail({ ...newDetail, fk_idNutritionalPlan: Number(e.target.value) || undefined })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
+                    >
+                      {nutritionalPlans.map(plan => (
+                        <option key={plan.idNutritionalPlan} value={plan.idNutritionalPlan}>
+                          {plan.name}
+                        </option>
+                      ))}
+                    </select>
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => updateDetail(detail.idDetail!, {

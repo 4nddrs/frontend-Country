@@ -20,6 +20,8 @@ const NutritionalPlanHorsesManagement = () => {
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [nutritionalPlans, setNutritionalPlans] = useState<any[]>([]);
+  const [horses, setHorses] = useState<any[]>([]);
 
   const fetchAssignments = async () => {
     setLoading(true);
@@ -34,6 +36,30 @@ const NutritionalPlanHorsesManagement = () => {
       setLoading(false);
     }
   };
+
+  const fetchNutritionalPlans = async () => {
+  try {
+    const res = await fetch("https://backend-country-nnxe.onrender.com/nutritional-plans/");
+    if (!res.ok) throw new Error("Error al obtener planes nutricionales");
+    const data = await res.json();
+     console.log("✅ Nutritional Plans recibidos:", data);
+    setNutritionalPlans(data);
+  } catch {
+    toast.error("No se pudieron cargar planes nutricionales");
+  }
+};
+
+  const fetchHorses = async () => {
+  try {
+    const res = await fetch("https://backend-country-nnxe.onrender.com/horses/");
+    if (!res.ok) throw new Error("Error al obtener caballos");
+    const data = await res.json();
+    setHorses(data);
+  } catch {
+    toast.error("No se pudieron cargar caballos");
+  }
+};
+
 
   useEffect(() => {
     fetchAssignments();
@@ -96,22 +122,39 @@ const NutritionalPlanHorsesManagement = () => {
             onChange={e => setNewAssignment({ ...newAssignment, assignmentDate: e.target.value })}
             className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
           />
-          <input
-            type="number"
-            name="fk_idNutritionalPlan"
-            placeholder="ID Plan Nutricional"
-            value={newAssignment.fk_idNutritionalPlan}
-            onChange={e => setNewAssignment({ ...newAssignment, fk_idNutritionalPlan: Number(e.target.value) })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
-          <input
-            type="number"
+        <select
+          name="fk_idNutritionalPlan"
+          value={newAssignment.fk_idNutritionalPlan || ""}
+          onChange={e =>
+            setNewAssignment({ ...newAssignment, fk_idNutritionalPlan: Number(e.target.value) })
+          }
+          onClick={fetchNutritionalPlans}
+          className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+        >
+          <option value="">
+            -- Selecciona un plan nutricional --
+          </option>
+          {nutritionalPlans.map(plan => (
+            <option key={plan.idNutritionalPlan} value={plan.idNutritionalPlan}>
+              {plan.name}
+            </option>
+          ))}
+        </select>
+
+          <select
             name="fk_idHorse"
-            placeholder="ID Caballo"
-            value={newAssignment.fk_idHorse}
+            value={newAssignment.fk_idHorse || ""}
             onChange={e => setNewAssignment({ ...newAssignment, fk_idHorse: Number(e.target.value) })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
+            onClick={fetchHorses}
+            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+          >
+            <option value="">-- Selecciona un caballo --</option>
+            {horses.map(horse => (
+              <option key={horse.idHorse} value={horse.idHorse}>
+                {horse.horseName}
+              </option>
+            ))}
+          </select>
           <button onClick={createAssignment} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
             <Plus size={20} /> Agregar
           </button>
@@ -134,19 +177,30 @@ const NutritionalPlanHorsesManagement = () => {
                       onChange={e => setNewAssignment({ ...newAssignment, assignmentDate: e.target.value })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
                     />
-                    <input
-                      type="number"
-                      defaultValue={assign.fk_idNutritionalPlan}
+                    <select
+                      value={newAssignment.fk_idNutritionalPlan}
                       onChange={e => setNewAssignment({ ...newAssignment, fk_idNutritionalPlan: Number(e.target.value) })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="number"
-                      defaultValue={assign.fk_idHorse}
+                    >
+                      {nutritionalPlans.map(plan => (
+                        <option key={plan.idNutritionalPlan} value={plan.idNutritionalPlan}>
+                          {plan.name}
+                        </option>
+                      ))}
+                    </select>
+                   <select
+                      value={newAssignment.fk_idHorse}
                       onChange={e => setNewAssignment({ ...newAssignment, fk_idHorse: Number(e.target.value) })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <div className="flex justify-end gap-2">
+                    >
+                      {horses.map(horse => (
+                        <option key={horse.idHorse} value={horse.idHorse}>
+                          {horse.horseName}
+                        </option>
+                      ))}
+                    </select>
+
+                    <div className="flex justify-endLkg gap-2">
                       <button
                         onClick={() => updateAssignment(assign.idNutritionalPlan_horse!, {
                           assignmentDate: newAssignment.assignmentDate || assign.assignmentDate,

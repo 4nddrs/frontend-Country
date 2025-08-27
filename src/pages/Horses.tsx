@@ -74,6 +74,7 @@ const fetchEmployees = async () => {
     try {
       const res = await fetch("https://backend-country-nnxe.onrender.com/employees/");
       const data = await res.json();
+      console.log("Empleados recibidos:", data); // 👀
       setEmployees(data);
     } catch (err) {
       console.error("Error cargando employees:", err);
@@ -279,6 +280,7 @@ const prepareHorseData = (horse: Horse) => ({
             value={newHorse.fk_idOwner || ""}
             onChange={e => setNewHorse({ ...newHorse, fk_idOwner: Number(e.target.value) })}
             onClick={fetchOwners}
+            className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
           >
             <option value="">-- Selecciona un dueño --</option>
             {owners.map((o) => (
@@ -292,6 +294,7 @@ const prepareHorseData = (horse: Horse) => ({
             value={newHorse.fk_idRace || ""}
             onChange={e => setNewHorse({ ...newHorse, fk_idRace: Number(e.target.value) })}
             onClick={fetchRaces}
+            className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
           >
             <option value="">-- Selecciona una raza --</option>
             {races.map((r) => (
@@ -300,16 +303,17 @@ const prepareHorseData = (horse: Horse) => ({
               </option>
             ))}
           </select>
-          <select
+         <select
             name="fk_idEmployee"
             value={newHorse.fk_idEmployee || ""}
             onChange={e => setNewHorse({ ...newHorse, fk_idEmployee: Number(e.target.value) })}
             onClick={fetchEmployees}
+            className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
           >
             <option value="">-- Selecciona un empleado --</option>
             {employees.map((e) => (
               <option key={e.idEmployee} value={e.idEmployee}>
-                {e.name}
+                {e.fullName}
               </option>
             ))}
           </select>
@@ -318,6 +322,7 @@ const prepareHorseData = (horse: Horse) => ({
             value={newHorse.fk_idVaccine || ""}
             onChange={e => setNewHorse({ ...newHorse, fk_idVaccine: Number(e.target.value) })}
             onClick={fetchVaccines}
+            className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
           >
             <option value="">-- Selecciona una vacuna --</option>
             {vaccines.map((v) => (

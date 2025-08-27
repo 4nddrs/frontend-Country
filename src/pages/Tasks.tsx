@@ -28,6 +28,8 @@ const TasksManagement = () => {
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
 
   const fetchTasks = async () => {
     setLoading(true);
@@ -43,8 +45,34 @@ const TasksManagement = () => {
     }
   };
 
+  const fetchCategories = async () => {
+  try {
+    const res = await fetch("https://backend-country-nnxe.onrender.com/task-categories/");
+    if (!res.ok) throw new Error("Error al obtener categorías");
+    const data = await res.json();
+    console.log("Categorías obtenidas:", data);
+    setCategories(data);
+  } catch {
+    toast.error("No se pudieron cargar categorías");
+  }
+};
+
+const fetchEmployees = async () => {
+  try {
+    const res = await fetch("https://backend-country-nnxe.onrender.com/employees/");
+    if (!res.ok) throw new Error("Error al obtener empleados");
+    const data = await res.json();
+    console.log("Empleados obtenidos:", data);
+    setEmployees(data);
+  } catch {
+    toast.error("No se pudieron cargar empleados");
+  }
+};
+
   useEffect(() => {
     fetchTasks();
+    fetchCategories();
+    fetchEmployees();
   }, []);
 
   const createTask = async () => {
@@ -144,22 +172,30 @@ const TasksManagement = () => {
             onChange={e => setNewTask({ ...newTask, taskStatus: e.target.value })}
             className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
           />
-          <input
-            type="number"
-            name="fk_idTaskCategory"
-            placeholder="ID Categoría"
+          <select
             value={newTask.fk_idTaskCategory}
             onChange={e => setNewTask({ ...newTask, fk_idTaskCategory: Number(e.target.value) })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
-          <input
-            type="number"
-            name="fk_idEmployee"
-            placeholder="ID Empleado"
+            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+          >
+            <option value="">-- Selecciona una categoría --</option>
+            {categories.map(cat => (
+              <option key={cat.idTaskCategory} value={cat.idTaskCategory}>
+                {cat.categoryName}
+              </option>
+            ))}
+          </select>
+          <select
             value={newTask.fk_idEmployee || ''}
             onChange={e => setNewTask({ ...newTask, fk_idEmployee: Number(e.target.value) || undefined })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
+            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+          >
+            <option value="">-- Selecciona un empleado --</option>
+            {employees.map(emp => (
+              <option key={emp.idEmployee} value={emp.idEmployee}>
+                {emp.fullName}
+              </option>
+            ))}
+          </select>
           <button onClick={createTask} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
             <Plus size={20} /> Agregar
           </button>
@@ -206,18 +242,29 @@ const TasksManagement = () => {
                       onChange={e => setNewTask({ ...newTask, taskStatus: e.target.value })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
                     />
-                    <input
-                      type="number"
-                      defaultValue={task.fk_idTaskCategory}
+                    <select
+                      value={newTask.fk_idTaskCategory}
                       onChange={e => setNewTask({ ...newTask, fk_idTaskCategory: Number(e.target.value) })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="number"
-                      defaultValue={task.fk_idEmployee || ''}
+                    >
+                      {categories.map(cat => (
+                        <option key={cat.idTaskCategory} value={cat.idTaskCategory}>
+                          {cat.categoryName}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={newTask.fk_idEmployee || ''}
                       onChange={e => setNewTask({ ...newTask, fk_idEmployee: Number(e.target.value) || undefined })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
+                    >
+                      <option value="">-- Selecciona un empleado --</option>
+                      {employees.map(emp => (
+                        <option key={emp.idEmployee} value={emp.idEmployee}>
+                          {emp.fullName}
+                        </option>
+                      ))}
+                    </select>
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => updateTask(task.idTask!, {
@@ -243,8 +290,8 @@ const TasksManagement = () => {
                     <p>Asignada: {task.assignmentDate?.slice(0,10)}</p>
                     <p>Finaliza: {task.completionDate?.slice(0,10)}</p>
                     <p>Estado: {task.taskStatus}</p>
-                    <p>ID Categoría: {task.fk_idTaskCategory}</p>
-                    <p>ID Empleado: {task.fk_idEmployee || '-'}</p>
+                    <p>Categoría: {categories.find(c => c.idTaskCategory === task.fk_idTaskCategory)?.name || task.fk_idTaskCategory}</p>
+                    <p>Empleado: {employees.find(e => e.idEmployee === task.fk_idEmployee)?.fullName || '-'}</p>
                     <div className="flex justify-end gap-2 mt-2">
                       <button
                         onClick={() => { setEditingId(task.idTask!); setNewTask(task); }}
