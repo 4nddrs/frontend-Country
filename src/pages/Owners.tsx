@@ -4,7 +4,7 @@
   import { decodeBackendImage } from '../utils/imageHelpers';
 
 
-  const API_URL = 'https://backend-country-nnxe.onrender.com/owners/';
+  const API_URL = 'https://backend-country-nnxe.onrender.com/owner/';
 
   // --- INTERFAZ ---
   // El tipo de ownerPhoto puede ser un objeto Buffer del backend o una cadena base64 del frontend

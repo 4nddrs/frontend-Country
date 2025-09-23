@@ -129,78 +129,100 @@ const fetchEmployees = async () => {
   return (
     <div className="container mx-auto p-4 text-white">
       <h1 className="text-3xl font-bold mb-6 text-center">Gestión de Tareas</h1>
-      <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
-        <h2 className="text-xl font-semibold mb-4">Agregar Nueva Tarea</h2>
-        <div className="flex gap-4 flex-wrap">
-          <input
-            type="text"
-            name="taskName"
-            placeholder="Nombre de la tarea"
-            value={newTask.taskName}
-            onChange={e => setNewTask({ ...newTask, taskName: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
-          <input
-            type="text"
-            name="description"
-            placeholder="Descripción"
-            value={newTask.description}
-            onChange={e => setNewTask({ ...newTask, description: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
-          <input
-            type="date"
-            name="assignmentDate"
-            placeholder="Fecha de asignación"
-            value={newTask.assignmentDate}
-            onChange={e => setNewTask({ ...newTask, assignmentDate: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
-          <input
-            type="date"
-            name="completionDate"
-            placeholder="Fecha de finalización"
-            value={newTask.completionDate}
-            onChange={e => setNewTask({ ...newTask, completionDate: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
-          <input
-            type="text"
-            name="taskStatus"
-            placeholder="Estado"
-            value={newTask.taskStatus}
-            onChange={e => setNewTask({ ...newTask, taskStatus: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
-          <select
-            value={newTask.fk_idTaskCategory}
-            onChange={e => setNewTask({ ...newTask, fk_idTaskCategory: Number(e.target.value) })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
-          >
-            <option value="">-- Selecciona una categoría --</option>
-            {categories.map(cat => (
-              <option key={cat.idTaskCategory} value={cat.idTaskCategory}>
-                {cat.categoryName}
-              </option>
-            ))}
-          </select>
-          <select
-            value={newTask.fk_idEmployee || ''}
-            onChange={e => setNewTask({ ...newTask, fk_idEmployee: Number(e.target.value) || undefined })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
-          >
-            <option value="">-- Selecciona un empleado --</option>
-            {employees.map(emp => (
-              <option key={emp.idEmployee} value={emp.idEmployee}>
-                {emp.fullName}
-              </option>
-            ))}
-          </select>
-          <button onClick={createTask} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
-            <Plus size={20} /> Agregar
-          </button>
-        </div>
-      </div>
+     <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
+  <h2 className="text-xl font-semibold mb-4">Agregar Nueva Tarea</h2>
+  <div className="flex gap-4 flex-wrap">
+    
+    <div className="flex-1">
+      <label className="text-sm mb-1 block">Nombre de la tarea</label>
+      <input
+        type="text"
+        name="taskName"
+        value={newTask.taskName}
+        onChange={e => setNewTask({ ...newTask, taskName: e.target.value })}
+        className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+      />
+    </div>
+
+    <div className="flex-1">
+      <label className="text-sm mb-1 block">Descripción</label>
+      <input
+        type="text"
+        name="description"
+        value={newTask.description}
+        onChange={e => setNewTask({ ...newTask, description: e.target.value })}
+        className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+      />
+    </div>
+
+    <div className="flex-1">
+      <label className="text-sm mb-1 block">Fecha de asignación</label>
+      <input
+        type="date"
+        name="assignmentDate"
+        value={newTask.assignmentDate}
+        onChange={e => setNewTask({ ...newTask, assignmentDate: e.target.value })}
+        className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+      />
+    </div>
+
+    <div className="flex-1">
+      <label className="text-sm mb-1 block">Fecha de finalización</label>
+      <input
+        type="date"
+        name="completionDate"
+        value={newTask.completionDate}
+        onChange={e => setNewTask({ ...newTask, completionDate: e.target.value })}
+        className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+      />
+    </div>
+
+    <div className="flex-1">
+      <label className="text-sm mb-1 block">Estado</label>
+      <input
+        type="text"
+        name="taskStatus"
+        value={newTask.taskStatus}
+        onChange={e => setNewTask({ ...newTask, taskStatus: e.target.value })}
+        className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+      />
+    </div>
+
+    <select
+      value={newTask.fk_idTaskCategory}
+      onChange={e => setNewTask({ ...newTask, fk_idTaskCategory: Number(e.target.value) })}
+      className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+    >
+      <option value="">-- Selecciona una categoría --</option>
+      {categories.map(cat => (
+        <option key={cat.idTaskCategory} value={cat.idTaskCategory}>
+          {cat.categoryName}
+        </option>
+      ))}
+    </select>
+
+    <select
+      value={newTask.fk_idEmployee || ''}
+      onChange={e => setNewTask({ ...newTask, fk_idEmployee: Number(e.target.value) || undefined })}
+      className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+    >
+      <option value="">-- Selecciona un empleado --</option>
+      {employees.map(emp => (
+        <option key={emp.idEmployee} value={emp.idEmployee}>
+          {emp.fullName}
+        </option>
+      ))}
+    </select>
+
+    <button
+      onClick={createTask}
+      className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2"
+    >
+      <Plus size={20} /> Agregar
+    </button>
+  </div>
+</div>
+
       <div className="bg-gray-800 p-6 rounded-lg shadow-md">
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
@@ -224,12 +246,16 @@ const fetchEmployees = async () => {
                       onChange={e => setNewTask({ ...newTask, description: e.target.value })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
                     />
-                    <input
-                      type="date"
-                      defaultValue={task.assignmentDate?.slice(0,10)}
-                      onChange={e => setNewTask({ ...newTask, assignmentDate: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
+                      <div className="flex-1">
+                      <label className="block text-sm mb-1">Fecha de asignación</label>
+                      <input
+                        type="date"
+                        name="assignmentDate"
+                        value={newTask.assignmentDate}
+                        onChange={e => setNewTask({ ...newTask, assignmentDate: e.target.value })}
+                        className="w-full p-2 rounded-md bg-gray-700 text-white"
+                      />
+                    </div>
                     <input
                       type="date"
                       defaultValue={task.completionDate?.slice(0,10)}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { decodeBackendImage } from '../utils/imageHelpers';
+import { decodeBackendImage, encodeImageForBackend } from '../utils/imageHelpers';
 import { toast } from 'react-hot-toast';
 import {
   UserPlus,
@@ -23,14 +23,8 @@ interface Employee {
   exitTime: string;
   salary: number;
   status: boolean;
-  fk_idRoleEmployee: number;
   fk_idPositionEmployee: number;
   employeePhoto?: string | null;
-}
-
-interface Role {
-  idRoleEmployee: number;
-  nameRole: string;
 }
 
 interface Position {
@@ -58,19 +52,17 @@ function toBase64(file: File): Promise<string> {
 
 const Employees = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
   const [newEmployee, setNewEmployee] = useState<Employee>({
     fullName: '',
     ci: '',
-    phoneNumber: 0, 
+    phoneNumber: 0,
     startContractDate: '',
     endContractDate: '',
     startTime: '',
     exitTime: '',
     salary: 0,
     status: true,
-    fk_idRoleEmployee: 1,
     fk_idPositionEmployee: 1,
     employeePhoto: null,
   });
@@ -79,32 +71,50 @@ const Employees = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
 
+const getEmptyEmployee = (): Employee => ({
+  fullName: '',
+  ci: '',
+  phoneNumber: 0,
+  startContractDate: '',
+  endContractDate: '',
+  startTime: '',
+  exitTime: '',
+  salary: 0,
+  status: true,
+  fk_idPositionEmployee: positions.length > 0 ? positions[0].idPositionEmployee : 0,
+  employeePhoto: null,
+});
+
+
   const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const employeesResponse = await fetch(`${API_URL}/employees/`);
-      if (!employeesResponse.ok) throw new Error(`Error al obtener empleados: ${employeesResponse.statusText}`);
-      const employeesData = await employeesResponse.json();
-      setEmployees(employeesData);
+  setLoading(true);
+  setError(null);
+  try {
+    const employeesResponse = await fetch(`${API_URL}/employees/`);
+    if (!employeesResponse.ok) throw new Error(`Error al obtener empleados: ${employeesResponse.statusText}`);
+    const employeesData = await employeesResponse.json();
 
-      const rolesResponse = await fetch(`${API_URL}/employee_roles/`);
-      if (!rolesResponse.ok) throw new Error(`Error al obtener roles: ${rolesResponse.statusText}`);
-      const rolesData = await rolesResponse.json();
-      setRoles(rolesData);
+    const positionsResponse = await fetch(`${API_URL}/employee_positions/`);
+    if (!positionsResponse.ok) throw new Error(`Error al obtener posiciones: ${positionsResponse.statusText}`);
+    const positionsData = await positionsResponse.json();
 
-      const positionsResponse = await fetch(`${API_URL}/employee_positions/`);
-      if (!positionsResponse.ok) throw new Error(`Error al obtener posiciones: ${positionsResponse.statusText}`);
-      const positionsData = await positionsResponse.json();
-      setPositions(positionsData);
+    setEmployees(employeesData);
+    setPositions(positionsData);
 
-    } catch (error: any) {
-      setError("No se pudo cargar la información. Inténtalo de nuevo más tarde.");
-      toast.error(`Error al cargar los datos: ${error.message}`);
-    } finally {
-      setLoading(false);
+    if (!editingId) {
+      setNewEmployee({
+        ...getEmptyEmployee(),
+        fk_idPositionEmployee: positionsData[0]?.idPositionEmployee || 0,
+      });
     }
-  };
+
+  } catch (error: any) {
+    setError("No se pudo cargar la información. Inténtalo de nuevo más tarde.");
+    toast.error(`Error al cargar los datos: ${error.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchData();
@@ -116,10 +126,11 @@ const Employees = () => {
     try {
       let employeePhoto: string | null = null;
       if (selectedPhoto) {
-        employeePhoto = await toBase64(selectedPhoto);
+          const base64Full = await toBase64(selectedPhoto); 
+          employeePhoto = encodeImageForBackend(base64Full);
       }
 
-      const employeeData = {
+     const employeeData = {
         ...newEmployee,
         phoneNumber: Number(newEmployee.phoneNumber),
         salary: Number(newEmployee.salary),
@@ -129,8 +140,16 @@ const Employees = () => {
         exitTime: newEmployee.endContractDate
           ? `${newEmployee.endContractDate}T${newEmployee.exitTime || '17:00'}:00`
           : '',
-        employeePhoto: employeePhoto || undefined, // omite si no hay imagen
+        ...(employeePhoto !== null && { employeePhoto }),
       };
+
+
+       console.log('Enviando empleado al backend:', employeeData);
+
+      if (!newEmployee.fk_idPositionEmployee) {
+        toast.error("Debe seleccionar una posición válida para el empleado.");
+        return;
+      }
 
       let response;
       if (editingId) {
@@ -152,20 +171,7 @@ const Employees = () => {
       }
       await response.json();
       toast.success(`Empleado ${editingId ? 'actualizado' : 'creado'} con éxito!`);
-      setNewEmployee({
-        fullName: '',
-        ci: '',
-        phoneNumber: 0,
-        startContractDate: '',
-        endContractDate: '',
-        startTime: '',
-        exitTime: '',
-        salary: 0,
-        status: true,
-        fk_idRoleEmployee: 1,
-        fk_idPositionEmployee: 1,
-        employeePhoto: null,
-      });
+      setNewEmployee(getEmptyEmployee());
       setEditingId(null);
       setSelectedPhoto(null);
       fetchData();
@@ -193,6 +199,7 @@ const Employees = () => {
 
   // Modo edición
   const startEdit = (employee: Employee) => {
+    console.log('Editando empleado:', employee);
     setNewEmployee({
       ...employee,
       startTime: formatTimeForInput(employee.startTime),
@@ -204,20 +211,7 @@ const Employees = () => {
   };
 
   const cancelEdit = () => {
-    setNewEmployee({
-      fullName: '',
-      ci: '',
-      phoneNumber: 0,
-      startContractDate: '',
-      endContractDate: '',
-      startTime: '',
-      exitTime: '',
-      salary: 0,
-      status: true,
-      fk_idRoleEmployee: 1,
-      fk_idPositionEmployee: 1,
-      employeePhoto: null,
-    });
+    setNewEmployee(getEmptyEmployee());
     setEditingId(null);
     setSelectedPhoto(null);
   };
@@ -252,25 +246,50 @@ const Employees = () => {
           {editingId ? "Editar Empleado" : "Crear Nuevo Empleado"}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div>
+            <label htmlFor="fullName">Nombre Completo</label>
           <input type="text" placeholder="Nombre Completo" name="fullName" value={newEmployee.fullName} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
+         </div>
+         <div>
+           <label htmlFor="ci">C.I.</label>
           <input type="text" placeholder="C.I." name="ci" value={newEmployee.ci} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
+         </div>
+          <div>
+            <label htmlFor="phoneNumber">Número de Teléfono</label>
           <input type="number" placeholder="Número de Teléfono" name="phoneNumber" value={newEmployee.phoneNumber} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
+          </div>
+          <div>
+            <label htmlFor="startContractDate">Fecha de Contrato (Inicio)</label>
           <input type="date" placeholder="Fecha de Contrato (Inicio)" name="startContractDate" value={newEmployee.startContractDate} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
+          </div>
+          <div>
+            <label htmlFor="endContractDate">Fecha de Contrato (Fin)</label>
           <input type="date" placeholder="Fecha de Contrato (Fin)" name="endContractDate" value={newEmployee.endContractDate} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
+          </div>
+          <div>
+            <label htmlFor="startTime">Hora de Entrada</label>
           <input type="time" placeholder="Hora de Entrada" name="startTime" value={newEmployee.startTime} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+          </div>
+          <div>
+            <label htmlFor="exitTime">Hora de Salida</label>
           <input type="time" placeholder="Hora de Salida" name="exitTime" value={newEmployee.exitTime} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" />
-          <input type="number" placeholder="Salario" name="salary" value={newEmployee.salary} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
-          <select name="fk_idRoleEmployee" value={newEmployee.fk_idRoleEmployee} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500" required>
-            {roles.map((role) => (
-              <option key={role.idRoleEmployee} value={role.idRoleEmployee}>{role.nameRole}</option>
-            ))}
-          </select>
+          </div>
+          <div>
+            <label htmlFor="salary">Salario</label>
+          <input type="number" placeholder="Salario" name="salary" value={newEmployee.salary} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />         
+          </div>
+          <div>
+            <label htmlFor="fk_idPositionEmployee">Posición</label>
           <select name="fk_idPositionEmployee" value={newEmployee.fk_idPositionEmployee} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500" required>
             {positions.map((position) => (
               <option key={position.idPositionEmployee} value={position.idPositionEmployee}>{position.namePosition}</option>
             ))}
           </select>
+          </div>
+          <div>
+            <label htmlFor="employeePhoto">Foto del Empleado</label>
           <input type="file" name="employeePhoto" accept="image/*" onChange={handlePhotoChange} className="w-full p-2 text-white placeholder-slate-400" />
+          </div>
         </div>
         <div className="flex justify-end gap-4 mt-6">
           {editingId ? (
@@ -299,15 +318,16 @@ const Employees = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Foto</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Nombre</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">C.I.</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Rol</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Número de Teléfono</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Posición</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Salario</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Acciones</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Hora de Entrada</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Hora de Salida</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">Fecha de Contrato - Inicio y Fin </th>
               </tr>
             </thead>
             <tbody className="bg-slate-800 divide-y divide-slate-700">
-              {employees.map((employee) => {
-                const roleName = roles.find(r => r.idRoleEmployee === employee.fk_idRoleEmployee)?.nameRole || 'Desconocido';
+              {employees.map((employee) => {              
                 const positionName = positions.find(p => p.idPositionEmployee === employee.fk_idPositionEmployee)?.namePosition || 'Desconocido';
                 return (
                   <tr key={employee.idEmployee} className="hover:bg-slate-700 transition-colors">
@@ -322,9 +342,12 @@ const Employees = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{employee.fullName}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{employee.ci}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{roleName}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{employee.phoneNumber}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{positionName}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">${employee.salary}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{employee.startTime ? new Date(employee.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{employee.exitTime ? new Date(employee.exitTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{employee.startContractDate ? new Date(employee.startContractDate).toLocaleDateString() : 'N/A'} - {employee.endContractDate ? new Date(employee.endContractDate).toLocaleDateString() : 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button onClick={() => startEdit(employee)} className="text-teal-400 hover:text-teal-600 transition-colors mr-4"><Edit size={20} /></button>
                       <button onClick={() => handleDelete(employee.idEmployee!)} className="text-red-400 hover:text-red-600 transition-colors"><Trash2 size={20} /></button>

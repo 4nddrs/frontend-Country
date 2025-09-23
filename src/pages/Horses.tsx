@@ -1,110 +1,96 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { toast } from 'react-hot-toast'; 
+import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
-import { decodeBackendImage } from '../utils/imageHelpers';
+import { decodeBackendImage, encodeImageForBackend } from '../utils/imageHelpers'; // CAMBIO: Importamos la función encodeImageForBackend
 
 // URL de tu API backend
-const API_URL = '/api/horses/';
-
+const API_URL = 'https://backend-country-nnxe.onrender.com/horses/';
 
 // --- INTERFACES ---
 interface Horse {
   idHorse?: number;
   horseName: string;
-  dirthDate: string; // ISO string
+  horsePhoto?: string | null;
+  birthdate: string; // ISO string (YYYY-DD-MM)
   sex: string;
   color: string;
   generalDescription: string;
-  fk_idOwner: number;
+  passportNumber: number;
+  box: boolean;
+  section: boolean;
+  basket: boolean;
   fk_idRace: number;
-  fk_idEmployee: number;
-  fk_idVaccine?: number;
-  horsePhoto?: string | null;
-
+  fk_idOwner: number;
+  fl_idNutritionalPlan: number;
 }
+
+const initialHorse: Omit<Horse, 'idHorse'> = {
+  horseName: '',
+  horsePhoto: null,
+  birthdate: '',
+  sex: '',
+  color: '',
+  generalDescription: '',
+  passportNumber: 0,
+  box: false,
+  section: false,
+  basket: false,
+  fk_idRace: 1,
+  fk_idOwner: 1,
+  fl_idNutritionalPlan: 1,
+};
 
 // --- COMPONENTE ---
 const HorsesManagement = () => {
   // --- ESTADOS ---
   const [owners, setOwners] = useState<any[]>([]);
-  const [employees, setEmployees] = useState<any[]>([]);
   const [races, setRaces] = useState<any[]>([]);
-  const [vaccines, setVaccines] = useState<any[]>([]);
+  const [nutritionalPlans, setNutritionalPlans] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [horses, setHorses] = useState<Horse[]>([]);
-
-  const [newHorse, setNewHorse] = useState<Omit<Horse, 'idHorse'>>({
-    horseName: '',
-    dirthDate: '',
-    sex: '',
-    color: '',
-    generalDescription: '',
-    fk_idOwner: 1,
-    fk_idRace: 1,
-    fk_idEmployee: 1,
-    fk_idVaccine: undefined,
-    horsePhoto: null,
-  });
-
-  
+  const [newHorse, setNewHorse] = useState<Omit<Horse, 'idHorse'>>({ ...initialHorse });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingHorseData, setEditingHorseData] = useState<Horse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null); // CAMBIO: Nuevo estado para guardar el archivo de la foto
 
-  
   // --- EFECTOS ---
   useEffect(() => {
     fetchHorses();
+    fetchOwners();
+    fetchRaces();
+    fetchNutritionalPlans();
   }, []);
 
   const fetchOwners = async () => {
-  if (owners.length === 0) {
     try {
-      const res = await fetch("https://backend-country-nnxe.onrender.com/owners/");
+      const res = await fetch('https://backend-country-nnxe.onrender.com/owner/');
       const data = await res.json();
       setOwners(data);
     } catch (err) {
-      console.error("Error cargando owners:", err);
+      toast.error('Error cargando dueños');
     }
-  }
-};
+  };
 
-const fetchEmployees = async () => {
-  if (employees.length === 0) {
+  const fetchRaces = async () => {
     try {
-      const res = await fetch("https://backend-country-nnxe.onrender.com/employees/");
-      const data = await res.json();
-      console.log("Empleados recibidos:", data); // 👀
-      setEmployees(data);
-    } catch (err) {
-      console.error("Error cargando employees:", err);
-    }
-  }
-};
-
-const fetchRaces = async () => {
-  if (races.length === 0) {
-    try {
-      const res = await fetch("https://backend-country-nnxe.onrender.com/races/");
+      const res = await fetch('https://backend-country-nnxe.onrender.com/race/');
       const data = await res.json();
       setRaces(data);
     } catch (err) {
-      console.error("Error cargando races:", err);
+      toast.error('Error cargando razas');
     }
-  }
-};
+  };
 
-const fetchVaccines = async () => {
-  if (vaccines.length === 0) {
+  const fetchNutritionalPlans = async () => {
     try {
-      const res = await fetch("https://backend-country-nnxe.onrender.com/vaccines/");
+      const res = await fetch('https://backend-country-nnxe.onrender.com/nutritional-plans/');
       const data = await res.json();
-      setVaccines(data);
+      setNutritionalPlans(data);
     } catch (err) {
-      console.error("Error cargando vaccines:", err);
+      toast.error('Error cargando planes nutricionales');
     }
-  }
-};
+  };
 
   // --- FUNCIONES API ---
   const fetchHorses = async () => {
@@ -115,128 +101,143 @@ const fetchVaccines = async () => {
       const data = await res.json();
       setHorses(data);
     } catch (error) {
-      console.error(error);
       toast.error('No se pudo cargar la lista de caballos.');
     } finally {
       setLoading(false);
     }
   };
 
-function toBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file); // incluye el prefijo data:image/...
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
-  });
-}
+  const toBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
 
-function base64ToBytes(base64: string): number[] {
-  const cleaned = base64.split(",")[1]; // quita el "data:image/jpeg;base64,"
-  const binary = atob(cleaned);
-  const bytes = new Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
-}
-
-const handlePhotoChange = async (
-  e: React.ChangeEvent<HTMLInputElement>,
-  mode: "create" | "edit" = "create"
-) => {
-  if (e.target.files && e.target.files[0]) {
-    const base64 = await toBase64(e.target.files[0]); // incluye "data:image/jpeg;base64,..."
-
-    if (mode === "create") {
-      setNewHorse({ ...newHorse, horsePhoto: base64 });
-    } else if (mode === "edit" && editingHorseData) {
-      setEditingHorseData({ ...editingHorseData, horsePhoto: base64 });
+  const handlePhotoChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    mode: 'create' | 'edit' = 'create'
+  ) => {
+    if (e.target.files?.[0]) {
+      const file = e.target.files[0];
+      setSelectedPhotoFile(file); // CAMBIO: Guardamos el archivo en el nuevo estado
+      if (mode === 'create') {
+        // En modo 'create' también podemos mostrar una vista previa si lo deseamos.
+        const base64 = await toBase64(file);
+        setNewHorse(prev => ({ ...prev, horsePhoto: base64 }));
+      } else {
+        const base64 = await toBase64(file);
+        editingHorseData && setEditingHorseData({ ...editingHorseData, horsePhoto: base64 });
+      }
     }
-  }
-};
-
-const prepareHorseData = (horse: Horse) => ({
-  ...horse,
-  fk_idOwner: Number(horse.fk_idOwner),
-  fk_idRace: Number(horse.fk_idRace),
-  fk_idEmployee: Number(horse.fk_idEmployee),
-  fk_idVaccine: horse.fk_idVaccine ? Number(horse.fk_idVaccine) : undefined,
-  horsePhoto: horse.horsePhoto ? horse.horsePhoto.split(",")[1] : null, // quita el prefijo
-});
-
-
-  // --- CONVERTIR ARCHIVO A BASE64 ---
+  };
 
   const createHorse = async () => {
-  if (!newHorse.horseName || !newHorse.dirthDate || !newHorse.sex || !newHorse.color) {
-    toast.error('Completa los campos obligatorios (Nombre, Fecha, Sexo, Color).');
-    return;
-  }
+    if (!newHorse.horseName || !newHorse.birthdate || !newHorse.sex || !newHorse.color) {
+      toast.error('Completa los campos obligatorios (Nombre, Fecha, Sexo, Color).');
+      return;
+    }
 
-  try {
-    const horseData = {
-      ...newHorse,
-      fk_idOwner: Number(newHorse.fk_idOwner),
-      fk_idRace: Number(newHorse.fk_idRace),
-      fk_idEmployee: Number(newHorse.fk_idEmployee),
-      fk_idVaccine: newHorse.fk_idVaccine ? Number(newHorse.fk_idVaccine) : undefined,
-      horsePhoto: newHorse.horsePhoto || null, // ✅ enviamos dataURL completo
-    };
+    try {
+      // CAMBIO: Preparamos la foto para el backend
+      let photoForBackend: string | null = null;
+      if (selectedPhotoFile) {
+        const base64Full = await toBase64(selectedPhotoFile);
+        photoForBackend = encodeImageForBackend(base64Full);
+      }
 
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(horseData),
-    });
+      const horseData = {
+        horseName: newHorse.horseName,
+        horsePhoto: photoForBackend, // CAMBIO: Usamos el formato binario
+        birthdate: newHorse.birthdate,
+        sex: newHorse.sex,
+        color: newHorse.color,
+        generalDescription: newHorse.generalDescription,
+        passportNumber: newHorse.passportNumber || 0,
+        box: newHorse.box || false,
+        section: newHorse.section || false,
+        basket: newHorse.basket || false,
+        fk_idRace: newHorse.fk_idRace,
+        fk_idOwner: newHorse.fk_idOwner,
+        fl_idNutritionalPlan: newHorse.fl_idNutritionalPlan || 0,
+      };
 
-    if (!res.ok) throw new Error(await res.text());
+      console.log("📤 Enviando nuevo caballo (con formato binario):", horseData);
 
-    toast.success('¡Caballo creado con éxito!');
-    setNewHorse({
-      horseName: '',
-      dirthDate: '',
-      sex: '',
-      color: '',
-      generalDescription: '',
-      fk_idOwner: 1,
-      fk_idRace: 1,
-      fk_idEmployee: 1,
-      fk_idVaccine: undefined,
-      horsePhoto: null,
-    });
- if (fileInputRef.current) fileInputRef.current.value = '';
+      const res = await fetch("https://backend-country-nnxe.onrender.com/horses/", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(horseData),
+      });
 
-    fetchHorses();
-  } catch (error: any) {
-    console.error('Error creando caballo:', error);
-    toast.error(`Error creando caballo: ${error.message}`);
-  }
-};
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Error del servidor: ${errorText}`);
+      }
 
+      toast.success("¡Caballo creado exitosamente!");
 
+      // Reset form
+      setNewHorse({ ...initialHorse });
+      setSelectedPhotoFile(null); // CAMBIO: Resetear el estado del archivo
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+
+      fetchHorses();
+    } catch (error: any) {
+      console.error("❌ Error al crear caballo:", error);
+      toast.error(`Error al crear caballo: ${error.message}`);
+    }
+  };
 
 
   const updateHorse = async (id: number) => {
-    
     if (!editingHorseData) return;
+    console.log("✏️ Actualizando caballo con ID:", id);
+    console.log("📤 Datos actualizados:", editingHorseData);
 
     try {
+      // CAMBIO: Preparamos la foto para el backend si se seleccionó una nueva
+      let photoForBackend: string | null | undefined = undefined; // undefined para no actualizar si no hay cambio
+      if (selectedPhotoFile) {
+        const base64Full = await toBase64(selectedPhotoFile);
+        photoForBackend = encodeImageForBackend(base64Full);
+      } else if (editingHorseData.horsePhoto === null) {
+        photoForBackend = null; // Si el usuario borró la foto
+      }
+
+      const horseDataToUpdate = {
+        ...editingHorseData,
+        fk_idOwner: Number(editingHorseData.fk_idOwner),
+        fk_idRace: Number(editingHorseData.fk_idRace),
+        fl_idNutritionalPlan: Number(editingHorseData.fl_idNutritionalPlan),
+        passportNumber: Number(editingHorseData.passportNumber),
+        box: Boolean(editingHorseData.box),
+        section: Boolean(editingHorseData.section),
+        basket: Boolean(editingHorseData.basket),
+        ...(photoForBackend !== undefined && { horsePhoto: photoForBackend }) // CAMBIO: Solo incluye horsePhoto si hay un cambio
+      };
+
       const res = await fetch(`${API_URL}${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingHorseData),
+        body: JSON.stringify(horseDataToUpdate),
       });
       if (!res.ok) throw new Error('Error al actualizar el caballo');
       toast.success('¡Caballo actualizado!');
       setEditingId(null);
       setEditingHorseData(null);
+      setSelectedPhotoFile(null); // CAMBIO: Resetear el estado del archivo
       fetchHorses();
     } catch (error) {
-      console.error(error);
       toast.error('No se pudo actualizar el caballo.');
     }
   };
+
 
   const deleteHorse = async (id: number) => {
     if (!window.confirm('¿Seguro quieres eliminar este caballo?')) return;
@@ -246,14 +247,14 @@ const prepareHorseData = (horse: Horse) => ({
       toast.success('¡Caballo eliminado!');
       fetchHorses();
     } catch (error) {
-      console.error(error);
       toast.error('No se pudo eliminar el caballo.');
     }
   };
 
   const handleEditClick = (horse: Horse) => {
+    console.log("🛠️ Entrando en modo edición con caballo:", horse);
     setEditingId(horse.idHorse!);
-    setEditingHorseData(horse);
+    setEditingHorseData({ ...horse });
   };
 
   const handleCancelEdit = () => {
@@ -268,84 +269,174 @@ const prepareHorseData = (horse: Horse) => ({
 
       {/* Formulario para agregar */}
       <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
-        <h2 className="text-xl font-semibold mb-4">Agregar Nuevo Caballo</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <input type="text" placeholder="Nombre del caballo" value={newHorse.horseName} onChange={e => setNewHorse({ ...newHorse, horseName: e.target.value })} className="p-2 rounded-md bg-gray-700" />
-          <input type="date" value={newHorse.dirthDate} onChange={e => setNewHorse({ ...newHorse, dirthDate: e.target.value })} className="p-2 rounded-md bg-gray-700" />
-          <input type="text" placeholder="Sexo" value={newHorse.sex} onChange={e => setNewHorse({ ...newHorse, sex: e.target.value })} className="p-2 rounded-md bg-gray-700" />
-          <input type="text" placeholder="Color" value={newHorse.color} onChange={e => setNewHorse({ ...newHorse, color: e.target.value })} className="p-2 rounded-md bg-gray-700" />
-          <input type="text" placeholder="Descripción" value={newHorse.generalDescription} onChange={e => setNewHorse({ ...newHorse, generalDescription: e.target.value })} className="p-2 rounded-md bg-gray-700" />
-          <select
-            name="fk_idOwner"
-            value={newHorse.fk_idOwner || ""}
-            onChange={e => setNewHorse({ ...newHorse, fk_idOwner: Number(e.target.value) })}
-            onClick={fetchOwners}
-            className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
-          >
-            <option value="">-- Selecciona un dueño --</option>
-            {owners.map((o) => (
-              <option key={o.idOwner} value={o.idOwner}>
-                {o.name} {o.FirstName}  
-              </option>
-            ))}
-          </select>
-          <select
-            name="fk_idRace"
-            value={newHorse.fk_idRace || ""}
-            onChange={e => setNewHorse({ ...newHorse, fk_idRace: Number(e.target.value) })}
-            onClick={fetchRaces}
-            className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
-          >
-            <option value="">-- Selecciona una raza --</option>
-            {races.map((r) => (
-              <option key={r.idRace} value={r.idRace}>
-                {r.nameRace}
-              </option>
-            ))}
-          </select>
-         <select
-            name="fk_idEmployee"
-            value={newHorse.fk_idEmployee || ""}
-            onChange={e => setNewHorse({ ...newHorse, fk_idEmployee: Number(e.target.value) })}
-            onClick={fetchEmployees}
-            className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
-          >
-            <option value="">-- Selecciona un empleado --</option>
-            {employees.map((e) => (
-              <option key={e.idEmployee} value={e.idEmployee}>
-                {e.fullName}
-              </option>
-            ))}
-          </select>
-          <select
-            name="fk_idVaccine"
-            value={newHorse.fk_idVaccine || ""}
-            onChange={e => setNewHorse({ ...newHorse, fk_idVaccine: Number(e.target.value) })}
-            onClick={fetchVaccines}
-            className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
-          >
-            <option value="">-- Selecciona una vacuna --</option>
-            {vaccines.map((v) => (
-              <option key={v.idVaccine} value={v.idVaccine}>
-                {v.vaccineName}
-              </option>
-            ))}
-          </select>
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            onChange={(e) => handlePhotoChange(e, "create")}
-            className="p-1.5 rounded-md bg-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
-          />
+  <h2 className="text-xl font-semibold mb-4">Agregar Nuevo Caballo</h2>
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-        </div>
-        <div className="mt-4 text-right">
-          <button onClick={createHorse} className="bg-green-600 hover:bg-green-700 text-white p-2 px-4 rounded-md font-semibold flex items-center gap-2 inline-flex">
-            <Plus size={20} /> Agregar
-          </button>
-        </div>
+    <div>
+      <label className="block mb-1">Nombre del Caballo</label>
+      <input
+        type="text"
+        value={newHorse.horseName}
+        onChange={e => setNewHorse({ ...newHorse, horseName: e.target.value })}
+        className="w-full p-2 rounded-md bg-gray-700"
+      />
+    </div>
+
+    <div>
+      <label className="block mb-1">Fecha de Nacimiento</label>
+      <input
+        type="date"
+        value={newHorse.birthdate}
+        onChange={e => setNewHorse({ ...newHorse, birthdate: e.target.value })}
+        className="w-full p-2 rounded-md bg-gray-700"
+      />
+    </div>
+
+    <div>
+      <label className="block mb-1">Sexo</label>
+      <input
+        type="text"
+        value={newHorse.sex}
+        onChange={e => setNewHorse({ ...newHorse, sex: e.target.value })}
+        className="w-full p-2 rounded-md bg-gray-700"
+      />
+    </div>
+
+    <div>
+      <label className="block mb-1">Color</label>
+      <input
+        type="text"
+        value={newHorse.color}
+        onChange={e => setNewHorse({ ...newHorse, color: e.target.value })}
+        className="w-full p-2 rounded-md bg-gray-700"
+      />
+    </div>
+
+    <div>
+      <label className="block mb-1">Descripción General</label>
+      <input
+        type="text"
+        value={newHorse.generalDescription}
+        onChange={e => setNewHorse({ ...newHorse, generalDescription: e.target.value })}
+        className="w-full p-2 rounded-md bg-gray-700"
+      />
+    </div>
+
+    <div>
+      <label className="block mb-1">Número de Pasaporte</label>
+      <input
+        type="number"
+        value={newHorse.passportNumber}
+        onChange={e => setNewHorse({ ...newHorse, passportNumber: Number(e.target.value) })}
+        className="w-full p-2 rounded-md bg-gray-700"
+      />
+    </div>
+
+    <div className="flex flex-col gap-2">
+      <label className="block">Opciones de Establo</label>
+      <div className="flex items-center gap-2">
+        <label>
+          <input
+            type="checkbox"
+            checked={newHorse.box}
+            onChange={e => setNewHorse({ ...newHorse, box: e.target.checked })}
+          />
+          <span className="ml-2">Box</span>
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={newHorse.section}
+            onChange={e => setNewHorse({ ...newHorse, section: e.target.checked })}
+          />
+          <span className="ml-2">Sección</span>
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={newHorse.basket}
+            onChange={e => setNewHorse({ ...newHorse, basket: e.target.checked })}
+          />
+          <span className="ml-2">Canasta</span>
+        </label>
       </div>
+    </div>
+
+    <div>
+      <label className="block mb-1">Dueño</label>
+      <select
+        name="fk_idOwner"
+        value={newHorse.fk_idOwner || ""}
+        onChange={e => setNewHorse({ ...newHorse, fk_idOwner: Number(e.target.value) })}
+        className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
+      >
+        <option value="">-- Selecciona un dueño --</option>
+        {owners.map((o) => (
+          <option key={o.idOwner} value={o.idOwner}>
+            {o.name} {o.FirstName}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    <div>
+      <label className="block mb-1">Raza</label>
+      <select
+        name="fk_idRace"
+        value={newHorse.fk_idRace || ""}
+        onChange={e => setNewHorse({ ...newHorse, fk_idRace: Number(e.target.value) })}
+        className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
+      >
+        <option value="">-- Selecciona una raza --</option>
+        {races.map((r) => (
+          <option key={r.idRace} value={r.idRace}>
+            {r.nameRace}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    <div>
+      <label className="block mb-1">Plan Nutricional</label>
+      <select
+        name="fl_idNutritionalPlan"
+        value={newHorse.fl_idNutritionalPlan || ''}
+        onChange={e => setNewHorse({ ...newHorse, fl_idNutritionalPlan: Number(e.target.value) })}
+        className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
+      >
+        <option value="">-- Selecciona un plan nutricional --</option>
+        {nutritionalPlans.map((n) => (
+          <option key={n.idNutritionalPlan} value={n.idNutritionalPlan}>
+            {n.name}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    <div>
+      <label className="block mb-1">Foto del Caballo</label>
+      <input
+        type="file"
+        accept="image/*"
+        ref={fileInputRef}
+        onChange={(e) => handlePhotoChange(e, "create")}
+        className="w-full p-1.5 rounded-md bg-gray-700 file:mr-4 file:py-2 file:px-4 
+                   file:rounded-full file:border-0 file:text-sm file:font-semibold 
+                   file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
+      />
+    </div>
+  </div>
+
+  <div className="mt-4 text-right">
+    <button
+      onClick={createHorse}
+      className="bg-green-600 hover:bg-green-700 text-white p-2 px-4 rounded-md font-semibold flex items-center gap-2 inline-flex"
+    >
+      <Plus size={20} /> Agregar
+    </button>
+  </div>
+</div>
+
 
       {/* Lista de caballos */}
       <div className="bg-gray-800 p-6 rounded-lg shadow-md">
@@ -360,18 +451,72 @@ const prepareHorseData = (horse: Horse) => ({
                 {editingId === horse.idHorse && editingHorseData ? (
                   <>
                     <div className="flex-grow space-y-2 mb-4">
-                      <input type="text" value={editingHorseData.horseName} onChange={e => setEditingHorseData({...editingHorseData, horseName: e.target.value})} className="w-full p-2 rounded-md bg-gray-600"/>
-                      <input type="date" value={editingHorseData.dirthDate?.slice(0, 10)} onChange={e => setEditingHorseData({...editingHorseData, dirthDate: e.target.value})} className="w-full p-2 rounded-md bg-gray-600"/>
-                      <input type="text" value={editingHorseData.color} onChange={e => setEditingHorseData({...editingHorseData, color: e.target.value})} className="w-full p-2 rounded-md bg-gray-600"/>
-                      <textarea value={editingHorseData.generalDescription} onChange={e => setEditingHorseData({...editingHorseData, generalDescription: e.target.value})} className="w-full p-2 rounded-md bg-gray-600" rows={2}></textarea>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      ref={fileInputRef}
-                      onChange={(e) => handlePhotoChange(e, "edit")}
-                      className="w-full p-1.5 rounded-md bg-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
-                    />
-
+                      <input type="text" value={editingHorseData.horseName} onChange={e => setEditingHorseData({ ...editingHorseData, horseName: e.target.value })} className="w-full p-2 rounded-md bg-gray-600" />
+                      <input type="date" value={editingHorseData.birthdate?.slice(0, 10)} onChange={e => setEditingHorseData({ ...editingHorseData, birthdate: e.target.value })} className="w-full p-2 rounded-md bg-gray-600" />
+                      <input type="text" value={editingHorseData.sex} onChange={e => setEditingHorseData({ ...editingHorseData, sex: e.target.value })} className="w-full p-2 rounded-md bg-gray-600" />
+                      <input type="text" value={editingHorseData.color} onChange={e => setEditingHorseData({ ...editingHorseData, color: e.target.value })} className="w-full p-2 rounded-md bg-gray-600" />
+                      <input type="text" value={editingHorseData.generalDescription} onChange={e => setEditingHorseData({ ...editingHorseData, generalDescription: e.target.value })} className="w-full p-2 rounded-md bg-gray-600" />
+                      <input type="number" value={editingHorseData.passportNumber} onChange={e => setEditingHorseData({ ...editingHorseData, passportNumber: Number(e.target.value) })} className="w-full p-2 rounded-md bg-gray-600" />
+                      <div className="flex items-center gap-2">
+                        <label>
+                          <input type="checkbox" checked={editingHorseData.box} onChange={e => setEditingHorseData({ ...editingHorseData, box: e.target.checked })} />
+                          <span className="ml-2">Box</span>
+                        </label>
+                        <label>
+                          <input type="checkbox" checked={editingHorseData.section} onChange={e => setEditingHorseData({ ...editingHorseData, section: e.target.checked })} />
+                          <span className="ml-2">Sección</span>
+                        </label>
+                        <label>
+                          <input type="checkbox" checked={editingHorseData.basket} onChange={e => setEditingHorseData({ ...editingHorseData, basket: e.target.checked })} />
+                          <span className="ml-2">Canasta</span>
+                        </label>
+                      </div>
+                      <select
+                        name="fk_idOwner"
+                        value={editingHorseData.fk_idOwner || ""}
+                        onChange={e => setEditingHorseData({ ...editingHorseData, fk_idOwner: Number(e.target.value) })}
+                        className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
+                      >
+                        <option value="">-- Selecciona un dueño --</option>
+                        {owners.map((o) => (
+                          <option key={o.idOwner} value={o.idOwner}>
+                            {o.name} {o.FirstName}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        name="fk_idRace"
+                        value={editingHorseData.fk_idRace || ""}
+                        onChange={e => setEditingHorseData({ ...editingHorseData, fk_idRace: Number(e.target.value) })}
+                        className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
+                      >
+                        <option value="">-- Selecciona una raza --</option>
+                        {races.map((r) => (
+                          <option key={r.idRace} value={r.idRace}>
+                            {r.nameRace}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        name="fl_idNutritionalPlan"
+                        value={editingHorseData.fl_idNutritionalPlan || ''}
+                        onChange={e => setEditingHorseData({ ...editingHorseData, fl_idNutritionalPlan: Number(e.target.value) })}
+                        className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
+                      >
+                        <option value="">-- Selecciona un plan nutricional --</option>
+                        {nutritionalPlans.map((n) => (
+                          <option key={n.idNutritionalPlan} value={n.idNutritionalPlan}>
+                            {n.name}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        ref={fileInputRef}
+                        onChange={(e) => handlePhotoChange(e, "edit")}
+                        className="w-full p-1.5 rounded-md bg-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
+                      />
                     </div>
                     <div className="flex justify-end gap-2">
                       <button onClick={() => updateHorse(horse.idHorse!)} className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center gap-1"><Save size={16} /> Guardar</button>
@@ -381,11 +526,13 @@ const prepareHorseData = (horse: Horse) => ({
                 ) : (
                   <>
                     <div className="flex-grow mb-4">
-                     <img src={decodeBackendImage(horse.horsePhoto) || 'https://placehold.co/100x100/4a5568/ffffff?text=Sin+Foto'} alt={`Foto de ${horse.horseName}`} className="w-full h-40 rounded-md object-cover mb-4 bg-gray-600" />
+                      <img src={decodeBackendImage(horse.horsePhoto) || 'https://placehold.co/100x100/4a5568/ffffff?text=Sin+Foto'} alt={`Foto de ${horse.horseName}`} className="w-full h-40 rounded-md object-cover mb-4 bg-gray-600" />
                       <h3 className="text-xl font-bold">{horse.horseName}</h3>
-                      <p className="text-sm text-gray-300">Nacimiento: {new Date(horse.dirthDate).toLocaleDateString()}</p>
+                      <p className="text-sm text-gray-300">Nacimiento: {new Date(horse.birthdate).toLocaleDateString()}</p>
                       <p className="text-sm text-gray-300">Sexo: {horse.sex}</p>
                       <p className="text-sm text-gray-300">Color: {horse.color}</p>
+                      <p className="text-sm text-gray-300">N° Pasaporte: {horse.passportNumber}</p>
+                      <p className="text-sm text-gray-300">Box: {horse.box ? 'Sí' : 'No'} | Sección: {horse.section ? 'Sí' : 'No'} | Canasta: {horse.basket ? 'Sí' : 'No'}</p>
                       {horse.generalDescription && <p className="mt-2 text-gray-400 text-sm">{horse.generalDescription}</p>}
                     </div>
                     <div className="flex justify-end gap-2">
@@ -402,18 +549,5 @@ const prepareHorseData = (horse: Horse) => ({
     </div>
   );
 };
-
-function hexToBase64(hexString: string) {
-  if (hexString.startsWith("\\x")) {
-    hexString = hexString.slice(2);
-  }
-
-  const bytes = new Uint8Array(
-    hexString.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16))
-  );
-
-  const text = new TextDecoder().decode(bytes);
-  return text; 
-}
 
 export default HorsesManagement;

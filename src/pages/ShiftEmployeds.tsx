@@ -1,0 +1,254 @@
+import React, { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
+import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+
+const API_URL = 'https://backend-country-nnxe.onrender.com/shift_employeds/';
+
+interface ShiftEmployed {
+  idShiftEmployed?: number;
+  startDateTime: string; 
+  endDateTime: string;   
+  fk_idShiftType: number;
+  created_at?: string;
+}
+
+const ShiftEmployedsManagement = () => {
+  const [shifts, setShifts] = useState<ShiftEmployed[]>([]);
+  const [newShift, setNewShift] = useState<ShiftEmployed>({
+    startDateTime: '',
+    endDateTime: '',
+    fk_idShiftType: 1,
+  });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // For shift type select
+  const [shiftTypes, setShiftTypes] = useState<any[]>([]);
+  const fetchShiftTypes = async () => {
+    try {
+      const res = await fetch("https://backend-country-nnxe.onrender.com/shift_types/");
+      if (!res.ok) throw new Error("Error al obtener tipos de turno");
+      const data = await res.json();
+      setShiftTypes(data);
+    } catch {
+      toast.error("No se pudieron cargar tipos de turno");
+    }
+  };
+
+  const fetchShifts = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error('Error al obtener turnos empleados');
+      const data = await res.json();
+      setShifts(data);
+    } catch {
+      toast.error('No se pudo cargar turnos empleados.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchShifts();
+    fetchShiftTypes();
+  }, []);
+
+  const createShift = async () => {
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newShift),
+      });
+      if (!res.ok) throw new Error('Error al crear turno');
+      toast.success('Turno creado!');
+      setNewShift({
+        startDateTime: '',
+        endDateTime: '',
+        fk_idShiftType: 1,
+      });
+      fetchShifts();
+    } catch {
+      toast.error('No se pudo crear turno.');
+    }
+  };
+
+  const updateShift = async (id: number, updatedShift: ShiftEmployed) => {
+    try {
+      const res = await fetch(`${API_URL}${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedShift),
+      });
+      if (!res.ok) throw new Error('Error al actualizar turno');
+      toast.success('Turno actualizado!');
+      setEditingId(null);
+      fetchShifts();
+    } catch {
+      toast.error('No se pudo actualizar turno.');
+    }
+  };
+
+  const deleteShift = async (id: number) => {
+    try {
+      const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Error al eliminar turno');
+      toast.success('Turno eliminado!');
+      fetchShifts();
+    } catch {
+      toast.error('No se pudo eliminar turno.');
+    }
+  };
+
+  return (
+    <div className="container mx-auto p-4 text-white">
+      <h1 className="text-3xl font-bold mb-6 text-center">Gestión de Turnos de Empleados</h1>
+      <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
+        <h2 className="text-xl font-semibold mb-4">Agregar Nuevo Turno</h2>
+        <div className="flex gap-4 flex-wrap">
+          <div>
+          <label htmlFor="startDateTime" className="block mb-1">Inicio</label>
+          <input
+            type="datetime-local"
+            name="startDateTime"
+            placeholder="Inicio"
+            value={newShift.startDateTime}
+            onChange={e => setNewShift({ ...newShift, startDateTime: e.target.value })}
+            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+          />
+          </div>
+          <div>
+          <label htmlFor="endDateTime" className="block mb-1">Fin</label>
+          <input
+            type="datetime-local"
+            name="endDateTime"
+            placeholder="Fin"
+            value={newShift.endDateTime}
+            onChange={e => setNewShift({ ...newShift, endDateTime: e.target.value })}
+            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+          />
+          </div>
+          <div>
+          <label htmlFor="fk_idShiftType" className="block mb-1">Tipo de Turno</label>
+          <select
+            name="fk_idShiftType"
+            value={newShift.fk_idShiftType}
+            onChange={e => setNewShift({ ...newShift, fk_idShiftType: Number(e.target.value) })}
+            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+          >
+            <option value="">-- Selecciona tipo de turno --</option>
+            {shiftTypes.map(type => (
+              <option key={type.idShiftType} value={type.idShiftType}>
+                {type.shiftName}
+              </option>
+            ))}
+          </select>
+          </div>
+          <button onClick={createShift} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
+            <Plus size={20} /> Agregar
+          </button>
+        </div>
+      </div>
+      <div className="bg-gray-800 p-6 rounded-lg shadow-md">
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
+            <Loader size={24} className="animate-spin" />Cargando turnos...
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {shifts.map(shift => (
+              <div key={shift.idShiftEmployed} className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between">
+                {editingId === shift.idShiftEmployed ? (
+                  <>
+                  <div>
+                    <label className="block mb-1">Inicio</label>
+                    <input
+                      type="datetime-local"
+                      defaultValue={shift.startDateTime?.slice(0, 16)}
+                      onChange={e => setNewShift({ ...newShift, startDateTime: e.target.value })}
+                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                    />
+                    </div>
+                    <div>
+                      <label className="block mb-1">Fin</label>
+                      <input
+                        type="datetime-local"
+                        defaultValue={shift.endDateTime?.slice(0, 16)}
+                        onChange={e => setNewShift({ ...newShift, endDateTime: e.target.value })}
+                        className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1">Fin</label>
+                      <input
+                        type="datetime-local"
+                        defaultValue={shift.endDateTime?.slice(0, 16)}
+                        onChange={e => setNewShift({ ...newShift, endDateTime: e.target.value })}
+                        className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1">Tipo de Turno</label>
+                      <select
+                        value={newShift.fk_idShiftType}
+                        onChange={e => setNewShift({ ...newShift, fk_idShiftType: Number(e.target.value) })}
+                        className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                      >
+                      {shiftTypes.map(type => (
+                        <option key={type.idShiftType} value={type.idShiftType}>
+                          {type.shiftName}
+                        </option>
+                      ))}
+                    </select>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => updateShift(shift.idShiftEmployed!, {
+                          startDateTime: newShift.startDateTime || shift.startDateTime,
+                          endDateTime: newShift.endDateTime || shift.endDateTime,
+                          fk_idShiftType: newShift.fk_idShiftType || shift.fk_idShiftType,
+                        })}
+                        className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center gap-1"
+                      >
+                        <Save size={16} /> Guardar
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
+                      >
+                        <X size={16} /> Cancelar
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-lg font-semibold">Tipo de turno: {shiftTypes.find(type => type.idShiftType === shift.fk_idShiftType)?.shiftName || shift.fk_idShiftType}</h3>
+                    <p>Inicio: {shift.startDateTime?.replace('T', ' ').slice(0, 16)}</p>
+                    <p>Fin: {shift.endDateTime?.replace('T', ' ').slice(0, 16)}</p>
+                    <div className="flex justify-end gap-2 mt-2">
+                      <button
+                        onClick={() => { setEditingId(shift.idShiftEmployed!); setNewShift(shift); }}
+                        className="bg-yellow-600 hover:bg-yellow-700 text-white p-2 rounded-md flex items-center gap-1"
+                      >
+                        <Edit size={16} /> Editar
+                      </button>
+                      <button
+                        onClick={() => deleteShift(shift.idShiftEmployed!)}
+                        className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
+                      >
+                        <Trash2 size={16} /> Eliminar
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ShiftEmployedsManagement;

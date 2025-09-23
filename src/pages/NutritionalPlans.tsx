@@ -7,8 +7,9 @@ const API_URL = 'https://backend-country-nnxe.onrender.com/nutritional-plans/';
 interface NutritionalPlan {
   idNutritionalPlan?: number;
   name: string;
-  startDate: string; // ISO date string
-  endDate: string;   // ISO date string
+  assignmentDate: string; // <--- CAMBIO aquí
+  endDate: string;
+  state: string;          // <--- CAMBIO aquí
   description?: string;
 }
 
@@ -16,8 +17,9 @@ const NutritionalPlansManagement = () => {
   const [plans, setPlans] = useState<NutritionalPlan[]>([]);
   const [newPlan, setNewPlan] = useState<NutritionalPlan>({
     name: '',
-    startDate: '',
+    assignmentDate: '',
     endDate: '',
+    state: '',
     description: '',
   });
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -50,7 +52,7 @@ const NutritionalPlansManagement = () => {
       });
       if (!res.ok) throw new Error('Error al crear plan');
       toast.success('Plan creado!');
-      setNewPlan({ name: '', startDate: '', endDate: '', description: '' });
+      setNewPlan({ name: '', assignmentDate: '', endDate: '', state: '', description: '' });
       fetchPlans();
     } catch {
       toast.error('No se pudo crear plan.');
@@ -88,45 +90,76 @@ const NutritionalPlansManagement = () => {
     <div className="container mx-auto p-4 text-white">
       <h1 className="text-3xl font-bold mb-6 text-center">Gestión de Planes Nutricionales</h1>
       <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
-        <h2 className="text-xl font-semibold mb-4">Agregar Nuevo Plan</h2>
-        <div className="flex gap-4 flex-wrap">
+      <h2 className="text-xl font-semibold mb-4">Agregar Nuevo Plan Nutricional</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <div>
+          <label className="block mb-1">Nombre del Plan</label>
           <input
             type="text"
             name="name"
-            placeholder="Nombre del plan"
             value={newPlan.name}
             onChange={e => setNewPlan({ ...newPlan, name: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="w-full p-2 rounded-md bg-gray-700 text-white"
           />
+        </div>
+
+        <div>
+          <label className="block mb-1">Fecha de Asignación</label>
           <input
             type="date"
-            name="startDate"
-            placeholder="Fecha inicio"
-            value={newPlan.startDate}
-            onChange={e => setNewPlan({ ...newPlan, startDate: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            name="assignmentDate"
+            value={newPlan.assignmentDate}
+            onChange={e => setNewPlan({ ...newPlan, assignmentDate: e.target.value })}
+            className="w-full p-2 rounded-md bg-gray-700 text-white"
           />
+        </div>
+
+        <div>
+          <label className="block mb-1">Fecha de Finalización</label>
           <input
             type="date"
             name="endDate"
-            placeholder="Fecha fin"
             value={newPlan.endDate}
             onChange={e => setNewPlan({ ...newPlan, endDate: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="w-full p-2 rounded-md bg-gray-700 text-white"
           />
+        </div>
+
+        <div>
+          <label className="block mb-1">Estado del Plan</label>
+          <input
+            type="text"
+            name="state"
+            value={newPlan.state}
+            onChange={e => setNewPlan({ ...newPlan, state: e.target.value })}
+            className="w-full p-2 rounded-md bg-gray-700 text-white"
+          />
+        </div>
+
+        <div className="md:col-span-2 lg:col-span-3">
+          <label className="block mb-1">Descripción</label>
           <input
             type="text"
             name="description"
-            placeholder="Descripción"
             value={newPlan.description}
             onChange={e => setNewPlan({ ...newPlan, description: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="w-full p-2 rounded-md bg-gray-700 text-white"
           />
-          <button onClick={createPlan} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
-            <Plus size={20} /> Agregar
-          </button>
         </div>
+
       </div>
+
+      <div className="mt-4 text-right">
+        <button
+          onClick={createPlan}
+          className="bg-green-600 hover:bg-green-700 text-white p-2 px-4 rounded-md font-semibold flex items-center gap-2 inline-flex"
+        >
+          <Plus size={20} /> Agregar
+        </button>
+      </div>
+    </div>
+
       <div className="bg-gray-800 p-6 rounded-lg shadow-md">
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
@@ -146,14 +179,20 @@ const NutritionalPlansManagement = () => {
                     />
                     <input
                       type="date"
-                      defaultValue={plan.startDate?.slice(0,10)}
-                      onChange={e => setNewPlan({ ...newPlan, startDate: e.target.value })}
+                      defaultValue={plan.assignmentDate?.slice(0, 10)}
+                      onChange={e => setNewPlan({ ...newPlan, assignmentDate: e.target.value })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
                     />
                     <input
                       type="date"
-                      defaultValue={plan.endDate?.slice(0,10)}
+                      defaultValue={plan.endDate?.slice(0, 10)}
                       onChange={e => setNewPlan({ ...newPlan, endDate: e.target.value })}
+                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                    />
+                    <input
+                      type="text"
+                      defaultValue={plan.state}
+                      onChange={e => setNewPlan({ ...newPlan, state: e.target.value })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
                     />
                     <input
@@ -166,8 +205,9 @@ const NutritionalPlansManagement = () => {
                       <button
                         onClick={() => updatePlan(plan.idNutritionalPlan!, {
                           name: newPlan.name || plan.name,
-                          startDate: newPlan.startDate || plan.startDate,
+                          assignmentDate: newPlan.assignmentDate || plan.assignmentDate,
                           endDate: newPlan.endDate || plan.endDate,
+                          state: newPlan.state || plan.state,
                           description: newPlan.description || plan.description,
                         })}
                         className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center gap-1"
@@ -185,8 +225,9 @@ const NutritionalPlansManagement = () => {
                 ) : (
                   <>
                     <h3 className="text-lg font-semibold">{plan.name}</h3>
-                    <p>Inicio: {plan.startDate?.slice(0,10)}</p>
-                    <p>Fin: {plan.endDate?.slice(0,10)}</p>
+                    <p>Asignado: {plan.assignmentDate?.slice(0, 10)}</p>
+                    <p>Fin: {plan.endDate?.slice(0, 10)}</p>
+                    <p>Estado: {plan.state}</p>
                     <p>{plan.description}</p>
                     <div className="flex justify-end gap-2 mt-2">
                       <button

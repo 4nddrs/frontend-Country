@@ -4,6 +4,12 @@ export function decodeBackendImage(photoData: string | any): string {
   if (!photoData) return placeholder;
 
   try {
+
+       if (typeof photoData === 'string') {
+    if (photoData.startsWith('data:image')) return photoData;
+    if (/^[A-Za-z0-9+/=]+$/.test(photoData)) return `data:image/png;base64,${photoData}`;
+  }
+  
     // Caso 1: Hexadecimal (con prefijo \x en todo el string)
     if (typeof photoData === "string" && photoData.startsWith("\\x")) {
       const hex = photoData.replace(/\\x/g, '');
@@ -11,9 +17,9 @@ export function decodeBackendImage(photoData: string | any): string {
       for (let i = 0; i < hex.length; i += 2) {
         binary += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
       }
-      // 📌 Aquí chequeamos si ya es un dataURL
+
       if (binary.startsWith("data:image")) {
-        return binary; // ya es un dataURL válido
+        return binary; 
       }
       const base64 = btoa(binary);
       return `data:image/png;base64,${base64}`;
@@ -43,4 +49,31 @@ export function decodeBackendImage(photoData: string | any): string {
   }
 
   return placeholder;
+}
+
+export function encodeImageForBackend(dataUrl: string): string {
+  try {
+    if (!dataUrl.startsWith("data:image")) {
+      console.warn("⚠️ El string no parece ser un dataURL válido.");
+      return dataUrl;
+    }
+
+    const base64Data = dataUrl.split(',')[1]; 
+    const hex = base64ToHex(base64Data);
+    return `\\x${hex}`;
+  } catch (err) {
+    console.error("❌ Error al codificar imagen para el backend:", err);
+    return '';
+  }
+}
+
+
+function base64ToHex(base64: string): string {
+  const binary = atob(base64);
+  let hex = '';
+  for (let i = 0; i < binary.length; i++) {
+    const byte = binary.charCodeAt(i).toString(16).padStart(2, '0');
+    hex += byte;
+  }
+  return hex;
 }

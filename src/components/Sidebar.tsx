@@ -16,24 +16,37 @@ import {
   Calendar,
 } from 'lucide-react';
 
-// Incluye todos los CRUDs generados
+
 const menuItems = [
-  { label: 'Dashboard', icon: <Home size={20} />, path: '/' },
-  { label: 'CRUD', icon: <ClipboardList size={20} />, path: '/crud' },
-  { label: 'CRUD de Empleados', icon: <User size={20} />, path: '/employee' },
-  { label: 'CRUD de Posiciones', icon: <Briefcase size={20} />, path: '/positions' },
-  { label: 'CRUD de Roles', icon: <Shield size={20} />, path: '/roles' },
+  { label: 'Home', icon: <Home size={20} />, path: '/' },
+  { label: 'Empleados', icon: <User size={20} />, path: '/employee' },
+  { label: 'Posiciones', icon: <Briefcase size={20} />, path: '/positions' },
   { label: 'Proveedores de Comida', icon: <Package size={20} />, path: '/food-providers' },
   { label: 'Stock de Comida', icon: <ClipboardList size={20} />, path: '/food-stocks' },
-  { label: 'Vacunas', icon: <Shield size={20} />, path: '/vaccines' },
   { label: 'Propietarios', icon: <User size={20} />, path: '/owners' },
   { label: 'Razas', icon: <Layers size={20} />, path: '/races' },
   { label: 'Caballos', icon: <Flag size={20} />, path: '/horses' },
   { label: 'Planes Nutricionales', icon: <Book size={20} />, path: '/nutritional-plans' },
-  { label: 'Plan Nutricional - Caballos', icon: <List size={20} />, path: '/nutritional-plan-horses' },
   { label: 'Detalles Plan Nutricional', icon: <List size={20} />, path: '/nutritional-plan-details' },
   { label: 'Categorías de Tareas', icon: <List size={20} />, path: '/task-categories' },
   { label: 'Tareas', icon: <Calendar size={20} />, path: '/tasks' },
+  { label: 'Control de Alfalfa', icon: <Calendar size={20} />, path: '/alfalfa-control' },
+  { label: 'Procedimientos Programados', icon: <Calendar size={20} />, path: '/scheduled-procedures' },
+  { label: 'Procedimiento de Solicitud', icon: <Calendar size={20} />, path: '/application-procedures' },
+  { label: 'Medicamentos', icon: <Calendar size={20} />, path: '/medicines' },
+  { label: 'Atención a Caballos', icon: <Calendar size={20} />, path: '/attentionHorses' },
+  { label: 'Ausencias de Empleados', icon: <Calendar size={20} />, path: '/employee-absences' },
+  { label: 'Tipos de Turno', icon: <Calendar size={20} />, path: '/shiftTypes' },
+  { label: 'Empleados por Turno', icon: <Calendar size={20} />, path: '/shiftEmployees' },
+  { label: 'Turnos de Empleados', icon: <Calendar size={20} />, path: '/EmployeesShiftem' },
+  { label: 'Usuarios ERP', icon: <Calendar size={20} />, path: '/ErpUsers' },
+  { label: 'Roles de Usuario ERP', icon: <Calendar size={20} />, path: '/UserRole' },
+  { label: 'Gastos', icon: <Calendar size={20} />, path: '/Expenses' },
+  { label: 'Ingresos', icon: <Calendar size={20} />, path: '/Income' },
+  { label: 'Reportes Mensuales de Propietario', icon: <Calendar size={20} />, path: '/OwnerReportMonth' },
+  { label: 'Control Total', icon: <Calendar size={20} />, path: '/TotalControl' },
+  { label: 'Control de Vacunación', icon: <Calendar size={20} />, path: '/VaccinationPlan' },
+  { label: 'Aplicación de Vacunación', icon: <Calendar size={20} />, path: '/VaccinationPlanApplication' }
 ];
 
 const Sidebar = () => {
@@ -59,7 +72,7 @@ const Sidebar = () => {
         ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 lg:flex-shrink-0`}
       >
         <div className="flex items-center justify-between h-20 px-4 border-b border-gray-700 lg:block">
-          <span className="text-2xl font-bold tracking-wide">Admin Panel</span>
+          <span className="text-2xl font-bold tracking-wide">Panel de Control</span>
           <button
             onClick={closeSidebar}
             className="lg:hidden p-2 text-white bg-gray-700 rounded-md"
@@ -86,7 +99,7 @@ const Sidebar = () => {
           </ul>
         </nav>
         <div className="mt-auto p-4 text-xs text-gray-400 border-t border-gray-700">
-          &copy; {new Date().getFullYear()} Admin Panel
+          &copy; {new Date().getFullYear()} Panel de Control  
         </div>
       </aside>
 

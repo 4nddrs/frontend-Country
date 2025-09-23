@@ -6,21 +6,23 @@ const API_URL = 'https://backend-country-nnxe.onrender.com/nutritional-plan-deta
 
 interface NutritionalPlanDetail {
   idDetail?: number;
-  amount: number;
-  frequency: string;
-  schedule: string; // ISO datetime
+  consumptionKlg: number;
+  daysConsumptionMonth: number;
+  totalConsumption: number;
+  period: string; // ISO date string (YYYY-MM-DD)
   fk_idFood: number;
-  fk_idNutritionalPlan?: number;
+  fk_idNutritionalPlan: number;
 }
 
 const NutritionalPlanDetailsManagement = () => {
   const [details, setDetails] = useState<NutritionalPlanDetail[]>([]);
   const [newDetail, setNewDetail] = useState<NutritionalPlanDetail>({
-    amount: 0,
-    frequency: '',
-    schedule: '',
+    consumptionKlg: 0,
+    daysConsumptionMonth: 0,
+    totalConsumption: 0,
+    period: '',
     fk_idFood: 1,
-    fk_idNutritionalPlan: undefined,
+    fk_idNutritionalPlan: 1,
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -42,28 +44,26 @@ const NutritionalPlanDetailsManagement = () => {
   };
 
   const fetchFoods = async () => {
-  try {
-    const res = await fetch("https://backend-country-nnxe.onrender.com/food-stocks/");
-    if (!res.ok) throw new Error("Error al obtener comidas");
-    const data = await res.json();
-    console.log("Comidas:", data); // para debug
-    setFoods(data);
-  } catch {
-    toast.error("No se pudieron cargar comidas");
-  }
-};
+    try {
+      const res = await fetch("https://backend-country-nnxe.onrender.com/food-stock/");
+      if (!res.ok) throw new Error("Error al obtener comidas");
+      const data = await res.json();
+      setFoods(data);
+    } catch {
+      toast.error("No se pudieron cargar comidas");
+    }
+  };
 
-const fetchNutritionalPlans = async () => {
-  try {
-    const res = await fetch("https://backend-country-nnxe.onrender.com/nutritional-plans/");
-    if (!res.ok) throw new Error("Error al obtener planes nutricionales");
-    const data = await res.json();
-    console.log("Planes nutricionales:", data); // para debug
-    setNutritionalPlans(data);
-  } catch {
-    toast.error("No se pudieron cargar planes nutricionales");
-  }
-};
+  const fetchNutritionalPlans = async () => {
+    try {
+      const res = await fetch("https://backend-country-nnxe.onrender.com/nutritional-plans/");
+      if (!res.ok) throw new Error("Error al obtener planes nutricionales");
+      const data = await res.json();
+      setNutritionalPlans(data);
+    } catch {
+      toast.error("No se pudieron cargar planes nutricionales");
+    }
+  };
 
   useEffect(() => {
     fetchDetails();
@@ -81,11 +81,12 @@ const fetchNutritionalPlans = async () => {
       if (!res.ok) throw new Error('Error al crear detalle');
       toast.success('Detalle creado!');
       setNewDetail({
-        amount: 0,
-        frequency: '',
-        schedule: '',
+        consumptionKlg: 0,
+        daysConsumptionMonth: 0,
+        totalConsumption: 0,
+        period: '',
         fk_idFood: 1,
-        fk_idNutritionalPlan: undefined,
+        fk_idNutritionalPlan: 1,
       });
       fetchDetails();
     } catch {
@@ -124,65 +125,99 @@ const fetchNutritionalPlans = async () => {
     <div className="container mx-auto p-4 text-white">
       <h1 className="text-3xl font-bold mb-6 text-center">Gestión de Detalles del Plan Nutricional</h1>
       <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
-        <h2 className="text-xl font-semibold mb-4">Agregar Nuevo Detalle</h2>
-        <div className="flex gap-4 flex-wrap">
-          <input
-            type="number"
-            name="amount"
-            placeholder="Cantidad"
-            value={newDetail.amount}
-            onChange={e => setNewDetail({ ...newDetail, amount: Number(e.target.value) })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
-          <input
-            type="text"
-            name="frequency"
-            placeholder="Frecuencia"
-            value={newDetail.frequency}
-            onChange={e => setNewDetail({ ...newDetail, frequency: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
-          <input
-            type="datetime-local"
-            name="schedule"
-            placeholder="Horario"
-            value={newDetail.schedule}
-            onChange={e => setNewDetail({ ...newDetail, schedule: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
-          <select
-            name="fk_idFood"
-            value={newDetail.fk_idFood}
-            onChange={e => setNewDetail({ ...newDetail, fk_idFood: Number(e.target.value) })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
-          >
-            <option value="">-- Selecciona una comida --</option>
-            {foods.map(food => (
-              <option key={food.idFood} value={food.idFood}>
-                {food.foodName}
-              </option>
-            ))}
-          </select>
+  <h2 className="text-xl font-semibold mb-4">Agregar Nuevo Detalle</h2>
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-          <select
-            name="fk_idNutritionalPlan"
-            value={newDetail.fk_idNutritionalPlan || ''}
-            onChange={e => setNewDetail({ ...newDetail, fk_idNutritionalPlan: Number(e.target.value) || undefined })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
-          >
-            <option value="">-- Selecciona un plan nutricional --</option>
-            {nutritionalPlans.map(plan => (
-              <option key={plan.idNutritionalPlan} value={plan.idNutritionalPlan}>
-                {plan.name}
-              </option>
-            ))}
-          </select>
+    <div>
+      <label className="block mb-1">Consumo (Kg)</label>
+      <input
+        type="number"
+        name="consumptionKlg"
+        value={newDetail.consumptionKlg}
+        onChange={e => setNewDetail({ ...newDetail, consumptionKlg: Number(e.target.value) })}
+        className="w-full p-2 rounded-md bg-gray-700 text-white"
+      />
+    </div>
 
-          <button onClick={createDetail} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
-            <Plus size={20} /> Agregar
-          </button>
-        </div>
-      </div>
+    <div>
+      <label className="block mb-1">Días de Consumo al Mes</label>
+      <input
+        type="number"
+        name="daysConsumptionMonth"
+        value={newDetail.daysConsumptionMonth}
+        onChange={e => setNewDetail({ ...newDetail, daysConsumptionMonth: Number(e.target.value) })}
+        className="w-full p-2 rounded-md bg-gray-700 text-white"
+      />
+    </div>
+
+    <div>
+      <label className="block mb-1">Total de Consumo</label>
+      <input
+        type="number"
+        name="totalConsumption"
+        value={newDetail.totalConsumption}
+        onChange={e => setNewDetail({ ...newDetail, totalConsumption: Number(e.target.value) })}
+        className="w-full p-2 rounded-md bg-gray-700 text-white"
+      />
+    </div>
+
+    <div>
+      <label className="block mb-1">Periodo</label>
+      <input
+        type="date"
+        name="period"
+        value={newDetail.period}
+        onChange={e => setNewDetail({ ...newDetail, period: e.target.value })}
+        className="w-full p-2 rounded-md bg-gray-700 text-white"
+      />
+    </div>
+
+    <div>
+      <label className="block mb-1">Comida</label>
+      <select
+        name="fk_idFood"
+        value={newDetail.fk_idFood}
+        onChange={e => setNewDetail({ ...newDetail, fk_idFood: Number(e.target.value) })}
+        className="w-full p-2 rounded-md bg-gray-700 text-white"
+      >
+        <option value="">-- Selecciona una comida --</option>
+        {foods.map(food => (
+          <option key={food.idFood} value={food.idFood}>
+            {food.foodName}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    <div>
+      <label className="block mb-1">Plan Nutricional</label>
+      <select
+        name="fk_idNutritionalPlan"
+        value={newDetail.fk_idNutritionalPlan}
+        onChange={e => setNewDetail({ ...newDetail, fk_idNutritionalPlan: Number(e.target.value) })}
+        className="w-full p-2 rounded-md bg-gray-700 text-white"
+      >
+        <option value="">-- Selecciona un plan nutricional --</option>
+        {nutritionalPlans.map(plan => (
+          <option key={plan.idNutritionalPlan} value={plan.idNutritionalPlan}>
+            {plan.name}
+          </option>
+        ))}
+      </select>
+    </div>
+
+  </div>
+
+  <div className="mt-4 text-right">
+    <button
+      onClick={createDetail}
+      className="bg-green-600 hover:bg-green-700 text-white p-2 px-4 rounded-md font-semibold flex items-center gap-2 inline-flex"
+    >
+      <Plus size={20} /> Agregar
+    </button>
+  </div>
+</div>
+     
       <div className="bg-gray-800 p-6 rounded-lg shadow-md">
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
@@ -196,20 +231,26 @@ const fetchNutritionalPlans = async () => {
                   <>
                     <input
                       type="number"
-                      defaultValue={detail.amount}
-                      onChange={e => setNewDetail({ ...newDetail, amount: Number(e.target.value) })}
+                      defaultValue={detail.consumptionKlg}
+                      onChange={e => setNewDetail({ ...newDetail, consumptionKlg: Number(e.target.value) })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
                     />
                     <input
-                      type="text"
-                      defaultValue={detail.frequency}
-                      onChange={e => setNewDetail({ ...newDetail, frequency: e.target.value })}
+                      type="number"
+                      defaultValue={detail.daysConsumptionMonth}
+                      onChange={e => setNewDetail({ ...newDetail, daysConsumptionMonth: Number(e.target.value) })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
                     />
                     <input
-                      type="datetime-local"
-                      defaultValue={detail.schedule?.slice(0,16)}
-                      onChange={e => setNewDetail({ ...newDetail, schedule: e.target.value })}
+                      type="number"
+                      defaultValue={detail.totalConsumption}
+                      onChange={e => setNewDetail({ ...newDetail, totalConsumption: Number(e.target.value) })}
+                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                    />
+                    <input
+                      type="date"
+                      defaultValue={detail.period?.slice(0, 10)}
+                      onChange={e => setNewDetail({ ...newDetail, period: e.target.value })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
                     />
                     <select
@@ -224,8 +265,8 @@ const fetchNutritionalPlans = async () => {
                       ))}
                     </select>
                     <select
-                      value={newDetail.fk_idNutritionalPlan || ''}
-                      onChange={e => setNewDetail({ ...newDetail, fk_idNutritionalPlan: Number(e.target.value) || undefined })}
+                      value={newDetail.fk_idNutritionalPlan}
+                      onChange={e => setNewDetail({ ...newDetail, fk_idNutritionalPlan: Number(e.target.value) })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
                     >
                       {nutritionalPlans.map(plan => (
@@ -237,9 +278,10 @@ const fetchNutritionalPlans = async () => {
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => updateDetail(detail.idDetail!, {
-                          amount: newDetail.amount || detail.amount,
-                          frequency: newDetail.frequency || detail.frequency,
-                          schedule: newDetail.schedule || detail.schedule,
+                          consumptionKlg: newDetail.consumptionKlg || detail.consumptionKlg,
+                          daysConsumptionMonth: newDetail.daysConsumptionMonth || detail.daysConsumptionMonth,
+                          totalConsumption: newDetail.totalConsumption || detail.totalConsumption,
+                          period: newDetail.period || detail.period,
                           fk_idFood: newDetail.fk_idFood || detail.fk_idFood,
                           fk_idNutritionalPlan: newDetail.fk_idNutritionalPlan || detail.fk_idNutritionalPlan,
                         })}
@@ -258,9 +300,10 @@ const fetchNutritionalPlans = async () => {
                 ) : (
                   <>
                     <h3 className="text-lg font-semibold">Comida #{detail.fk_idFood} - Plan #{detail.fk_idNutritionalPlan}</h3>
-                    <p>Cantidad: {detail.amount}</p>
-                    <p>Frecuencia: {detail.frequency}</p>
-                    <p>Horario: {detail.schedule?.replace('T',' ').slice(0,16)}</p>
+                    <p>Consumo (Kg): {detail.consumptionKlg}</p>
+                    <p>Días/mes: {detail.daysConsumptionMonth}</p>
+                    <p>Total consumo: {detail.totalConsumption}</p>
+                    <p>Periodo: {detail.period?.slice(0, 10)}</p>
                     <div className="flex justify-end gap-2 mt-2">
                       <button
                         onClick={() => { setEditingId(detail.idDetail!); setNewDetail(detail); }}
