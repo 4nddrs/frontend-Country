@@ -123,10 +123,10 @@ const AlphaControlsManagement = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 text-white">
-      <h1 className="text-3xl font-bold mb-6 text-center">Gestión de Control de Alfalfa</h1>
+    <div className="p-6 bg-slate-950 min-h-screen text-white">
+      <h1 className="text-3xl font-bold mb-6 text-center text-teal-400">Gestión de Control de Alfalfa</h1>
     <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
-  <h2 className="text-xl font-semibold mb-4">Agregar Nuevo Control</h2>
+  <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Control</h2>
   <div className="flex gap-4 flex-wrap">
 
     <div className="flex-1">
@@ -245,8 +245,7 @@ const AlphaControlsManagement = () => {
 
     <button
       onClick={createControl}
-      className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2"
-    >
+      className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
       <Plus size={20} /> Agregar
     </button>
   </div>

@@ -262,14 +262,13 @@ const HorsesManagement = () => {
     setEditingHorseData(null);
   };
 
-  // --- RENDER ---
-  return (
-    <div className="container mx-auto p-4 text-white font-sans">
-      <h1 className="text-3xl font-bold mb-6 text-center">Gestión de Caballos</h1>
 
-      {/* Formulario para agregar */}
+  return (
+    <div className="p-6 bg-slate-950 min-h-screen text-white">
+      <h1 className="text-3xl font-bold mb-6 text-center text-teal-400">Gestión de Caballos</h1>
+
       <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
-  <h2 className="text-xl font-semibold mb-4">Agregar Nuevo Caballo</h2>
+  <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Caballo</h2>
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
     <div>
@@ -437,8 +436,6 @@ const HorsesManagement = () => {
   </div>
 </div>
 
-
-      {/* Lista de caballos */}
       <div className="bg-gray-800 p-6 rounded-lg shadow-md">
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">

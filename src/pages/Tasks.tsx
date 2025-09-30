@@ -127,10 +127,10 @@ const fetchEmployees = async () => {
   };
 
   return (
-    <div className="container mx-auto p-4 text-white">
-      <h1 className="text-3xl font-bold mb-6 text-center">Gestión de Tareas</h1>
-     <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
-  <h2 className="text-xl font-semibold mb-4">Agregar Nueva Tarea</h2>
+    <div className="p-6 bg-slate-950 min-h-screen text-white">
+      <h1 className="text-3xl font-bold mb-6 text-center text-teal-400">Gestión de Tareas</h1>
+     <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8 ">
+  <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Tarea</h2>
   <div className="flex gap-4 flex-wrap">
     
     <div className="flex-1">

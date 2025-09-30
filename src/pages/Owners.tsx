@@ -6,8 +6,6 @@
 
   const API_URL = 'https://backend-country-nnxe.onrender.com/owner/';
 
-  // --- INTERFAZ ---
-  // El tipo de ownerPhoto puede ser un objeto Buffer del backend o una cadena base64 del frontend
   interface Owner {
     idOwner?: number;
     name: string;
@@ -18,9 +16,9 @@
     ownerPhoto?: string | null | { type: 'Buffer', data: number[] }; 
   }
 
-  // --- COMPONENTE ---
+
   const OwnersManagement = () => {
-    // --- ESTADOS ---
+   
     const [owners, setOwners] = useState<Owner[]>([]);
     const [newOwner, setNewOwner] = useState<Omit<Owner, 'idOwner'>>({
       name: '',
@@ -34,12 +32,12 @@
     const [editingOwnerData, setEditingOwnerData] = useState<Owner | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     
-    // --- EFECTOS ---
+
     useEffect(() => {
       fetchOwners();
     }, []);
 
-    // --- FUNCIONES API ---
+
     const fetchOwners = async () => {
       setLoading(true);
       try {
@@ -110,7 +108,7 @@
       }
     };
 
-    // --- MANEJADORES DE EVENTOS ---
+  
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, target: 'new' | 'edit') => {
       const file = e.target.files?.[0];
       if (!file) return;
@@ -138,15 +136,15 @@
       setEditingOwnerData(null);
     };
 
-    // --- RENDERIZADO ---
+  
     return (
-      <div className="container mx-auto p-4 text-white">
+      <div className="p-6 bg-slate-950 min-h-screen text-white">
         <Toaster position="top-right" toastOptions={{ style: { background: '#334155', color: 'white' } }} />
-        <h1 className="text-3xl font-bold mb-6 text-center">Gestión de Propietarios</h1>
+        <h1 className="text-3xl font-bold mb-6 text-center text-teal-400">Gestión de Propietarios</h1>
 
-        {/* Formulario para nuevo propietario */}
+  
         <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-xl font-semibold mb-4">Agregar Nuevo Propietario</h2>
+          <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Propietario</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <input type="text" placeholder="Apellido" value={newOwner.name} onChange={e => setNewOwner({ ...newOwner, name: e.target.value })} className="p-2 rounded-md bg-gray-700" />
             <input type="text" placeholder="Primer Nombre" value={newOwner.FirstName} onChange={e => setNewOwner({ ...newOwner, FirstName: e.target.value })} className="p-2 rounded-md bg-gray-700" />
@@ -162,7 +160,7 @@
           </div>
         </div>
 
-        {/* Lista de propietarios */}
+
         <div className="bg-gray-800 p-6 rounded-lg shadow-md">
           {loading ? (
             <div className="flex items-center justify-center gap-2 text-xl text-gray-400"><Loader size={24} className="animate-spin" />Cargando propietarios...</div>
@@ -171,7 +169,7 @@
               {owners.map(owner => (
                 <div key={owner.idOwner} className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between">
                   {editingId === owner.idOwner && editingOwnerData ? (
-                    // --- VISTA DE EDICIÓN ---
+
                     <>
                       <div className="flex-grow space-y-2 mb-4">
                           <input type="text" placeholder="Apellido" value={editingOwnerData.name} onChange={e => setEditingOwnerData({...editingOwnerData, name: e.target.value})} className="w-full p-2 rounded-md bg-gray-600"/>
@@ -185,7 +183,7 @@
                       </div>
                     </>
                   ) : (
-                    // --- VISTA NORMAL ---
+  
                     <>
                       <div>
                       <img

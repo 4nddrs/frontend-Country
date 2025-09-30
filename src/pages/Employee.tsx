@@ -130,18 +130,24 @@ const getEmptyEmployee = (): Employee => ({
           employeePhoto = encodeImageForBackend(base64Full);
       }
 
-     const employeeData = {
-        ...newEmployee,
-        phoneNumber: Number(newEmployee.phoneNumber),
-        salary: Number(newEmployee.salary),
-        startTime: newEmployee.startContractDate
-          ? `${newEmployee.startContractDate}T${newEmployee.startTime || '08:00'}:00`
-          : '',
-        exitTime: newEmployee.endContractDate
-          ? `${newEmployee.endContractDate}T${newEmployee.exitTime || '17:00'}:00`
-          : '',
-        ...(employeePhoto !== null && { employeePhoto }),
-      };
+     // Archivo: Employee.tsx -> dentro de handleCreateOrUpdate
+
+const employeeData = {
+  ...newEmployee,
+  // 👇 Asegúrate de que TODOS los campos numéricos se conviertan
+  ci: Number(newEmployee.ci),
+  phoneNumber: Number(newEmployee.phoneNumber),
+  salary: Number(newEmployee.salary),
+  fk_idPositionEmployee: Number(newEmployee.fk_idPositionEmployee), // <--- AÑADE ESTA LÍNEA
+  
+  startTime: newEmployee.startContractDate
+    ? `${newEmployee.startContractDate}T${newEmployee.startTime || '08:00'}:00`
+    : '',
+  exitTime: newEmployee.endContractDate
+    ? `${newEmployee.endContractDate}T${newEmployee.exitTime || '17:00'}:00`
+    : '',
+  ...(employeePhoto !== null && { employeePhoto }),
+};  
 
 
        console.log('Enviando empleado al backend:', employeeData);
@@ -234,7 +240,7 @@ const getEmptyEmployee = (): Employee => ({
   };
 
   return (
-    <div className="p-6 bg-slate-900 min-h-screen text-white">
+    <div className="p-6 bg-slate-950 min-h-screen text-white"> 
       <h1 className="text-3xl font-bold mb-8 text-center text-teal-400">
         Gestión de Empleados
       </h1>

@@ -155,14 +155,13 @@ const VaccinationPlanManagement = () => {
     }
   };
   
-  // --- FORMULARIO PARA AGREGAR NUEVO PLAN ---
+
   const renderAddForm = () => {
     const availableScheduledMonths = MONTHS.filter(month => !Object.values(newPlan.scheduledMonths).includes(month));
     const availableDosesMonths = MONTHS.filter(month => !Object.keys(newPlan.dosesByMonth).includes(month));
 
     return (
       <div className="flex flex-col gap-4">
-        {/* Meses Programados */}
         <div className="flex flex-col gap-2 p-2 bg-gray-700 rounded-md">
           <label className="text-gray-300 font-bold">Meses Programados</label>
           {Object.entries(newPlan.scheduledMonths).map(([key, value]) => (
@@ -476,12 +475,12 @@ const VaccinationPlanManagement = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 text-white font-sans">
-      <h1 className="text-3xl font-bold mb-6 text-center">Gestión de Planes de Vacunación</h1>
+    <div className="p-6 bg-slate-950 min-h-screen text-white">
+      <h1 className="text-3xl font-bold mb-6 text-center text-teal-400">Gestión de Planes de Vacunación</h1>
       
       {/* Formulario para agregar */}
       <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
-        <h2 className="text-xl font-semibold mb-4">Agregar Nuevo Plan</h2>
+        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Plan</h2>
         <div className="flex flex-col gap-4">
           <input
             type="text"

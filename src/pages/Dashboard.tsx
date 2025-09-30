@@ -8,8 +8,7 @@ const Dashboard = () => {
   ]);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4 md:p-8">
-      {/* HEADER */}
+    <div className="p-6 bg-slate-900 min-h-screen text-white"> 
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>

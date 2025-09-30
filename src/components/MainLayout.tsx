@@ -1,13 +1,10 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-
 import Sidebar from '../components/Sidebar';
 import Dashboard from '../pages/Dashboard';
 import Employees from '../pages/Employee';
-
-
-import PositionManagement from '../pages/PositionManagment';    
+import PositionManagement from '../pages/PositionManagment';
 import FoodProvidersManagement from '../pages/FoodProviders';
 import FoodStocksManagement from '../pages/FoodStocks';
 import OwnersManagement from '../pages/Owners';
@@ -30,16 +27,16 @@ import ErpUsers from '../pages/ErpUsers';
 import UserRole from '../pages/UserRole';
 import Expenses from '../pages/Expenses';
 import Income from '../pages/Income';
-import OwnerReportMonth from '../pages/OwnerReportMonth'
+import OwnerReportMonth from '../pages/OwnerReportMonth';
 import TotalControl from '../pages/TotalConrtrol';
 import VaccinationPlan from '../pages/VaccinationPlan';
 import VaccinationPlanApplication from '../pages/VaccinationPlanApplication';
 
 const MainLayout = () => {
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-900 text-white font-sans">
+     <div className="bg-cyan-950 text-white font-sans flex h-screen overflow-hidden text-base leading-normal">
       <Sidebar />
-      <main className="flex-1 p-4 lg:p-8">
+      <main className="flex-1 p-4 lg:p-8 overflow-y-auto lg:ml-64">
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/employee" element={<Employees />} />
