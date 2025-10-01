@@ -113,9 +113,9 @@ const EmployeesShiftemManagement = () => {
   };
 
   return (
-    <div className="p-6 bg-slate-950 min-h-screen text-white">
+    <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
       <h1 className="text-3xl font-bold mb-6 text-center text-teal-400">Gestión de Empleados-Turnos</h1>
-      <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
+      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Relación</h2>
         <div className="flex gap-4 flex-wrap">
           <select
@@ -149,7 +149,7 @@ const EmployeesShiftemManagement = () => {
           </button>
         </div>
       </div>
-      <div className="bg-gray-800 p-6 rounded-lg shadow-md">
+      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
             <Loader size={24} className="animate-spin" />Cargando relaciones...

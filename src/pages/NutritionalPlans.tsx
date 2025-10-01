@@ -87,80 +87,80 @@ const NutritionalPlansManagement = () => {
   };
 
   return (
-    <div className="p-6 bg-slate-950 min-h-screen text-white">
+    <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
       <h1 className="text-3xl font-bold mb-6 text-center text-teal-400">Gestión de Planes Nutricionales</h1>
-      <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
-      <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Plan Nutricional</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Plan Nutricional</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-        <div>
-          <label className="block mb-1">Nombre del Plan</label>
-          <input
-            type="text"
-            name="name"
-            value={newPlan.name}
-            onChange={e => setNewPlan({ ...newPlan, name: e.target.value })}
-            className="w-full p-2 rounded-md bg-gray-700 text-white"
-          />
+          <div>
+            <label className="block mb-1">Nombre del Plan</label>
+            <input
+              type="text"
+              name="name"
+              value={newPlan.name}
+              onChange={e => setNewPlan({ ...newPlan, name: e.target.value })}
+              className="w-full p-2 rounded-md bg-gray-700 text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1">Fecha de Asignación</label>
+            <input
+              type="date"
+              name="assignmentDate"
+              value={newPlan.assignmentDate}
+              onChange={e => setNewPlan({ ...newPlan, assignmentDate: e.target.value })}
+              className="w-full p-2 rounded-md bg-gray-700 text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1">Fecha de Finalización</label>
+            <input
+              type="date"
+              name="endDate"
+              value={newPlan.endDate}
+              onChange={e => setNewPlan({ ...newPlan, endDate: e.target.value })}
+              className="w-full p-2 rounded-md bg-gray-700 text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1">Estado del Plan</label>
+            <input
+              type="text"
+              name="state"
+              value={newPlan.state}
+              onChange={e => setNewPlan({ ...newPlan, state: e.target.value })}
+              className="w-full p-2 rounded-md bg-gray-700 text-white"
+            />
+          </div>
+
+          <div className="md:col-span-2 lg:col-span-3">
+            <label className="block mb-1">Descripción</label>
+            <input
+              type="text"
+              name="description"
+              value={newPlan.description}
+              onChange={e => setNewPlan({ ...newPlan, description: e.target.value })}
+              className="w-full p-2 rounded-md bg-gray-700 text-white"
+            />
+          </div>
+
         </div>
 
-        <div>
-          <label className="block mb-1">Fecha de Asignación</label>
-          <input
-            type="date"
-            name="assignmentDate"
-            value={newPlan.assignmentDate}
-            onChange={e => setNewPlan({ ...newPlan, assignmentDate: e.target.value })}
-            className="w-full p-2 rounded-md bg-gray-700 text-white"
-          />
+        <div className="mt-4 text-right">
+          <button
+            onClick={createPlan}
+            className="bg-green-600 hover:bg-green-700 text-white p-2 px-4 rounded-md font-semibold flex items-center gap-2 inline-flex"
+          >
+            <Plus size={20} /> Agregar
+          </button>
         </div>
-
-        <div>
-          <label className="block mb-1">Fecha de Finalización</label>
-          <input
-            type="date"
-            name="endDate"
-            value={newPlan.endDate}
-            onChange={e => setNewPlan({ ...newPlan, endDate: e.target.value })}
-            className="w-full p-2 rounded-md bg-gray-700 text-white"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1">Estado del Plan</label>
-          <input
-            type="text"
-            name="state"
-            value={newPlan.state}
-            onChange={e => setNewPlan({ ...newPlan, state: e.target.value })}
-            className="w-full p-2 rounded-md bg-gray-700 text-white"
-          />
-        </div>
-
-        <div className="md:col-span-2 lg:col-span-3">
-          <label className="block mb-1">Descripción</label>
-          <input
-            type="text"
-            name="description"
-            value={newPlan.description}
-            onChange={e => setNewPlan({ ...newPlan, description: e.target.value })}
-            className="w-full p-2 rounded-md bg-gray-700 text-white"
-          />
-        </div>
-
       </div>
 
-      <div className="mt-4 text-right">
-        <button
-          onClick={createPlan}
-          className="bg-green-600 hover:bg-green-700 text-white p-2 px-4 rounded-md font-semibold flex items-center gap-2 inline-flex"
-        >
-          <Plus size={20} /> Agregar
-        </button>
-      </div>
-    </div>
-
-      <div className="bg-gray-800 p-6 rounded-lg shadow-md">
+      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
             <Loader size={24} className="animate-spin" />Cargando planes...

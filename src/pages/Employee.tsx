@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { decodeBackendImage, encodeImageForBackend } from '../utils/imageHelpers';
 import { toast } from 'react-hot-toast';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
   UserPlus,
   Trash2,
@@ -12,10 +14,25 @@ import {
 
 const API_URL = 'https://backend-country-nnxe.onrender.com';
 
+// ====== LOGO (según tu indicación) ======
+const LOGO_URL = `${import.meta.env.BASE_URL}image/LogoHipica.png`;
+const urlToDataUrl = (url: string) =>
+  fetch(url)
+    .then(r => r.blob())
+    .then(
+      blob =>
+        new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        })
+    );
+
+// ====== Tipos ======
 interface Employee {
   idEmployee?: number;
   fullName: string;
-  ci: string;
+  ci: number;
   phoneNumber: number;
   startContractDate: string;
   endContractDate: string;
@@ -26,12 +43,12 @@ interface Employee {
   fk_idPositionEmployee: number;
   employeePhoto?: string | null;
 }
-
 interface Position {
   idPositionEmployee: number;
   namePosition: string;
 }
 
+// ====== Helpers ======
 const formatTimeForInput = (isoDateString: string): string => {
   if (!isoDateString) return '';
   const date = new Date(isoDateString);
@@ -40,22 +57,27 @@ const formatTimeForInput = (isoDateString: string): string => {
   return `${hours}:${minutes}`;
 };
 
-// Utilidad para convertir imagen a base64 con prefijo
+// convertir imagen a base64 con prefijo
 function toBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.readAsDataURL(file); // incluye el prefijo
+    reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result as string);
     reader.onerror = error => reject(error);
   });
 }
+
+// moneda BOB
+const formatCurrency = (n: number) =>
+  new Intl.NumberFormat('es-BO', { style: 'currency', currency: 'BOB', maximumFractionDigits: 2 })
+    .format(n || 0);
 
 const Employees = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
   const [newEmployee, setNewEmployee] = useState<Employee>({
     fullName: '',
-    ci: '',
+    ci: 0,
     phoneNumber: 0,
     startContractDate: '',
     endContractDate: '',
@@ -71,50 +93,51 @@ const Employees = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
 
-const getEmptyEmployee = (): Employee => ({
-  fullName: '',
-  ci: '',
-  phoneNumber: 0,
-  startContractDate: '',
-  endContractDate: '',
-  startTime: '',
-  exitTime: '',
-  salary: 0,
-  status: true,
-  fk_idPositionEmployee: positions.length > 0 ? positions[0].idPositionEmployee : 0,
-  employeePhoto: null,
-});
+  // estado para exportación
+  const [exporting, setExporting] = useState<boolean>(false);
 
+  const getEmptyEmployee = (): Employee => ({
+    fullName: '',
+    ci: 0,
+    phoneNumber: 0,
+    startContractDate: '',
+    endContractDate: '',
+    startTime: '',
+    exitTime: '',
+    salary: 0,
+    status: true,
+    fk_idPositionEmployee: positions.length > 0 ? positions[0].idPositionEmployee : 0,
+    employeePhoto: null,
+  });
 
   const fetchData = async () => {
-  setLoading(true);
-  setError(null);
-  try {
-    const employeesResponse = await fetch(`${API_URL}/employees/`);
-    if (!employeesResponse.ok) throw new Error(`Error al obtener empleados: ${employeesResponse.statusText}`);
-    const employeesData = await employeesResponse.json();
+    setLoading(true);
+    setError(null);
+    try {
+      const employeesResponse = await fetch(`${API_URL}/employees/`);
+      if (!employeesResponse.ok) throw new Error(`Error al obtener empleados: ${employeesResponse.statusText}`);
+      const employeesData = await employeesResponse.json();
 
-    const positionsResponse = await fetch(`${API_URL}/employee_positions/`);
-    if (!positionsResponse.ok) throw new Error(`Error al obtener posiciones: ${positionsResponse.statusText}`);
-    const positionsData = await positionsResponse.json();
+      const positionsResponse = await fetch(`${API_URL}/employee_positions/`);
+      if (!positionsResponse.ok) throw new Error(`Error al obtener posiciones: ${positionsResponse.statusText}`);
+      const positionsData = await positionsResponse.json();
 
-    setEmployees(employeesData);
-    setPositions(positionsData);
+      setEmployees(employeesData);
+      setPositions(positionsData);
 
-    if (!editingId) {
-      setNewEmployee({
-        ...getEmptyEmployee(),
-        fk_idPositionEmployee: positionsData[0]?.idPositionEmployee || 0,
-      });
+      if (!editingId) {
+        setNewEmployee({
+          ...getEmptyEmployee(),
+          fk_idPositionEmployee: positionsData[0]?.idPositionEmployee || 0,
+        });
+      }
+    } catch (error: any) {
+      setError("No se pudo cargar la información. Inténtalo de nuevo más tarde.");
+      toast.error(`Error al cargar los datos: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
-
-  } catch (error: any) {
-    setError("No se pudo cargar la información. Inténtalo de nuevo más tarde.");
-    toast.error(`Error al cargar los datos: ${error.message}`);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   useEffect(() => {
     fetchData();
@@ -126,31 +149,22 @@ const getEmptyEmployee = (): Employee => ({
     try {
       let employeePhoto: string | null = null;
       if (selectedPhoto) {
-          const base64Full = await toBase64(selectedPhoto); 
-          employeePhoto = encodeImageForBackend(base64Full);
+        const base64Full = await toBase64(selectedPhoto);
+        employeePhoto = encodeImageForBackend(base64Full);
       }
 
-     // Archivo: Employee.tsx -> dentro de handleCreateOrUpdate
-
-const employeeData = {
-  ...newEmployee,
-  // 👇 Asegúrate de que TODOS los campos numéricos se conviertan
-  ci: Number(newEmployee.ci),
-  phoneNumber: Number(newEmployee.phoneNumber),
-  salary: Number(newEmployee.salary),
-  fk_idPositionEmployee: Number(newEmployee.fk_idPositionEmployee), // <--- AÑADE ESTA LÍNEA
-  
-  startTime: newEmployee.startContractDate
-    ? `${newEmployee.startContractDate}T${newEmployee.startTime || '08:00'}:00`
-    : '',
-  exitTime: newEmployee.endContractDate
-    ? `${newEmployee.endContractDate}T${newEmployee.exitTime || '17:00'}:00`
-    : '',
-  ...(employeePhoto !== null && { employeePhoto }),
-};  
-
-
-       console.log('Enviando empleado al backend:', employeeData);
+      const employeeData = {
+        ...newEmployee,
+        phoneNumber: Number(newEmployee.phoneNumber),
+        salary: Number(newEmployee.salary),
+        startTime: newEmployee.startContractDate
+          ? `${newEmployee.startContractDate}T${newEmployee.startTime || '08:00'}:00`
+          : '',
+        exitTime: newEmployee.endContractDate
+          ? `${newEmployee.endContractDate}T${newEmployee.exitTime || '17:00'}:00`
+          : '',
+        ...(employeePhoto !== null && { employeePhoto }),
+      };
 
       if (!newEmployee.fk_idPositionEmployee) {
         toast.error("Debe seleccionar una posición válida para el empleado.");
@@ -189,9 +203,7 @@ const employeeData = {
   // Eliminar empleado
   const handleDelete = async (id: number) => {
     try {
-      const response = await fetch(`${API_URL}/employees/${id}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(`${API_URL}/employees/${id}`, { method: 'DELETE' });
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Error al eliminar: ${response.status} - ${errorText}`);
@@ -205,7 +217,6 @@ const employeeData = {
 
   // Modo edición
   const startEdit = (employee: Employee) => {
-    console.log('Editando empleado:', employee);
     setNewEmployee({
       ...employee,
       startTime: formatTimeForInput(employee.startTime),
@@ -239,75 +250,202 @@ const employeeData = {
     }
   };
 
+  // ====== Exportar PDF ======
+  const exportEmployeesPDF = async () => {
+    if (employees.length === 0) return;
+    try {
+      setExporting(true);
+
+      const doc = new jsPDF();
+      doc.setFontSize(14);
+      doc.text('Planilla de Empleados', 14, 18);
+
+      // Cargar logo → DataURL
+      try {
+        const logoDataUrl = await urlToDataUrl(LOGO_URL);
+        if (logoDataUrl) {
+          // Detectar formato por el encabezado del dataURL
+          const isPng = logoDataUrl.startsWith('data:image/png');
+          const isJpg = logoDataUrl.startsWith('data:image/jpeg') || logoDataUrl.startsWith('data:image/jpg');
+          const fmt = isPng ? 'PNG' : (isJpg ? 'JPEG' : 'PNG'); // fallback PNG
+
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const imgW = 22; // mm
+          const imgH = 22; // mm
+          const x = pageWidth - imgW - 14;
+          const y = 8;
+          try {
+            doc.addImage(logoDataUrl, fmt as any, x, y, imgW, imgH);
+          } catch {
+            // si falla, seguimos sin logo
+          }
+        }
+      } catch {
+        // ignorar si el logo falla
+      }
+
+      // Encabezados y filas
+      const head = [['#', 'Empleado', 'Cargo', 'Monto', 'Firma']];
+      const body = employees.map((emp, idx) => {
+        const positionName =
+          positions.find(p => p.idPositionEmployee === emp.fk_idPositionEmployee)?.namePosition || 'Desconocido';
+        return [
+          (idx + 1).toString(),
+          emp.fullName,
+          positionName,
+          formatCurrency(Number(emp.salary || 0)),
+          '' // firma vacía
+        ];
+      });
+
+      const total = employees.reduce((acc, e) => acc + Number(e.salary || 0), 0);
+
+      autoTable(doc, {
+        head,
+        body,
+        foot: [['', '', 'TOTAL', formatCurrency(total), '']],
+        startY: 48,
+        theme: 'grid',
+        styles: {
+          fontSize: 10,
+          cellPadding: 2,
+          textColor: [30, 30, 30],
+          lineColor: [180, 180, 180],
+          lineWidth: 0.1,
+        },
+        headStyles: {
+          fillColor: [45, 55, 72],   // gris oscuro (no azul)
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+        },
+        footStyles: {
+          fillColor: [241, 245, 249], // gris claro
+          textColor: [30, 30, 30],
+          fontStyle: 'bold',
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252], // alterna filas
+        },
+        tableLineColor: [200, 200, 200],
+        tableLineWidth: 0.1,
+      });
+
+      const fileName = `planilla_empleados_${new Date().toISOString().slice(0,10)}.pdf`;
+      doc.save(fileName);
+      toast.success('PDF generado');
+    } catch {
+      toast.error('No se pudo generar el PDF');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
-    <div className="p-6 bg-slate-950 min-h-screen text-white"> 
+    <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
       <h1 className="text-3xl font-bold mb-8 text-center text-teal-400">
         Gestión de Empleados
       </h1>
+
       <form
         onSubmit={handleCreateOrUpdate}
         className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700"
       >
-        <h2 className="text-xl font-semibold mb-4 text-teal-300">
-          {editingId ? "Editar Empleado" : "Crear Nuevo Empleado"}
-        </h2>
+  
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-teal-300">
+            {editingId ? "Editar Empleado" : "Crear Nuevo Empleado"}
+          </h2>
+
+          <button
+            type="button"
+            onClick={exportEmployeesPDF}
+            disabled={loading || exporting || employees.length === 0}
+            className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white
+                      px-3 py-1.5 text-sm rounded-md font-medium shadow-sm hover:shadow-md transition"
+            title="Generar PDF de empleados"
+          >
+            {exporting ? 'Exportando…' : 'Exportar PDF'}
+          </button>
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label htmlFor="fullName">Nombre Completo</label>
-          <input type="text" placeholder="Nombre Completo" name="fullName" value={newEmployee.fullName} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
-         </div>
-         <div>
-           <label htmlFor="ci">C.I.</label>
-          <input type="text" placeholder="C.I." name="ci" value={newEmployee.ci} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
-         </div>
+            <input type="text" placeholder="Nombre Completo" id="fullName" name="fullName" value={newEmployee.fullName} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
+          </div>
+          <div>
+            <label htmlFor="ci">C.I.</label>
+            <input type="number" placeholder="C.I." id="ci" name="ci" value={newEmployee.ci} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
+          </div>
           <div>
             <label htmlFor="phoneNumber">Número de Teléfono</label>
-          <input type="number" placeholder="Número de Teléfono" name="phoneNumber" value={newEmployee.phoneNumber} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
+            <input type="number" placeholder="Número de Teléfono" id="phoneNumber" name="phoneNumber" value={newEmployee.phoneNumber} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
           </div>
           <div>
             <label htmlFor="startContractDate">Fecha de Contrato (Inicio)</label>
-          <input type="date" placeholder="Fecha de Contrato (Inicio)" name="startContractDate" value={newEmployee.startContractDate} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
+            <input type="date" placeholder="Fecha de Contrato (Inicio)" id="startContractDate" name="startContractDate" value={newEmployee.startContractDate} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
           </div>
           <div>
             <label htmlFor="endContractDate">Fecha de Contrato (Fin)</label>
-          <input type="date" placeholder="Fecha de Contrato (Fin)" name="endContractDate" value={newEmployee.endContractDate} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
+            <input type="date" placeholder="Fecha de Contrato (Fin)" id="endContractDate" name="endContractDate" value={newEmployee.endContractDate} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
           </div>
           <div>
             <label htmlFor="startTime">Hora de Entrada</label>
-          <input type="time" placeholder="Hora de Entrada" name="startTime" value={newEmployee.startTime} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+            <input type="time" placeholder="Hora de Entrada" id="startTime" name="startTime" value={newEmployee.startTime} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" />
           </div>
           <div>
             <label htmlFor="exitTime">Hora de Salida</label>
-          <input type="time" placeholder="Hora de Salida" name="exitTime" value={newEmployee.exitTime} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+            <input type="time" placeholder="Hora de Salida" id="exitTime" name="exitTime" value={newEmployee.exitTime} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" />
           </div>
           <div>
             <label htmlFor="salary">Salario</label>
-          <input type="number" placeholder="Salario" name="salary" value={newEmployee.salary} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />         
+            <input
+              type="number"
+              placeholder="Salario"
+              id="salary"
+              name="salary"
+              value={newEmployee.salary}
+              onChange={handleInputChange}
+              step="0.01"
+              min="0"
+              inputMode="decimal"
+              className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              required
+            />
           </div>
           <div>
             <label htmlFor="fk_idPositionEmployee">Posición</label>
-          <select name="fk_idPositionEmployee" value={newEmployee.fk_idPositionEmployee} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500" required>
-            {positions.map((position) => (
-              <option key={position.idPositionEmployee} value={position.idPositionEmployee}>{position.namePosition}</option>
-            ))}
-          </select>
+            <select id="fk_idPositionEmployee" name="fk_idPositionEmployee" value={newEmployee.fk_idPositionEmployee} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500" required>
+              {positions.map((position) => (
+                <option key={position.idPositionEmployee} value={position.idPositionEmployee}>{position.namePosition}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label htmlFor="employeePhoto">Foto del Empleado</label>
-          <input type="file" name="employeePhoto" accept="image/*" onChange={handlePhotoChange} className="w-full p-2 text-white placeholder-slate-400" />
+            <input type="file" id="employeePhoto" name="employeePhoto" accept="image/*" onChange={handlePhotoChange} className="w-full p-2 text-white placeholder-slate-400" />
           </div>
         </div>
-        <div className="flex justify-end gap-4 mt-6">
-          {editingId ? (
-            <>
-              <button type="submit" className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md shadow-md hover:bg-green-700 transition-colors"><Save size={18} /> Guardar Cambios</button>
-              <button type="button" onClick={cancelEdit} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md shadow-md hover:bg-red-700 transition-colors"><X size={18} /> Cancelar</button>
-            </>
-          ) : (
-            <button type="submit" className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-md shadow-md hover:bg-teal-600 transition-colors"><UserPlus size={18} /> Agregar Empleado</button>
-          )}
+
+        {/* Barra de acciones inferiores */}
+        <div className="flex flex-wrap items-center gap-3 mt-6">
+          <span className="text-sm bg-gray-700 px-3 py-1 rounded-md">
+            Total: <b>{formatCurrency(employees.reduce((acc, e) => acc + Number(e.salary || 0), 0))}</b>
+          </span>
+
+          <div className="ml-auto flex gap-2">
+            {editingId ? (
+              <>
+                <button type="submit" className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md shadow-md hover:bg-green-700 transition-colors"><Save size={18} /> Guardar Cambios</button>
+                <button type="button" onClick={cancelEdit} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md shadow-md hover:bg-red-700 transition-colors"><X size={18} /> Cancelar</button>
+              </>
+            ) : (
+              <button type="submit" className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-md shadow-md hover:bg-teal-600 transition-colors"><UserPlus size={18} /> Agregar Empleado</button>
+            )}
+          </div>
         </div>
       </form>
+
       {loading && (
         <div className="flex justify-center items-center p-8">
           <Loader size={48} className="animate-spin text-teal-400" />
@@ -330,10 +468,11 @@ const employeeData = {
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Hora de Entrada</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Hora de Salida</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">Fecha de Contrato - Inicio y Fin </th>
+                <th className="px-6 py-3"></th>
               </tr>
             </thead>
             <tbody className="bg-slate-800 divide-y divide-slate-700">
-              {employees.map((employee) => {              
+              {employees.map((employee) => {
                 const positionName = positions.find(p => p.idPositionEmployee === employee.fk_idPositionEmployee)?.namePosition || 'Desconocido';
                 return (
                   <tr key={employee.idEmployee} className="hover:bg-slate-700 transition-colors">
@@ -350,7 +489,7 @@ const employeeData = {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{employee.ci}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{employee.phoneNumber}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{positionName}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">${employee.salary}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{formatCurrency(Number(employee.salary || 0))}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{employee.startTime ? new Date(employee.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{employee.exitTime ? new Date(employee.exitTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{employee.startContractDate ? new Date(employee.startContractDate).toLocaleDateString() : 'N/A'} - {employee.endContractDate ? new Date(employee.endContractDate).toLocaleDateString() : 'N/A'}</td>

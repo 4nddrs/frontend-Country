@@ -122,103 +122,103 @@ const NutritionalPlanDetailsManagement = () => {
   };
 
   return (
-    <div className="p-6 bg-slate-950 min-h-screen text-white">
+    <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
       <h1 className="text-3xl font-bold mb-6 text-center text-teal-400">Gestión de Detalles del Plan Nutricional</h1>
-      <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
+      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Detalle</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-    <div>
-      <label className="block mb-1">Consumo (Kg)</label>
-      <input
-        type="number"
-        name="consumptionKlg"
-        value={newDetail.consumptionKlg}
-        onChange={e => setNewDetail({ ...newDetail, consumptionKlg: Number(e.target.value) })}
-        className="w-full p-2 rounded-md bg-gray-700 text-white"
-      />
+      <div>
+        <label className="block mb-1">Consumo (Kg)</label>
+        <input
+          type="number"
+          name="consumptionKlg"
+          value={newDetail.consumptionKlg}
+          onChange={e => setNewDetail({ ...newDetail, consumptionKlg: Number(e.target.value) })}
+          className="w-full p-2 rounded-md bg-gray-700 text-white"
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1">Días de Consumo al Mes</label>
+        <input
+          type="number"
+          name="daysConsumptionMonth"
+          value={newDetail.daysConsumptionMonth}
+          onChange={e => setNewDetail({ ...newDetail, daysConsumptionMonth: Number(e.target.value) })}
+          className="w-full p-2 rounded-md bg-gray-700 text-white"
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1">Total de Consumo</label>
+        <input
+          type="number"
+          name="totalConsumption"
+          value={newDetail.totalConsumption}
+          onChange={e => setNewDetail({ ...newDetail, totalConsumption: Number(e.target.value) })}
+          className="w-full p-2 rounded-md bg-gray-700 text-white"
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1">Periodo</label>
+        <input
+          type="date"
+          name="period"
+          value={newDetail.period}
+          onChange={e => setNewDetail({ ...newDetail, period: e.target.value })}
+          className="w-full p-2 rounded-md bg-gray-700 text-white"
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1">Comida</label>
+        <select
+          name="fk_idFood"
+          value={newDetail.fk_idFood}
+          onChange={e => setNewDetail({ ...newDetail, fk_idFood: Number(e.target.value) })}
+          className="w-full p-2 rounded-md bg-gray-700 text-white"
+        >
+          <option value="">-- Selecciona una comida --</option>
+          {foods.map(food => (
+            <option key={food.idFood} value={food.idFood}>
+              {food.foodName}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block mb-1">Plan Nutricional</label>
+        <select
+          name="fk_idNutritionalPlan"
+          value={newDetail.fk_idNutritionalPlan}
+          onChange={e => setNewDetail({ ...newDetail, fk_idNutritionalPlan: Number(e.target.value) })}
+          className="w-full p-2 rounded-md bg-gray-700 text-white"
+        >
+          <option value="">-- Selecciona un plan nutricional --</option>
+          {nutritionalPlans.map(plan => (
+            <option key={plan.idNutritionalPlan} value={plan.idNutritionalPlan}>
+              {plan.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
     </div>
 
-    <div>
-      <label className="block mb-1">Días de Consumo al Mes</label>
-      <input
-        type="number"
-        name="daysConsumptionMonth"
-        value={newDetail.daysConsumptionMonth}
-        onChange={e => setNewDetail({ ...newDetail, daysConsumptionMonth: Number(e.target.value) })}
-        className="w-full p-2 rounded-md bg-gray-700 text-white"
-      />
-    </div>
-
-    <div>
-      <label className="block mb-1">Total de Consumo</label>
-      <input
-        type="number"
-        name="totalConsumption"
-        value={newDetail.totalConsumption}
-        onChange={e => setNewDetail({ ...newDetail, totalConsumption: Number(e.target.value) })}
-        className="w-full p-2 rounded-md bg-gray-700 text-white"
-      />
-    </div>
-
-    <div>
-      <label className="block mb-1">Periodo</label>
-      <input
-        type="date"
-        name="period"
-        value={newDetail.period}
-        onChange={e => setNewDetail({ ...newDetail, period: e.target.value })}
-        className="w-full p-2 rounded-md bg-gray-700 text-white"
-      />
-    </div>
-
-    <div>
-      <label className="block mb-1">Comida</label>
-      <select
-        name="fk_idFood"
-        value={newDetail.fk_idFood}
-        onChange={e => setNewDetail({ ...newDetail, fk_idFood: Number(e.target.value) })}
-        className="w-full p-2 rounded-md bg-gray-700 text-white"
+    <div className="mt-4 text-right">
+      <button
+        onClick={createDetail}
+        className="bg-green-600 hover:bg-green-700 text-white p-2 px-4 rounded-md font-semibold flex items-center gap-2 inline-flex"
       >
-        <option value="">-- Selecciona una comida --</option>
-        {foods.map(food => (
-          <option key={food.idFood} value={food.idFood}>
-            {food.foodName}
-          </option>
-        ))}
-      </select>
+        <Plus size={20} /> Agregar
+      </button>
     </div>
-
-    <div>
-      <label className="block mb-1">Plan Nutricional</label>
-      <select
-        name="fk_idNutritionalPlan"
-        value={newDetail.fk_idNutritionalPlan}
-        onChange={e => setNewDetail({ ...newDetail, fk_idNutritionalPlan: Number(e.target.value) })}
-        className="w-full p-2 rounded-md bg-gray-700 text-white"
-      >
-        <option value="">-- Selecciona un plan nutricional --</option>
-        {nutritionalPlans.map(plan => (
-          <option key={plan.idNutritionalPlan} value={plan.idNutritionalPlan}>
-            {plan.name}
-          </option>
-        ))}
-      </select>
-    </div>
-
   </div>
-
-  <div className="mt-4 text-right">
-    <button
-      onClick={createDetail}
-      className="bg-green-600 hover:bg-green-700 text-white p-2 px-4 rounded-md font-semibold flex items-center gap-2 inline-flex"
-    >
-      <Plus size={20} /> Agregar
-    </button>
-  </div>
-</div>
      
-      <div className="bg-gray-800 p-6 rounded-lg shadow-md">
+      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
             <Loader size={24} className="animate-spin" />Cargando detalles...

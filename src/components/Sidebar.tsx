@@ -46,7 +46,10 @@ const menuItems = [
     { label: 'Reportes Mensuales de Propietario', icon: <Calendar size={20} />, path: '/OwnerReportMonth' },
     { label: 'Control Total', icon: <Calendar size={20} />, path: '/TotalControl' },
     { label: 'Control de Vacunación', icon: <Calendar size={20} />, path: '/VaccinationPlan' },
-    { label: 'Aplicación de Vacunación', icon: <Calendar size={20} />, path: '/VaccinationPlanApplication' }
+    { label: 'Aplicación de Vacunación', icon: <Calendar size={20} />, path: '/VaccinationPlanApplication' },
+    { label: 'Control de Consumo de Alfalfa', icon: <Calendar size={20} />, path: '/AlphaConsumptionControl' },
+    { label: 'Pagos de Salarios', icon: <Calendar size={20} />, path: '/SalaryPayments' },
+    { label: 'Pago de Propinas', icon: <Calendar size={20} />, path: '/TipPayment' }
 ];
 
 const Sidebar = () => {

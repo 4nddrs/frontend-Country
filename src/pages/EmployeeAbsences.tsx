@@ -111,7 +111,7 @@ const EmployeeAbsencesManagement = () => {
   };
 
   return (
-    <div className="p-6 bg-slate-950 min-h-screen text-white">
+    <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
@@ -122,7 +122,7 @@ const EmployeeAbsencesManagement = () => {
         `}
       </style>
       <h1 className="text-3xl font-bold mb-6 text-center text-teal-400">Gestión de Ausencias de Empleados</h1>
-      <div className="bg-gray-800 p-6 rounded-lg shadow-xl mb-8">
+      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Ausencia</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Fecha de Inicio */}
@@ -207,7 +207,7 @@ const EmployeeAbsencesManagement = () => {
           </button>
         </div>
       </div>
-      <div className="bg-gray-800 p-6 rounded-lg shadow-xl">
+      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
             <Loader size={24} className="animate-spin" /> Cargando ausencias...

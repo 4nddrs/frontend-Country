@@ -119,81 +119,81 @@ const ApplicationProceduresManagement = () => {
   };
 
   return (
-    <div className="p-6 bg-slate-950 min-h-screen text-white">
+    <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
       <h1 className="text-3xl font-bold mb-6 text-center text-teal-400">Gestión de Aplicaciones de Procedimiento</h1>
-    <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
-  <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Aplicación</h2>
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    <div className="flex flex-col">
-      <label className="block mb-1">Fecha de ejecución</label>
-      <input
-        id="executionDate-input"
-        type="date"
-        name="executionDate"
-        value={newProcedure.executionDate}
-        onChange={e => setNewProcedure({ ...newProcedure, executionDate: e.target.value })}
-        className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-      />
-    </div>
+      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Aplicación</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex flex-col">
+            <label className="block mb-1">Fecha de ejecución</label>
+            <input
+              id="executionDate-input"
+              type="date"
+              name="executionDate"
+              value={newProcedure.executionDate}
+              onChange={e => setNewProcedure({ ...newProcedure, executionDate: e.target.value })}
+              className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            />
+          </div>
 
-    <div className="flex flex-col">
-      <label className="block mb-1">Observaciones</label>
-      <input
-        id="observations-input"
-        type="text"
-        name="observations"
-        value={newProcedure.observations}
-        onChange={e => setNewProcedure({ ...newProcedure, observations: e.target.value })}
-        className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-        placeholder="Ej: El caballo reaccionó bien"
-      />
-    </div>
+          <div className="flex flex-col">
+            <label className="block mb-1">Observaciones</label>
+            <input
+              id="observations-input"
+              type="text"
+              name="observations"
+              value={newProcedure.observations}
+              onChange={e => setNewProcedure({ ...newProcedure, observations: e.target.value })}
+              className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+              placeholder="Ej: El caballo reaccionó bien"
+            />
+          </div>
 
 
-    <div className="flex flex-col">
-      <label className="block mb-1">Procedimiento programado</label>
-      <select
-        id="scheduledProcedure-select"
-        name="fk_idScheduledProcedure"
-        value={newProcedure.fk_idScheduledProcedure}
-        onChange={e => setNewProcedure({ ...newProcedure, fk_idScheduledProcedure: Number(e.target.value) })}
-        className="w-full p-2 rounded-md bg-gray-700 text-white"
-      >
-        <option value="">-- Selecciona procedimiento programado --</option>
-        {scheduledProcedures.map(proc => (
-          <option key={proc.idScheduledProcedure} value={proc.idScheduledProcedure}>
-            {proc.name}
-          </option>
-        ))}
-      </select>
-    </div>
+          <div className="flex flex-col">
+            <label className="block mb-1">Procedimiento programado</label>
+            <select
+              id="scheduledProcedure-select"
+              name="fk_idScheduledProcedure"
+              value={newProcedure.fk_idScheduledProcedure}
+              onChange={e => setNewProcedure({ ...newProcedure, fk_idScheduledProcedure: Number(e.target.value) })}
+              className="w-full p-2 rounded-md bg-gray-700 text-white"
+            >
+              <option value="">-- Selecciona procedimiento programado --</option>
+              {scheduledProcedures.map(proc => (
+                <option key={proc.idScheduledProcedure} value={proc.idScheduledProcedure}>
+                  {proc.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-    <div className="flex flex-col">
-      <label htmlFor="horse-select" className="block mb-1">Caballo</label>
-      <select
-        id="horse-select"
-        name="fk_idHorse"
-        value={newProcedure.fk_idHorse}
-        onChange={e => setNewProcedure({ ...newProcedure, fk_idHorse: Number(e.target.value) })}
-        className="w-full p-2 rounded-md bg-gray-700 text-white"
-      >
-        <option value="">-- Selecciona caballo --</option>
-        {horses.map(horse => (
-          <option key={horse.idHorse} value={horse.idHorse}>
-            {horse.horseName}
-          </option>
-        ))}
-      </select>
-    </div>
+          <div className="flex flex-col">
+            <label htmlFor="horse-select" className="block mb-1">Caballo</label>
+            <select
+              id="horse-select"
+              name="fk_idHorse"
+              value={newProcedure.fk_idHorse}
+              onChange={e => setNewProcedure({ ...newProcedure, fk_idHorse: Number(e.target.value) })}
+              className="w-full p-2 rounded-md bg-gray-700 text-white"
+            >
+              <option value="">-- Selecciona caballo --</option>
+              {horses.map(horse => (
+                <option key={horse.idHorse} value={horse.idHorse}>
+                  {horse.horseName}
+                </option>
+              ))}
+            </select>
+          </div>
 
-    <div className="flex items-end justify-end col-span-1 md:col-span-2 lg:col-span-1">
-      <button onClick={createProcedure} className="w-full p-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-semibold flex items-center justify-center gap-2">
-        <Plus size={20} /> Agregar
-      </button>
-    </div>
-  </div>
-</div>
-      <div className="bg-gray-800 p-6 rounded-lg shadow-md">
+          <div className="flex items-end justify-end col-span-1 md:col-span-2 lg:col-span-1">
+            <button onClick={createProcedure} className="w-full p-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-semibold flex items-center justify-center gap-2">
+              <Plus size={20} /> Agregar
+            </button>
+          </div>
+        </div>
+      </div>
+      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
             <Loader size={24} className="animate-spin" />Cargando aplicaciones...

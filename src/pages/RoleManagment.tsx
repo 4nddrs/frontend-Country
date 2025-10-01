@@ -75,9 +75,9 @@ const RoleManagement = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 text-white">
+    <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
       <h1 className="text-3xl font-bold mb-6 text-center">Gestión de Roles</h1>
-      <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
+      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
         <h2 className="text-xl font-semibold mb-4">Agregar Nuevo Rol</h2>
         <div className="flex gap-4">
           <input
@@ -93,7 +93,7 @@ const RoleManagement = () => {
           </button>
         </div>
       </div>
-      <div className="bg-gray-800 p-6 rounded-lg shadow-md">
+      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
             <Loader size={24} className="animate-spin" />Cargando roles...

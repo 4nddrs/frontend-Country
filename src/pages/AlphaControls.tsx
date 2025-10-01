@@ -123,135 +123,135 @@ const AlphaControlsManagement = () => {
   };
 
   return (
-    <div className="p-6 bg-slate-950 min-h-screen text-white">
+    <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
       <h1 className="text-3xl font-bold mb-6 text-center text-teal-400">Gestión de Control de Alfalfa</h1>
-    <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
-  <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Control</h2>
-  <div className="flex gap-4 flex-wrap">
+      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Control</h2>
+        <div className="flex gap-4 flex-wrap">
 
-    <div className="flex-1">
-      <label className="text-sm mb-1 block">Fecha del control</label>
-      <input
-        type="date"
-        name="date"
-        value={newControl.date}
-        onChange={e => setNewControl({ ...newControl, date: e.target.value })}
-        className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-      />
-    </div>
+          <div className="flex-1">
+            <label className="text-sm mb-1 block">Fecha del control</label>
+            <input
+              type="date"
+              name="date"
+              value={newControl.date}
+              onChange={e => setNewControl({ ...newControl, date: e.target.value })}
+              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            />
+          </div>
 
-    <div className="flex-1">
-      <label className="text-sm mb-1 block">Ingreso alfalfa (kg)</label>
-      <input
-        type="number"
-        name="alphaIncome"
-        value={newControl.alphaIncome}
-        onChange={e => setNewControl({ ...newControl, alphaIncome: Number(e.target.value) })}
-        className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-      />
-    </div>
+          <div className="flex-1">
+            <label className="text-sm mb-1 block">Ingreso alfalfa (kg)</label>
+            <input
+              type="number"
+              name="alphaIncome"
+              value={newControl.alphaIncome}
+              onChange={e => setNewControl({ ...newControl, alphaIncome: Number(e.target.value) })}
+              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            />
+          </div>
 
-    <div className="flex-1">
-      <label className="text-sm mb-1 block">Precio unitario (Bs.)</label>
-      <input
-        type="number"
-        name="unitPrice"
-        value={newControl.unitPrice}
-        onChange={e => setNewControl({ ...newControl, unitPrice: Number(e.target.value) })}
-        className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-      />
-    </div>
+          <div className="flex-1">
+            <label className="text-sm mb-1 block">Precio unitario (Bs.)</label>
+            <input
+              type="number"
+              name="unitPrice"
+              value={newControl.unitPrice}
+              onChange={e => setNewControl({ ...newControl, unitPrice: Number(e.target.value) })}
+              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            />
+          </div>
 
-    <div className="flex-1">
-      <label className="text-sm mb-1 block">Precio total de compra (Bs.)</label>
-      <input
-        type="number"
-        name="totalPurchasePrice"
-        value={newControl.totalPurchasePrice}
-        onChange={e => setNewControl({ ...newControl, totalPurchasePrice: Number(e.target.value) })}
-        className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-      />
-    </div>
+          <div className="flex-1">
+            <label className="text-sm mb-1 block">Precio total de compra (Bs.)</label>
+            <input
+              type="number"
+              name="totalPurchasePrice"
+              value={newControl.totalPurchasePrice}
+              onChange={e => setNewControl({ ...newControl, totalPurchasePrice: Number(e.target.value) })}
+              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            />
+          </div>
 
-    <div className="flex-1">
-      <label className="text-sm mb-1 block">Salida de alfalfa (kg)</label>
-      <input
-        type="number"
-        name="outcome"
-        value={newControl.outcome}
-        onChange={e => setNewControl({ ...newControl, outcome: Number(e.target.value) })}
-        className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-      />
-    </div>
+          <div className="flex-1">
+            <label className="text-sm mb-1 block">Salida de alfalfa (kg)</label>
+            <input
+              type="number"
+              name="outcome"
+              value={newControl.outcome}
+              onChange={e => setNewControl({ ...newControl, outcome: Number(e.target.value) })}
+              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            />
+          </div>
 
-    <div className="flex-1">
-      <label className="text-sm mb-1 block">Balance (kg)</label>
-      <input
-        type="number"
-        name="balance"
-        value={newControl.balance}
-        onChange={e => setNewControl({ ...newControl, balance: Number(e.target.value) })}
-        className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-      />
-    </div>
+          <div className="flex-1">
+            <label className="text-sm mb-1 block">Balance (kg)</label>
+            <input
+              type="number"
+              name="balance"
+              value={newControl.balance}
+              onChange={e => setNewControl({ ...newControl, balance: Number(e.target.value) })}
+              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            />
+          </div>
 
-    <div className="flex-1">
-      <label className="text-sm mb-1 block">Precio de venta (Bs.)</label>
-      <input
-        type="number"
-        name="salePrice"
-        value={newControl.salePrice}
-        onChange={e => setNewControl({ ...newControl, salePrice: Number(e.target.value) })}
-        className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-      />
-    </div>
+          <div className="flex-1">
+            <label className="text-sm mb-1 block">Precio de venta (Bs.)</label>
+            <input
+              type="number"
+              name="salePrice"
+              value={newControl.salePrice}
+              onChange={e => setNewControl({ ...newControl, salePrice: Number(e.target.value) })}
+              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            />
+          </div>
 
-    <div className="flex-1">
-      <label className="text-sm mb-1 block">Ingreso (Bs.)</label>
-      <input
-        type="number"
-        name="income"
-        value={newControl.income}
-        onChange={e => setNewControl({ ...newControl, income: Number(e.target.value) })}
-        className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-      />
-    </div>
+          <div className="flex-1">
+            <label className="text-sm mb-1 block">Ingreso (Bs.)</label>
+            <input
+              type="number"
+              name="income"
+              value={newControl.income}
+              onChange={e => setNewControl({ ...newControl, income: Number(e.target.value) })}
+              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            />
+          </div>
 
-    <div className="flex-1">
-      <label className="text-sm mb-1 block">Monto de cierre</label>
-      <input
-        type="text"
-        name="closingAmount"
-        value={newControl.closingAmount}
-        onChange={e => setNewControl({ ...newControl, closingAmount: e.target.value })}
-        className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-      />
-    </div>
+          <div className="flex-1">
+            <label className="text-sm mb-1 block">Monto de cierre</label>
+            <input
+              type="text"
+              name="closingAmount"
+              value={newControl.closingAmount}
+              onChange={e => setNewControl({ ...newControl, closingAmount: e.target.value })}
+              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            />
+          </div>
 
-    <div className="flex-1">
-      <label className="text-sm mb-1 block">Proveedor de alfalfa</label>
-      <select
-        name="fk_idFoodProvider"
-        value={newControl.fk_idFoodProvider}
-        onChange={e => setNewControl({ ...newControl, fk_idFoodProvider: Number(e.target.value) })}
-        className="flex-1 p-2 rounded-md bg-gray-700 text-white"
-      >
-        <option value="">-- Selecciona proveedor --</option>
-        {foodProviders.map(p => (
-          <option key={p.idFoodProvider} value={p.idFoodProvider}>{p.supplierName}</option>
-        ))}
-      </select>
-    </div>
+          <div className="flex-1">
+            <label className="text-sm mb-1 block">Proveedor de alfalfa</label>
+            <select
+              name="fk_idFoodProvider"
+              value={newControl.fk_idFoodProvider}
+              onChange={e => setNewControl({ ...newControl, fk_idFoodProvider: Number(e.target.value) })}
+              className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+            >
+              <option value="">-- Selecciona proveedor --</option>
+              {foodProviders.map(p => (
+                <option key={p.idFoodProvider} value={p.idFoodProvider}>{p.supplierName}</option>
+              ))}
+            </select>
+          </div>
 
-    <button
-      onClick={createControl}
-      className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
-      <Plus size={20} /> Agregar
-    </button>
-  </div>
-</div>
+          <button
+            onClick={createControl}
+            className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
+            <Plus size={20} /> Agregar
+          </button>
+        </div>
+      </div>
 
-      <div className="bg-gray-800 p-6 rounded-lg shadow-md">
+      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
             <Loader size={24} className="animate-spin" />Cargando controles...

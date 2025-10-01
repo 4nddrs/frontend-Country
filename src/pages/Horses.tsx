@@ -1,10 +1,26 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
 import { decodeBackendImage, encodeImageForBackend } from '../utils/imageHelpers'; // CAMBIO: Importamos la función encodeImageForBackend
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import dayjs from 'dayjs';
 
 // URL de tu API backend
-const API_URL = 'https://backend-country-nnxe.onrender.com/horses/';
+const API_URL = 'https://backend-country-nnxe.onrender.com/horses/'; 
+
+const LOGO_URL = `${import.meta.env.BASE_URL}image/LogoHipica.png`;
+const urlToDataUrl = (url: string) =>
+  fetch(url)
+    .then(r => r.blob())
+    .then(
+      blob =>
+        new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        })
+    );
 
 // --- INTERFACES ---
 interface Horse {
@@ -22,6 +38,8 @@ interface Horse {
   fk_idRace: number;
   fk_idOwner: number;
   fl_idNutritionalPlan: number;
+  state: string;
+  stateSchool:boolean;
 }
 
 const initialHorse: Omit<Horse, 'idHorse'> = {
@@ -38,6 +56,8 @@ const initialHorse: Omit<Horse, 'idHorse'> = {
   fk_idRace: 1,
   fk_idOwner: 1,
   fl_idNutritionalPlan: 1,
+  state: 'Activo',
+  stateSchool: false,
 };
 
 // --- COMPONENTE ---
@@ -53,6 +73,15 @@ const HorsesManagement = () => {
   const [editingHorseData, setEditingHorseData] = useState<Horse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null); // CAMBIO: Nuevo estado para guardar el archivo de la foto
+
+  // PDF state
+  const [exporting, setExporting] = useState(false);
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    // carga logo opcional
+    urlToDataUrl(LOGO_URL).then(setLogoDataUrl).catch(() => setLogoDataUrl(null));
+  }, []);
 
   // --- EFECTOS ---
   useEffect(() => {
@@ -138,6 +167,13 @@ const HorsesManagement = () => {
       toast.error('Completa los campos obligatorios (Nombre, Fecha, Sexo, Color).');
       return;
     }
+    if (!newHorse.state) {
+      toast.error('Selecciona el estado.');
+      return;
+    }
+    if (typeof newHorse.stateSchool !== 'boolean') { 
+      toast.error('Indica si pertenece a escuela.'); return; 
+    }
 
     try {
       // CAMBIO: Preparamos la foto para el backend
@@ -161,6 +197,8 @@ const HorsesManagement = () => {
         fk_idRace: newHorse.fk_idRace,
         fk_idOwner: newHorse.fk_idOwner,
         fl_idNutritionalPlan: newHorse.fl_idNutritionalPlan || 0,
+        state: newHorse.state,
+        stateSchool: newHorse.stateSchool,
       };
 
       console.log("📤 Enviando nuevo caballo (con formato binario):", horseData);
@@ -199,7 +237,14 @@ const HorsesManagement = () => {
     if (!editingHorseData) return;
     console.log("✏️ Actualizando caballo con ID:", id);
     console.log("📤 Datos actualizados:", editingHorseData);
-
+    if (!editingHorseData.state) {
+      toast.error('Selecciona el estado.');
+      return;
+    }
+    if (!editingHorseData.stateSchool) {
+      toast.error('Selecciona el estado de escuela.');
+      return;
+    }
     try {
       // CAMBIO: Preparamos la foto para el backend si se seleccionó una nueva
       let photoForBackend: string | null | undefined = undefined; // undefined para no actualizar si no hay cambio
@@ -219,6 +264,8 @@ const HorsesManagement = () => {
         box: Boolean(editingHorseData.box),
         section: Boolean(editingHorseData.section),
         basket: Boolean(editingHorseData.basket),
+        state: editingHorseData.state,
+        stateSchool: Boolean(editingHorseData.stateSchool),
         ...(photoForBackend !== undefined && { horsePhoto: photoForBackend }) // CAMBIO: Solo incluye horsePhoto si hay un cambio
       };
 
@@ -262,181 +309,340 @@ const HorsesManagement = () => {
     setEditingHorseData(null);
   };
 
+  // Helpers
+  const getOwnerName = (id: number) => {
+    const o = owners.find((x) => x.idOwner === id);
+    return o ? `${o.name ?? ''} ${o.FirstName ?? ''}`.trim() || String(id) : String(id);
+  };
+  const boolTxt = (b: boolean) => (b ? 'Sí' : 'No');
 
+  // Total caballos (para mostrar y PDF)
+  const totalCaballos = useMemo(() => horses.length, [horses]);
+
+  // Exportar PDF Diseño
+  const exportHorsesPDF = async () => {
+    try {
+      setExporting(true);
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'pt' });
+
+      // LOGO (opcional)
+      try {
+        if (logoDataUrl) {
+          const margin = 40;
+          const w = 120;
+          const h = 70;
+          const pageW = doc.internal.pageSize.getWidth();
+          const x = pageW - w - margin;
+          const y = 20;
+          doc.addImage(logoDataUrl, 'PNG', x, y, w, h);
+        }
+      } catch (e) {
+        console.warn('No se pudo dibujar el logo:', e);
+      }
+
+      const titulo = 'Reporte de Caballos y Dueños';
+      const now = dayjs().format('YYYY-MM-DD HH:mm');
+
+      // Título centrado
+      const pageW = doc.internal.pageSize.getWidth();
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text(titulo, pageW / 2, 50, { align: 'center' });
+
+      // Subtítulos
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`Generado: ${now}`, 40, 70);
+
+      // Tabla
+      const body = horses.map(h => ([
+        h.horseName,
+        getOwnerName(h.fk_idOwner),
+        h.birthdate ? new Date(h.birthdate).toLocaleDateString() : '',
+        h.sex,
+        h.color,
+        String(h.passportNumber ?? ''),
+        boolTxt(h.box),
+        boolTxt(h.section),
+        boolTxt(h.basket),
+      ]));
+
+      autoTable(doc, {
+        startY: 110,
+        theme: 'striped',
+        head: [['Caballo','Dueño','Nacimiento','Sexo','Color','Pasaporte','Box','Sección','Canasta']],
+        body,
+        styles: { fontSize: 9, cellPadding: 6 }, // cuerpo blanco por defecto
+        headStyles: {
+          fillColor: [38, 72, 131], // #264883
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+        },
+
+        // Pie “TOTAL … CABALLOS”
+        foot: [[
+          {
+            content: 'TOTAL',
+            colSpan: 5,
+            styles: {
+              halign: 'left', // a la izquierda
+              fontStyle: 'bold',
+              cellPadding: { left: 6, top: 6, right: 6, bottom: 6 }
+            }
+          },
+          {
+            content: `${totalCaballos} CABALLOS`,
+            colSpan: 4,
+            styles: { halign: 'center', fontStyle: 'bold' }
+          },
+        ]],
+        footStyles: {
+          fillColor: [38, 72, 131], // #264883
+          textColor: [255, 255, 255],
+        },
+
+        didDrawPage: (data) => {
+          const pageCount = doc.getNumberOfPages();
+          doc.setFontSize(9);
+          doc.text(
+            `Página ${data.pageNumber} de ${pageCount}`,
+            doc.internal.pageSize.getWidth() - 120,
+            doc.internal.pageSize.getHeight() - 20
+          );
+        },
+      });
+
+      doc.save(`Caballos_Duenos_${dayjs().format('YYYYMMDD_HHmm')}.pdf`);
+      toast.success('PDF generado.');
+    } catch (e) {
+      console.error(e);
+      toast.error('No se pudo generar el PDF.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  
+  // --- RENDER ---
   return (
-    <div className="p-6 bg-slate-950 min-h-screen text-white">
-      <h1 className="text-3xl font-bold mb-6 text-center text-teal-400">Gestión de Caballos</h1>
+    <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+      <h1 className="text-3xl font-bold mb-6 text-center">Gestión de Caballos</h1>
 
-      <div className="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
-  <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Caballo</h2>
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">Agregar Nuevo Caballo</h2>
+          <button
+            onClick={exportHorsesPDF}
+            disabled={loading || exporting || horses.length === 0}
+            className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white 
+                      px-6 py-3 text-lg rounded-xl font-semibold shadow-md
+                      hover:shadow-lg transition"
+            title="Generar PDF de caballos y dueños"
+          >
+            {exporting ? 'Exportando...' : 'Exportar PDF'}
+          </button>
+        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-    <div>
-      <label className="block mb-1">Nombre del Caballo</label>
-      <input
-        type="text"
-        value={newHorse.horseName}
-        onChange={e => setNewHorse({ ...newHorse, horseName: e.target.value })}
-        className="w-full p-2 rounded-md bg-gray-700"
-      />
-    </div>
-
-    <div>
-      <label className="block mb-1">Fecha de Nacimiento</label>
-      <input
-        type="date"
-        value={newHorse.birthdate}
-        onChange={e => setNewHorse({ ...newHorse, birthdate: e.target.value })}
-        className="w-full p-2 rounded-md bg-gray-700"
-      />
-    </div>
-
-    <div>
-      <label className="block mb-1">Sexo</label>
-      <input
-        type="text"
-        value={newHorse.sex}
-        onChange={e => setNewHorse({ ...newHorse, sex: e.target.value })}
-        className="w-full p-2 rounded-md bg-gray-700"
-      />
-    </div>
-
-    <div>
-      <label className="block mb-1">Color</label>
-      <input
-        type="text"
-        value={newHorse.color}
-        onChange={e => setNewHorse({ ...newHorse, color: e.target.value })}
-        className="w-full p-2 rounded-md bg-gray-700"
-      />
-    </div>
-
-    <div>
-      <label className="block mb-1">Descripción General</label>
-      <input
-        type="text"
-        value={newHorse.generalDescription}
-        onChange={e => setNewHorse({ ...newHorse, generalDescription: e.target.value })}
-        className="w-full p-2 rounded-md bg-gray-700"
-      />
-    </div>
-
-    <div>
-      <label className="block mb-1">Número de Pasaporte</label>
-      <input
-        type="number"
-        value={newHorse.passportNumber}
-        onChange={e => setNewHorse({ ...newHorse, passportNumber: Number(e.target.value) })}
-        className="w-full p-2 rounded-md bg-gray-700"
-      />
-    </div>
-
-    <div className="flex flex-col gap-2">
-      <label className="block">Opciones de Establo</label>
-      <div className="flex items-center gap-2">
-        <label>
-          <input
-            type="checkbox"
-            checked={newHorse.box}
-            onChange={e => setNewHorse({ ...newHorse, box: e.target.checked })}
-          />
-          <span className="ml-2">Box</span>
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={newHorse.section}
-            onChange={e => setNewHorse({ ...newHorse, section: e.target.checked })}
-          />
-          <span className="ml-2">Sección</span>
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={newHorse.basket}
-            onChange={e => setNewHorse({ ...newHorse, basket: e.target.checked })}
-          />
-          <span className="ml-2">Canasta</span>
-        </label>
+      <div>
+        <label className="block mb-1">Nombre del Caballo</label>
+        <input
+          type="text"
+          value={newHorse.horseName}
+          onChange={e => setNewHorse({ ...newHorse, horseName: e.target.value })}
+          className="w-full p-2 rounded-md bg-gray-700"
+        />
       </div>
+
+      <div>
+        <label className="block mb-1">Fecha de Nacimiento</label>
+        <input
+          type="date"
+          value={newHorse.birthdate}
+          onChange={e => setNewHorse({ ...newHorse, birthdate: e.target.value })}
+          className="w-full p-2 rounded-md bg-gray-700"
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1">Sexo</label>
+        <input
+          type="text"
+          value={newHorse.sex}
+          onChange={e => setNewHorse({ ...newHorse, sex: e.target.value })}
+          className="w-full p-2 rounded-md bg-gray-700"
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1">Color</label>
+        <input
+          type="text"
+          value={newHorse.color}
+          onChange={e => setNewHorse({ ...newHorse, color: e.target.value })}
+          className="w-full p-2 rounded-md bg-gray-700"
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1">Descripción General</label>
+        <input
+          type="text"
+          value={newHorse.generalDescription}
+          onChange={e => setNewHorse({ ...newHorse, generalDescription: e.target.value })}
+          className="w-full p-2 rounded-md bg-gray-700"
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1">Número de Pasaporte</label>
+        <input
+          type="number"
+          value={newHorse.passportNumber}
+          onChange={e => setNewHorse({ ...newHorse, passportNumber: Number(e.target.value) })}
+          className="w-full p-2 rounded-md bg-gray-700"
+        />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="block">Opciones de Establo</label>
+        <div className="flex items-center gap-2">
+          <label>
+            <input
+              type="checkbox"
+              checked={newHorse.box}
+              onChange={e => setNewHorse({ ...newHorse, box: e.target.checked })}
+            />
+            <span className="ml-2">Box</span>
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={newHorse.section}
+              onChange={e => setNewHorse({ ...newHorse, section: e.target.checked })}
+            />
+            <span className="ml-2">Sección</span>
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={newHorse.basket}
+              onChange={e => setNewHorse({ ...newHorse, basket: e.target.checked })}
+            />
+            <span className="ml-2">Canasta</span>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label className="block mb-1">Dueño</label>
+        <select
+          name="fk_idOwner"
+          value={newHorse.fk_idOwner || ""}
+          onChange={e => setNewHorse({ ...newHorse, fk_idOwner: Number(e.target.value) })}
+          className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
+        >
+          <option value="">-- Selecciona un dueño --</option>
+          {owners.map((o) => (
+            <option key={o.idOwner} value={o.idOwner}>
+              {o.name} {o.FirstName}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block mb-1">Raza</label>
+        <select
+          name="fk_idRace"
+          value={newHorse.fk_idRace || ""}
+          onChange={e => setNewHorse({ ...newHorse, fk_idRace: Number(e.target.value) })}
+          className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
+        >
+          <option value="">-- Selecciona una raza --</option>
+          {races.map((r) => (
+            <option key={r.idRace} value={r.idRace}>
+              {r.nameRace}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block mb-1">Plan Nutricional</label>
+        <select
+          name="fl_idNutritionalPlan"
+          value={newHorse.fl_idNutritionalPlan || ''}
+          onChange={e => setNewHorse({ ...newHorse, fl_idNutritionalPlan: Number(e.target.value) })}
+          className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
+        >
+          <option value="">-- Selecciona un plan nutricional --</option>
+          {nutritionalPlans.map((n) => (
+            <option key={n.idNutritionalPlan} value={n.idNutritionalPlan}>
+              {n.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block mb-1">Foto del Caballo</label>
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          onChange={(e) => handlePhotoChange(e, "create")}
+          className="w-full p-1.5 rounded-md bg-gray-700 file:mr-4 file:py-2 file:px-4 
+                    file:rounded-full file:border-0 file:text-sm file:font-semibold 
+                    file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
+        />
+      </div>
+
+      <div>
+        <label className="block mb-1">Estado</label>
+        <select
+          required
+          value={newHorse.state}
+          onChange={e => setNewHorse({ ...newHorse, state: e.target.value })}
+          className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
+        >
+          <option value="ACTIVO">ACTIVO</option>
+          <option value="AUSENTE">AUSENTE</option>
+          <option value="FALLECIDO">FALLECIDO</option>
+        </select>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <input
+          id="stateSchool"
+          type="checkbox"
+          checked={newHorse.stateSchool}
+          onChange={e => setNewHorse({ ...newHorse, stateSchool: e.target.checked })}
+        />
+        <label htmlFor="stateSchool">Pertenece a escuela</label>
+      </div>
+
     </div>
 
-    <div>
-      <label className="block mb-1">Dueño</label>
-      <select
-        name="fk_idOwner"
-        value={newHorse.fk_idOwner || ""}
-        onChange={e => setNewHorse({ ...newHorse, fk_idOwner: Number(e.target.value) })}
-        className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
+    <div className="mt-4 text-right">
+      <button
+        onClick={createHorse}
+        className="bg-green-600 hover:bg-green-700 text-white p-2 px-4 rounded-md font-semibold flex items-center gap-2 inline-flex"
       >
-        <option value="">-- Selecciona un dueño --</option>
-        {owners.map((o) => (
-          <option key={o.idOwner} value={o.idOwner}>
-            {o.name} {o.FirstName}
-          </option>
-        ))}
-      </select>
+        <Plus size={20} /> Agregar
+      </button>
     </div>
 
-    <div>
-      <label className="block mb-1">Raza</label>
-      <select
-        name="fk_idRace"
-        value={newHorse.fk_idRace || ""}
-        onChange={e => setNewHorse({ ...newHorse, fk_idRace: Number(e.target.value) })}
-        className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
-      >
-        <option value="">-- Selecciona una raza --</option>
-        {races.map((r) => (
-          <option key={r.idRace} value={r.idRace}>
-            {r.nameRace}
-          </option>
-        ))}
-      </select>
-    </div>
-
-    <div>
-      <label className="block mb-1">Plan Nutricional</label>
-      <select
-        name="fl_idNutritionalPlan"
-        value={newHorse.fl_idNutritionalPlan || ''}
-        onChange={e => setNewHorse({ ...newHorse, fl_idNutritionalPlan: Number(e.target.value) })}
-        className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
-      >
-        <option value="">-- Selecciona un plan nutricional --</option>
-        {nutritionalPlans.map((n) => (
-          <option key={n.idNutritionalPlan} value={n.idNutritionalPlan}>
-            {n.name}
-          </option>
-        ))}
-      </select>
-    </div>
-
-    <div>
-      <label className="block mb-1">Foto del Caballo</label>
-      <input
-        type="file"
-        accept="image/*"
-        ref={fileInputRef}
-        onChange={(e) => handlePhotoChange(e, "create")}
-        className="w-full p-1.5 rounded-md bg-gray-700 file:mr-4 file:py-2 file:px-4 
-                   file:rounded-full file:border-0 file:text-sm file:font-semibold 
-                   file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
-      />
+    {/* Resumen + Botón PDF */}
+    <div className="flex items-center gap-4">
+      <span className="text-base bg-gray-700 px-4 py-2 rounded-lg">
+        Total caballos: <b>{totalCaballos}</b>
+      </span>
     </div>
   </div>
 
-  <div className="mt-4 text-right">
-    <button
-      onClick={createHorse}
-      className="bg-green-600 hover:bg-green-700 text-white p-2 px-4 rounded-md font-semibold flex items-center gap-2 inline-flex"
-    >
-      <Plus size={20} /> Agregar
-    </button>
-  </div>
-</div>
-
-      <div className="bg-gray-800 p-6 rounded-lg shadow-md">
+      {/* Lista de caballos */}
+      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
             <Loader size={24} className="animate-spin" />Cargando caballos...
@@ -514,11 +720,45 @@ const HorsesManagement = () => {
                         onChange={(e) => handlePhotoChange(e, "edit")}
                         className="w-full p-1.5 rounded-md bg-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
                       />
+
+                      <div>
+                        <label className="block mb-1">Estado</label>
+                        <select
+                          required
+                          value={editingHorseData.state}
+                          onChange={e => setEditingHorseData({ ...editingHorseData, state: e.target.value })}
+                          className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
+                        >
+                          <option value="ACTIVO">ACTIVO</option>
+                          <option value="AUSENTE">AUSENTE</option>
+                          <option value="FALLECIDO">FALLECIDO</option>
+                        </select>
+                      </div>
+
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={editingHorseData.stateSchool}
+                          onChange={e => setEditingHorseData({ ...editingHorseData, stateSchool: e.target.checked })}
+                        />
+                        Pertenece a escuela
+                      </label>
+
+                      {/* Barra TOTAL al final de la lista */}
+                      <div className="mt-6 grid grid-cols-2 rounded-md bg-amber-100 text-amber-900 font-extrabold text-lg">
+                        <div className="py-3 text-center tracking-wide">TOTAL</div>
+                        <div className="py-3 text-center tracking-wide">
+                          {totalCaballos} CABALLOS
+                        </div>
+                      </div>
+
                     </div>
+
                     <div className="flex justify-end gap-2">
                       <button onClick={() => updateHorse(horse.idHorse!)} className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center gap-1"><Save size={16} /> Guardar</button>
                       <button onClick={handleCancelEdit} className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"><X size={16} /> Cancelar</button>
                     </div>
+
                   </>
                 ) : (
                   <>
@@ -531,6 +771,8 @@ const HorsesManagement = () => {
                       <p className="text-sm text-gray-300">N° Pasaporte: {horse.passportNumber}</p>
                       <p className="text-sm text-gray-300">Box: {horse.box ? 'Sí' : 'No'} | Sección: {horse.section ? 'Sí' : 'No'} | Canasta: {horse.basket ? 'Sí' : 'No'}</p>
                       {horse.generalDescription && <p className="mt-2 text-gray-400 text-sm">{horse.generalDescription}</p>}
+                      <p className="text-sm text-gray-300">Estado: {horse.state}</p>
+                      <p className="text-sm text-gray-300">Escuela: {horse.stateSchool ? 'Sí' : 'No'}</p>
                     </div>
                     <div className="flex justify-end gap-2">
                       <button onClick={() => handleEditClick(horse)} className="bg-yellow-600 hover:bg-yellow-700 text-white p-2 rounded-md flex items-center gap-1"><Edit size={16} /> Editar</button>
