@@ -6,9 +6,9 @@ import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
 
 
-const API_URL = "http://localhost:8000/salary_payments/";
-const EMPLOYEES_URL = "http://localhost:8000/employees/";
-const EXPENSES_URL = "http://localhost:8000/expenses/";
+const API_URL = "https://backend-country-nnxe.onrender.com/salary_payments/";
+const EMPLOYEES_URL = "https://backend-country-nnxe.onrender.com/employees/";
+const EXPENSES_URL = "https://backend-country-nnxe.onrender.com/expenses/";
 
 interface EmployeeLite {
   idEmployee: number;
@@ -570,14 +570,16 @@ const SalaryPayments: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {expenses.map((ex) => (
-              <tr key={ex.idExpenses} className="border-t border-gray-600">
-                <td className="p-2">{ex.idExpenses}</td>
-                <td className="p-2">{fmtDateView(ex.date)}</td>
-                <td className="p-2">{ex.description}</td>
-                <td className="p-2">{ex.AmountBsCaptureType.toFixed(2)} Bs</td>
-                <td className="p-2">{fmtDateView(ex.period)}</td>
-              </tr>
+            {expenses
+                .filter((ex) => ex.description?.startsWith("Pago de salario"))
+                .map((ex) => (
+                <tr key={ex.idExpenses} className="border-t border-gray-600">
+                    <td className="p-2">{ex.idExpenses}</td>
+                    <td className="p-2">{fmtDateView(ex.date)}</td>
+                    <td className="p-2">{ex.description}</td>
+                    <td className="p-2">{ex.AmountBsCaptureType.toFixed(2)} Bs</td>
+                    <td className="p-2">{fmtDateView(ex.period)}</td>
+                </tr>
             ))}
           </tbody>
         </table>
