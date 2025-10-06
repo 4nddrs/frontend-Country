@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 import {
   Home,
   Menu,
@@ -123,6 +124,14 @@ const Sidebar = () => {
         
         <div className="mt-auto p-4 text-xs text-gray-400 border-t border-gray-700">
           &copy; {new Date().getFullYear()} Country Club - Hipica
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+            }}
+            className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md mt-4 w-full"
+           >
+            Cerrar sesión
+          </button>
         </div>
       </aside>
 

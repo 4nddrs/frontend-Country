@@ -1,7 +1,7 @@
   import React, { useState, useEffect } from 'react';
   import { Toaster, toast } from 'react-hot-toast';
   import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
-  import { decodeBackendImage } from '../utils/imageHelpers';
+  import { decodeBackendImage } from '../../utils/imageHelpers';
 
 
   const API_URL = 'https://backend-country-nnxe.onrender.com/owner/';

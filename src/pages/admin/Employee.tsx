@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { decodeBackendImage, encodeImageForBackend } from '../utils/imageHelpers';
+import { decodeBackendImage, encodeImageForBackend } from '../../utils/imageHelpers';
 import { toast } from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';

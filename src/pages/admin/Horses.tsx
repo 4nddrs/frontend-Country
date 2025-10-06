@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
-import { decodeBackendImage, encodeImageForBackend } from '../utils/imageHelpers'; // CAMBIO: Importamos la función encodeImageForBackend
+import { decodeBackendImage, encodeImageForBackend } from '../../utils/imageHelpers'; // CAMBIO: Importamos la función encodeImageForBackend
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
