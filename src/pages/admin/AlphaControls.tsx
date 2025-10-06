@@ -1,12 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { toast } from "react-hot-toast";
+import { Plus, Save, Trash2, Loader, X, Edit, FileText } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import dayjs from "dayjs";
 
-const API_URL = 'https://backend-country-nnxe.onrender.com/alpha_controls/';
+const API_URL = "http://localhost:8000/alpha_controls/";
+
+interface ProviderLite {
+  idFoodProvider: number;
+  supplierName: string;
+}
 
 interface AlphaControl {
   idAlphaControl?: number;
-  date: string; // ISO date: "YYYY-MM-DD"
+  date: string;
   alphaIncome: number;
   unitPrice: number;
   totalPurchasePrice: number;
@@ -14,15 +22,37 @@ interface AlphaControl {
   balance: number;
   salePrice: number;
   income: number;
-  closingAmount: string;
   fk_idFoodProvider: number;
-  created_at?: string;
+  provider?: ProviderLite;
 }
 
-const AlphaControlsManagement = () => {
+// 🔹 Formatea visualmente (para mostrar en tabla o PDF)
+const formatDisplay = (value: number): string => {
+  if (isNaN(value)) return "";
+  return new Intl.NumberFormat("es-BO", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
+
+// 🔹 Limpia la entrada del usuario (solo permite números, comas y puntos)
+const normalizeInput = (raw: string): string => {
+  return raw.replace(/[^\d.,]/g, "");
+};
+
+// 🔹 Convierte el string formateado a número (interno)
+const parseToNumber = (raw: string): number => {
+  if (!raw) return 0;
+  const cleaned = raw.replace(/\./g, "").replace(",", ".");
+  const parsed = parseFloat(cleaned);
+  if (isNaN(parsed)) return 0;
+  return Math.round(parsed * 100) / 100; // 🔸 Redondea a 2 decimales
+};
+
+const AlphaControlsManagement: React.FC = () => {
   const [controls, setControls] = useState<AlphaControl[]>([]);
   const [newControl, setNewControl] = useState<AlphaControl>({
-    date: '',
+    date: "",
     alphaIncome: 0,
     unitPrice: 0,
     totalPurchasePrice: 0,
@@ -30,22 +60,51 @@ const AlphaControlsManagement = () => {
     balance: 0,
     salePrice: 0,
     income: 0,
-    closingAmount: '',
     fk_idFoodProvider: 1,
   });
+
+  const [displayInputs, setDisplayInputs] = useState({
+    alphaIncome: "",
+    unitPrice: "",
+    outcome: "",
+    salePrice: "",
+  });
+
+  const [foodProviders, setFoodProviders] = useState<ProviderLite[]>([]);
+  const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [editData, setEditData] = useState<AlphaControl | null>(null);
+  const [editDisplay, setEditDisplay] = useState({
+    alphaIncome: "",
+    unitPrice: "",
+    outcome: "",
+    salePrice: "",
+  });
+  const [exporting, setExporting] = useState(false);
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
 
+  // ===== Cargar logo =====
+  useEffect(() => {
+    const LOGO_URL = `${import.meta.env.BASE_URL}image/LogoHipica.png`;
+    fetch(LOGO_URL)
+      .then((r) => r.blob())
+      .then((blob) => {
+        const reader = new FileReader();
+        reader.onloadend = () => setLogoDataUrl(reader.result as string);
+        reader.readAsDataURL(blob);
+      })
+      .catch(() => console.warn("No se pudo cargar el logo"));
+  }, []);
 
-  const [foodProviders, setFoodProviders] = useState<any[]>([]);
+  // ===== Fetch datos =====
   const fetchFoodProviders = async () => {
     try {
-      const res = await fetch("https://backend-country-nnxe.onrender.com/food-providers/");
-      if (!res.ok) throw new Error("Error al obtener proveedores");
+      const res = await fetch("http://localhost:8000/food-providers/");
+      if (!res.ok) throw new Error();
       const data = await res.json();
       setFoodProviders(data);
     } catch {
-      toast.error("No se pudieron cargar proveedores");
+      toast.error("Error al obtener proveedores");
     }
   };
 
@@ -53,11 +112,10 @@ const AlphaControlsManagement = () => {
     setLoading(true);
     try {
       const res = await fetch(API_URL);
-      if (!res.ok) throw new Error('Error al obtener controles');
       const data = await res.json();
-      setControls(data);
+      setControls(calculateWithBalance(data));
     } catch {
-      toast.error('No se pudo cargar controles.');
+      toast.error("No se pudieron cargar los controles");
     } finally {
       setLoading(false);
     }
@@ -68,17 +126,53 @@ const AlphaControlsManagement = () => {
     fetchFoodProviders();
   }, []);
 
+  // ===== Calcular saldo acumulado =====
+  const calculateWithBalance = (controls: AlphaControl[]) => {
+    let saldo = 0;
+    return controls.map((c) => {
+      saldo = saldo + c.alphaIncome - c.outcome;
+      return { ...c, balance: saldo };
+    });
+  };
+
+  // ===== Input controlado (sin autocompletar) =====
+  const handleDynamicInput = (
+    field: keyof AlphaControl,
+    rawValue: string,
+    isEdit = false
+  ) => {
+    const cleaned = normalizeInput(rawValue);
+    const num = parseToNumber(cleaned);
+
+    if (isEdit && editData) {
+      setEditDisplay((prev) => ({ ...prev, [field]: cleaned }));
+      setEditData({ ...editData, [field]: num });
+    } else {
+      setDisplayInputs((prev) => ({ ...prev, [field]: cleaned }));
+      setNewControl({ ...newControl, [field]: num });
+    }
+  };
+
+  // ===== CRUD =====
   const createControl = async () => {
     try {
+      const payload = {
+        ...newControl,
+        totalPurchasePrice: Math.round(
+          newControl.alphaIncome * newControl.unitPrice * 100
+        ) / 100,
+        income:
+          Math.round(newControl.outcome * newControl.salePrice * 100) / 100,
+      };
       const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newControl),
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error('Error al crear control');
-      toast.success('Control creado!');
+      if (!res.ok) throw new Error();
+      toast.success("Control creado!");
       setNewControl({
-        date: '',
+        date: "",
         alphaIncome: 0,
         unitPrice: 0,
         totalPurchasePrice: 0,
@@ -86,304 +180,374 @@ const AlphaControlsManagement = () => {
         balance: 0,
         salePrice: 0,
         income: 0,
-        closingAmount: '',
         fk_idFoodProvider: 1,
+      });
+      setDisplayInputs({
+        alphaIncome: "",
+        unitPrice: "",
+        outcome: "",
+        salePrice: "",
       });
       fetchControls();
     } catch {
-      toast.error('No se pudo crear control.');
+      toast.error("Error al crear control");
     }
   };
 
-  const updateControl = async (id: number, updatedControl: AlphaControl) => {
+  const startEdit = (row: AlphaControl) => {
+    setEditingId(row.idAlphaControl!);
+    setEditData(row);
+    setEditDisplay({
+      alphaIncome: formatDisplay(row.alphaIncome),
+      unitPrice: formatDisplay(row.unitPrice),
+      outcome: formatDisplay(row.outcome),
+      salePrice: formatDisplay(row.salePrice),
+    });
+  };
+
+  const updateControl = async (id: number) => {
     try {
+      if (!editData) return;
+      const payload = {
+        ...editData,
+        totalPurchasePrice: Math.round(
+          editData.alphaIncome * editData.unitPrice * 100
+        ) / 100,
+        income: Math.round(editData.outcome * editData.salePrice * 100) / 100,
+      };
       const res = await fetch(`${API_URL}${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedControl),
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error('Error al actualizar control');
-      toast.success('Control actualizado!');
+      if (!res.ok) throw new Error();
+      toast.success("Control actualizado!");
       setEditingId(null);
+      setEditData(null);
       fetchControls();
     } catch {
-      toast.error('No se pudo actualizar control.');
+      toast.error("Error al actualizar control");
     }
   };
 
   const deleteControl = async (id: number) => {
     try {
-      const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Error al eliminar control');
-      toast.success('Control eliminado!');
+      const res = await fetch(`${API_URL}${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      toast.success("Eliminado correctamente");
       fetchControls();
     } catch {
-      toast.error('No se pudo eliminar control.');
+      toast.error("Error al eliminar");
     }
   };
 
-  return (
-    <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
-      <h1 className="text-3xl font-bold mb-6 text-center text-teal-400">Gestión de Control de Alfalfa</h1>
-      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Control</h2>
-        <div className="flex gap-4 flex-wrap">
+  // ===== PDF =====
+  const exportAlphaPDF = async () => {
+    try {
+      setExporting(true);
+      const doc = new jsPDF({ orientation: "landscape", unit: "pt" });
+      if (logoDataUrl) {
+        const margin = 40;
+        const w = 120;
+        const h = 70;
+        const pageW = doc.internal.pageSize.getWidth();
+        doc.addImage(logoDataUrl, "PNG", pageW - w - margin, 20, w, h);
+      }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text(
+        "Reporte de Control de Alfalfa",
+        doc.internal.pageSize.getWidth() / 2,
+        50,
+        { align: "center" }
+      );
+      const body = controls.map((p, i) => [
+        i + 1,
+        p.date ? new Date(p.date).toLocaleDateString("es-BO") : "—",
+        p.provider?.supplierName || "—",
+        formatDisplay(p.alphaIncome) + " KLG",
+        formatDisplay(p.totalPurchasePrice) + " Bs",
+        formatDisplay(p.outcome) + " KLG",
+        formatDisplay(p.income) + " Bs",
+      ]);
+      autoTable(doc, {
+        startY: 110,
+        head: [
+          [
+            "#",
+            "FECHA",
+            "PROVEEDOR",
+            "INGRESO KLG.",
+            "PRECIO COMPRA",
+            "EGRESO KLG.",
+            "INGRESO Bs.",
+          ],
+        ],
+        body,
+        styles: { fontSize: 9, cellPadding: 6 },
+      });
+      doc.save(`Alfalfa_${dayjs().format("YYYYMMDD_HHmm")}.pdf`);
+      toast.success("PDF generado");
+    } catch (err) {
+      toast.error("No se pudo generar el PDF");
+    } finally {
+      setExporting(false);
+    }
+  };
 
-          <div className="flex-1">
-            <label className="text-sm mb-1 block">Fecha del control</label>
+
+
+  return (
+    <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700 overflow-x-auto">
+      <h1 className="text-3xl font-bold mb-6 text-center text-teal-400">
+        Gestión de Control de Alfalfa
+      </h1>
+
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={exportAlphaPDF}
+          disabled={exporting}
+          className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2"
+        >
+          <FileText size={18} />
+          {exporting ? "Generando..." : "Exportar PDF"}
+        </button>
+      </div>
+
+      {/* FORMULARIO */}
+      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+        <h2 className="text-xl font-semibold mb-4 text-teal-400">
+          Agregar Nuevo Control
+        </h2>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div>
+            <label className="text-sm mb-1 block">FECHA</label>
             <input
               type="date"
-              name="date"
               value={newControl.date}
-              onChange={e => setNewControl({ ...newControl, date: e.target.value })}
-              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+              onChange={(e) =>
+                setNewControl({ ...newControl, date: e.target.value })
+              }
+              className="w-full p-2 rounded-md bg-gray-700 text-white"
             />
           </div>
 
-          <div className="flex-1">
-            <label className="text-sm mb-1 block">Ingreso alfalfa (kg)</label>
-            <input
-              type="number"
-              name="alphaIncome"
-              value={newControl.alphaIncome}
-              onChange={e => setNewControl({ ...newControl, alphaIncome: Number(e.target.value) })}
-              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-            />
-          </div>
-
-          <div className="flex-1">
-            <label className="text-sm mb-1 block">Precio unitario (Bs.)</label>
-            <input
-              type="number"
-              name="unitPrice"
-              value={newControl.unitPrice}
-              onChange={e => setNewControl({ ...newControl, unitPrice: Number(e.target.value) })}
-              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-            />
-          </div>
-
-          <div className="flex-1">
-            <label className="text-sm mb-1 block">Precio total de compra (Bs.)</label>
-            <input
-              type="number"
-              name="totalPurchasePrice"
-              value={newControl.totalPurchasePrice}
-              onChange={e => setNewControl({ ...newControl, totalPurchasePrice: Number(e.target.value) })}
-              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-            />
-          </div>
-
-          <div className="flex-1">
-            <label className="text-sm mb-1 block">Salida de alfalfa (kg)</label>
-            <input
-              type="number"
-              name="outcome"
-              value={newControl.outcome}
-              onChange={e => setNewControl({ ...newControl, outcome: Number(e.target.value) })}
-              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-            />
-          </div>
-
-          <div className="flex-1">
-            <label className="text-sm mb-1 block">Balance (kg)</label>
-            <input
-              type="number"
-              name="balance"
-              value={newControl.balance}
-              onChange={e => setNewControl({ ...newControl, balance: Number(e.target.value) })}
-              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-            />
-          </div>
-
-          <div className="flex-1">
-            <label className="text-sm mb-1 block">Precio de venta (Bs.)</label>
-            <input
-              type="number"
-              name="salePrice"
-              value={newControl.salePrice}
-              onChange={e => setNewControl({ ...newControl, salePrice: Number(e.target.value) })}
-              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-            />
-          </div>
-
-          <div className="flex-1">
-            <label className="text-sm mb-1 block">Ingreso (Bs.)</label>
-            <input
-              type="number"
-              name="income"
-              value={newControl.income}
-              onChange={e => setNewControl({ ...newControl, income: Number(e.target.value) })}
-              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-            />
-          </div>
-
-          <div className="flex-1">
-            <label className="text-sm mb-1 block">Monto de cierre</label>
-            <input
-              type="text"
-              name="closingAmount"
-              value={newControl.closingAmount}
-              onChange={e => setNewControl({ ...newControl, closingAmount: e.target.value })}
-              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-            />
-          </div>
-
-          <div className="flex-1">
-            <label className="text-sm mb-1 block">Proveedor de alfalfa</label>
+          <div>
+            <label className="text-sm mb-1 block">PROVEEDOR</label>
             <select
-              name="fk_idFoodProvider"
               value={newControl.fk_idFoodProvider}
-              onChange={e => setNewControl({ ...newControl, fk_idFoodProvider: Number(e.target.value) })}
-              className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+              onChange={(e) =>
+                setNewControl({
+                  ...newControl,
+                  fk_idFoodProvider: Number(e.target.value),
+                })
+              }
+              className="w-full p-2 rounded-md bg-gray-700 text-white"
             >
               <option value="">-- Selecciona proveedor --</option>
-              {foodProviders.map(p => (
-                <option key={p.idFoodProvider} value={p.idFoodProvider}>{p.supplierName}</option>
+              {foodProviders.map((p) => (
+                <option key={p.idFoodProvider} value={p.idFoodProvider}>
+                  {p.supplierName}
+                </option>
               ))}
             </select>
           </div>
 
-          <button
-            onClick={createControl}
-            className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
-            <Plus size={20} /> Agregar
-          </button>
+          {/* Inputs numéricos */}
+          {[
+            { label: "INGRESO KLG.", field: "alphaIncome" },
+            { label: "PRECIO UNITARIO Bs.", field: "unitPrice" },
+            { label: "EGRESO KLG.", field: "outcome" },
+            { label: "PRECIO VENTA Bs.", field: "salePrice" },
+          ].map(({ label, field }) => (
+            <div key={field}>
+              <label className="text-sm mb-1 block">{label}</label>
+              <input
+                type="text"
+                placeholder="0,00"
+                value={(displayInputs as any)[field]}
+                onChange={(e) =>
+                  handleDynamicInput(field as keyof AlphaControl, e.target.value)
+                }
+                className="w-full p-2 rounded bg-gray-700 text-white"
+              />
+            </div>
+          ))}
+
+          <div className="col-span-full flex justify-end">
+            <button
+              onClick={createControl}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2"
+            >
+              <Plus size={20} /> Agregar
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+      {/* TABLA */}
+      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700 overflow-x-auto">
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
-            <Loader size={24} className="animate-spin" />Cargando controles...
+            <Loader size={24} className="animate-spin" /> Cargando controles...
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {controls.map(control => (
-              <div key={control.idAlphaControl} className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between">
-                {editingId === control.idAlphaControl ? (
-                  <>
-                    <input
-                      type="date"
-                      defaultValue={control.date?.slice(0,10)}
-                      onChange={e => setNewControl({ ...newControl, date: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="number"
-                      defaultValue={control.alphaIncome}
-                      onChange={e => setNewControl({ ...newControl, alphaIncome: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="number"
-                      defaultValue={control.unitPrice}
-                      onChange={e => setNewControl({ ...newControl, unitPrice: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="number"
-                      defaultValue={control.totalPurchasePrice}
-                      onChange={e => setNewControl({ ...newControl, totalPurchasePrice: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="number"
-                      defaultValue={control.outcome}
-                      onChange={e => setNewControl({ ...newControl, outcome: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="number"
-                      defaultValue={control.balance}
-                      onChange={e => setNewControl({ ...newControl, balance: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="number"
-                      defaultValue={control.salePrice}
-                      onChange={e => setNewControl({ ...newControl, salePrice: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="number"
-                      defaultValue={control.income}
-                      onChange={e => setNewControl({ ...newControl, income: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="text"
-                      defaultValue={control.closingAmount}
-                      onChange={e => setNewControl({ ...newControl, closingAmount: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <select
-                      value={newControl.fk_idFoodProvider}
-                      onChange={e => setNewControl({ ...newControl, fk_idFoodProvider: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    >
-                      {foodProviders.map(p => (<option key={p.idFoodProvider} value={p.idFoodProvider}>{p.supplierName}</option>))}
-                    </select>
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => updateControl(control.idAlphaControl!, {
-                          date: newControl.date || control.date,
-                          alphaIncome: newControl.alphaIncome || control.alphaIncome,
-                          unitPrice: newControl.unitPrice || control.unitPrice,
-                          totalPurchasePrice: newControl.totalPurchasePrice || control.totalPurchasePrice,
-                          outcome: newControl.outcome || control.outcome,
-                          balance: newControl.balance || control.balance,
-                          salePrice: newControl.salePrice || control.salePrice,
-                          income: newControl.income || control.income,
-                          closingAmount: newControl.closingAmount || control.closingAmount,
-                          fk_idFoodProvider: newControl.fk_idFoodProvider || control.fk_idFoodProvider
-                        })}
-                        className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center gap-1"
-                      >
-                        <Save size={16} /> Guardar
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
-                      >
-                        <X size={16} /> Cancelar
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <h3 className="text-lg font-semibold">Fecha: {control.date?.slice(0, 10)}</h3>
-                    <p>Ingreso alfalfa: {control.alphaIncome}</p>
-                    <p>Precio unitario: {control.unitPrice}</p>
-                    <p>Precio total compra: {control.totalPurchasePrice}</p>
-                    <p>Salida: {control.outcome}</p>
-                    <p>Balance: {control.balance}</p>
-                    <p>Precio venta: {control.salePrice}</p>
-                    <p>Ingreso: {control.income}</p>
-                    <p>Monto cierre: {control.closingAmount}</p>
-                    <p>Proveedor: {foodProviders.find(p => p.idFoodProvider === control.fk_idFoodProvider)?.supplierName || control.fk_idFoodProvider}</p>
-                    <div className="flex justify-end gap-2 mt-2">
-                      <button
-                        onClick={() => { setEditingId(control.idAlphaControl!); setNewControl(control); }}
-                        className="bg-yellow-600 hover:bg-yellow-700 text-white p-2 rounded-md flex items-center gap-1"
-                      >
-                        <Edit size={16} /> Editar
-                      </button>
-                      <button
-                        onClick={() => deleteControl(control.idAlphaControl!)}
-                        className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
-                      >
-                        <Trash2 size={16} /> Eliminar
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
+          <table className="w-full border-collapse text-sm text-gray-200">
+            <thead className="bg-slate-700 text-gray-100">
+              <tr>
+                <th className="p-2 border border-slate-600">FECHA</th>
+                <th className="p-2 border border-slate-600">PROVEEDOR</th>
+                <th className="p-2 border border-slate-600">INGRESO KLG.</th>
+                <th className="p-2 border border-slate-600">PRECIO UNITARIO</th>
+                <th className="p-2 border border-slate-600">PRECIO COMPRA</th>
+                <th className="p-2 border border-slate-600">EGRESO KLG.</th>
+                <th className="p-2 border border-slate-600">SALDO KLG.</th>
+                <th className="p-2 border border-slate-600">PRECIO VENTA</th>
+                <th className="p-2 border border-slate-600">INGRESO Bs.</th>
+                <th className="p-2 border border-slate-600">ACCIONES</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {controls.map((control) => (
+                <tr key={control.idAlphaControl} className="hover:bg-slate-600">
+                  {editingId === control.idAlphaControl ? (
+                    <>
+                      <td className="p-2 border border-slate-600">
+                        <input
+                          type="date"
+                          value={editData?.date || ""}
+                          onChange={(e) =>
+                            setEditData({ ...editData!, date: e.target.value })
+                          }
+                          className="p-1 rounded-md bg-gray-700 text-white"
+                        />
+                      </td>
+
+                      <td className="p-2 border border-slate-600">
+                        <select
+                          value={editData?.fk_idFoodProvider}
+                          onChange={(e) =>
+                            setEditData({
+                              ...editData!,
+                              fk_idFoodProvider: Number(e.target.value),
+                            })
+                          }
+                          className="p-1 rounded-md bg-gray-700 text-white"
+                        >
+                          {foodProviders.map((p) => (
+                            <option
+                              key={p.idFoodProvider}
+                              value={p.idFoodProvider}
+                            >
+                              {p.supplierName}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+
+                      {[
+                        { field: "alphaIncome" },
+                        { field: "unitPrice" },
+                        { field: "outcome" },
+                        { field: "salePrice" },
+                      ].map(({ field }) => (
+                        <td key={field} className="p-2 border border-slate-600">
+                          <input
+                            type="text"
+                            placeholder="0,00"
+                            value={(editDisplay as any)[field]}
+                            onChange={(e) =>
+                              handleDynamicInput(
+                                field as keyof AlphaControl,
+                                e.target.value,
+                                true
+                              )
+                            }
+                            className="p-1 rounded-md bg-gray-700 text-white"
+                          />
+                        </td>
+                      ))}
+
+                      <td className="p-2 border border-slate-600">
+                        {formatDisplay(
+                          editData!.outcome * editData!.salePrice
+                        )}
+                      </td>
+
+                      <td className="p-2 border border-slate-600 flex gap-2">
+                        <button
+                          onClick={() => updateControl(control.idAlphaControl!)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded-md flex items-center gap-1"
+                        >
+                          <Save size={14} /> Guardar
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingId(null);
+                            setEditData(null);
+                          }}
+                          className="bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded-md flex items-center gap-1"
+                        >
+                          <X size={14} /> Cancelar
+                        </button>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="p-2 border border-slate-600">
+                        {control.date?.slice(0, 10)}
+                      </td>
+                      <td className="p-2 border border-slate-600">
+                        {control.provider?.supplierName || "N/A"}
+                      </td>
+                      <td className="p-2 border border-slate-600">
+                        {formatDisplay(control.alphaIncome)}
+                      </td>
+                      <td className="p-2 border border-slate-600">
+                        {formatDisplay(control.unitPrice)}
+                      </td>
+                      <td className="p-2 border border-slate-600">
+                        {formatDisplay(control.totalPurchasePrice)}
+                      </td>
+                      <td className="p-2 border border-slate-600">
+                        {formatDisplay(control.outcome)}
+                      </td>
+                      <td className="p-2 border border-slate-600">
+                        {formatDisplay(control.balance)}
+                      </td>
+                      <td className="p-2 border border-slate-600">
+                        {formatDisplay(control.salePrice)}
+                      </td>
+                      <td className="p-2 border border-slate-600">
+                        {formatDisplay(control.outcome * control.salePrice)}
+                      </td>
+                      <td className="p-2 border border-slate-600 flex gap-2">
+                        <button
+                          onClick={() => startEdit(control)}
+                          className="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded-md flex items-center gap-1"
+                        >
+                          <Edit size={14} /> Editar
+                        </button>
+                        <button
+                          onClick={() => deleteControl(control.idAlphaControl!)}
+                          className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-md flex items-center gap-1"
+                        >
+                          <Trash2 size={14} /> Eliminar
+                        </button>
+                      </td>
+                    </>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
     </div>
   );
+
 };
 
 export default AlphaControlsManagement;
