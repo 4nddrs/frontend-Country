@@ -155,7 +155,7 @@ const SalaryPayments: React.FC = () => {
       autoTable(doc, {
         startY: 110,
         theme: "striped",
-        head: [["NRO.", "NOMBRE", "CARGO", "FECHA DE PAGO", "MONTO Bs."]],
+        head: [["NRO.", "NOMBRE", "CARGO", "FECHA DE PAGO", "MONTO Bs." , "FIRMA"]],
         body,
         styles: { fontSize: 9, cellPadding: 6 },
         headStyles: { fillColor: [38, 72, 131], textColor: [255, 255, 255], fontStyle: "bold" },
