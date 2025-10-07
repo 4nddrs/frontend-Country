@@ -4,6 +4,9 @@ import { Plus, Save, Trash2, Loader, X, Edit, FileText } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dayjs from "dayjs";
+import 'dayjs/locale/es';
+dayjs.locale('es');
+
 
 const API_URL = "http://localhost:8000/alpha_controls/";
 
@@ -22,7 +25,7 @@ interface AlphaControl {
   balance: number;
   salePrice: number;
   income: number;
-  fk_idFoodProvider: number;
+  fk_idFoodProvider: number | null;
   provider?: ProviderLite;
 }
 
@@ -60,7 +63,7 @@ const AlphaControlsManagement: React.FC = () => {
     balance: 0,
     salePrice: 0,
     income: 0,
-    fk_idFoodProvider: 1,
+    fk_idFoodProvider: null,
   });
 
   const [displayInputs, setDisplayInputs] = useState({
@@ -166,16 +169,22 @@ const AlphaControlsManagement: React.FC = () => {
   const handleSubmit = async () => {
     // === VALIDACIÓN SEGÚN ESTADO ===
     if (!isMonthlyClose) {
+      if (!newControl.fk_idFoodProvider) {
+        toast.error("Debes seleccionar un proveedor para registrar una compra.");
+        return;
+      }
       if (!newControl.alphaIncome || !newControl.unitPrice || !newControl.salePrice) {
         toast.error("Completa los campos de Ingreso, Precio unitario y Precio venta.");
         return;
       }
     } else {
+      // Para el cierre de mes (venta)
       if (!newControl.outcome || !newControl.salePrice) {
         toast.error("Completa los campos de Egreso y Precio venta para el cierre de mes.");
         return;
       }
     }
+
 
     try {
       const payload = {
@@ -244,7 +253,7 @@ const AlphaControlsManagement: React.FC = () => {
       balance: 0,
       salePrice: 0,
       income: 0,
-      fk_idFoodProvider: 1,
+      fk_idFoodProvider: null,
     });
     setDisplayInputs({
       alphaIncome: "",
@@ -308,7 +317,9 @@ const AlphaControlsManagement: React.FC = () => {
       const body = controls.map((p, i) => [
         i + 1,
         p.date ? new Date(p.date).toLocaleDateString("es-BO") : "—",
-        p.provider?.supplierName || "—",
+        p.provider?.supplierName
+          ? p.provider.supplierName
+          : `VENTA DE ALFA - ${dayjs(p.date).locale("es").format("MMMM").toUpperCase()}`,
         formatDisplay(p.alphaIncome) + " KLG",
         formatDisplay(p.totalPurchasePrice) + " Bs",
         formatDisplay(p.outcome) + " KLG",
@@ -378,18 +389,26 @@ const AlphaControlsManagement: React.FC = () => {
           </div>
 
           <div>
-            <label className="text-sm mb-1 block">PROVEEDOR</label>
+            <label className="text-sm mb-1 block">
+              PROVEEDOR{" "}
+              {!isMonthlyClose && (
+                <span className="text-red-400">*</span>
+              )}
+            </label>
             <select
-              value={newControl.fk_idFoodProvider}
+              value={newControl.fk_idFoodProvider ?? ""}
               onChange={(e) =>
                 setNewControl({
                   ...newControl,
-                  fk_idFoodProvider: Number(e.target.value),
+                  fk_idFoodProvider: e.target.value ? Number(e.target.value) : null,
                 })
               }
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className={`w-full p-2 rounded-md text-white ${
+                isMonthlyClose ? "bg-gray-600 opacity-60 cursor-not-allowed" : "bg-gray-700"
+              }`}
+              disabled={isMonthlyClose}
             >
-              <option value="">-- Selecciona proveedor --</option>
+              <option value="">-- Sin proveedor --</option>
               {foodProviders.map((p) => (
                 <option key={p.idFoodProvider} value={p.idFoodProvider}>
                   {p.supplierName}
@@ -397,6 +416,7 @@ const AlphaControlsManagement: React.FC = () => {
               ))}
             </select>
           </div>
+
 
           {[
             { label: "INGRESO KLG.", field: "alphaIncome" },
@@ -505,8 +525,19 @@ const AlphaControlsManagement: React.FC = () => {
                   <td className="p-2 border border-slate-600">
                     {control.date?.slice(0, 10)}
                   </td>
-                  <td className="p-2 border border-slate-600">
-                    {control.provider?.supplierName || "N/A"}
+                  <td
+                    className={`p-2 border border-slate-600 tracking-wide ${
+                      control.provider?.supplierName
+                        ? "text-white font-normal"
+                        : "text-yellow-300 font-semibold"
+                    }`}
+                  >
+                    {control.provider?.supplierName
+                      ? control.provider.supplierName
+                      : `VENTA DE ALFA - ${dayjs(control.date)
+                          .locale("es")
+                          .format("MMMM")
+                          .toUpperCase()}`}
                   </td>
                   <td className="p-2 border border-slate-600">
                     {formatDisplay(control.alphaIncome)}
