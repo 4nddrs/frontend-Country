@@ -15,7 +15,7 @@ declare module "jspdf" {
 }
 
 
-const API_URL = "http://localhost:8000/alpha_controls/";
+const API_URL = "https://backend-country-nnxe.onrender.com/alpha_controls/";
 
 interface ProviderLite {
   idFoodProvider: number;
