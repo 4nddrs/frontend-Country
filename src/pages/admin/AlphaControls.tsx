@@ -82,6 +82,8 @@ const AlphaControlsManagement: React.FC = () => {
   });
   const [exporting, setExporting] = useState(false);
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+  const [isMonthlyClose, setIsMonthlyClose] = useState(false);
+
 
   // ===== Cargar logo =====
   useEffect(() => {
@@ -159,9 +161,22 @@ const AlphaControlsManagement: React.FC = () => {
       setNewControl({ ...newControl, [field]: num });
     }
   };
-
+  
   // ===== CRUD =====
   const handleSubmit = async () => {
+    // === VALIDACIÓN SEGÚN ESTADO ===
+    if (!isMonthlyClose) {
+      if (!newControl.alphaIncome || !newControl.unitPrice || !newControl.salePrice) {
+        toast.error("Completa los campos de Ingreso, Precio unitario y Precio venta.");
+        return;
+      }
+    } else {
+      if (!newControl.outcome || !newControl.salePrice) {
+        toast.error("Completa los campos de Egreso y Precio venta para el cierre de mes.");
+        return;
+      }
+    }
+
     try {
       const payload = {
         ...newControl,
@@ -388,42 +403,75 @@ const AlphaControlsManagement: React.FC = () => {
             { label: "PRECIO UNITARIO Bs.", field: "unitPrice" },
             { label: "EGRESO KLG.", field: "outcome" },
             { label: "PRECIO VENTA Bs.", field: "salePrice" },
-          ].map(({ label, field }) => (
-            <div key={field}>
-              <label className="text-sm mb-1 block">{label}</label>
+          ].map(({ label, field }) => {
+            // 🔹 lógica de habilitación
+            const disabled =
+              (isMonthlyClose && (field === "alphaIncome" || field === "unitPrice")) ||
+              (!isMonthlyClose && field === "outcome");
+
+            // 🔹 lógica de obligatoriedad
+            const required =
+              isMonthlyClose
+                ? field === "outcome" || field === "salePrice"
+                : field === "alphaIncome" ||
+                  field === "unitPrice" ||
+                  field === "salePrice";
+
+            return (
+              <div key={field}>
+                <label className="text-sm mb-1 block">
+                  {label} {required && <span className="text-red-400">*</span>}
+                </label>
+                <input
+                  type="text"
+                  placeholder="0,00"
+                  value={(displayInputs as any)[field]}
+                  onChange={(e) =>
+                    handleDynamicInput(field as keyof AlphaControl, e.target.value)
+                  }
+                  className={`w-full p-2 rounded ${
+                    disabled ? "bg-gray-600 opacity-60" : "bg-gray-700"
+                  } text-white`}
+                  disabled={disabled}
+                  required={required}
+                />
+              </div>
+            );
+          })}
+          
+          <div className="col-span-full flex justify-between items-center mt-4">
+            <label className="flex items-center gap-2 text-sm text-gray-300">
               <input
-                type="text"
-                placeholder="0,00"
-                value={(displayInputs as any)[field]}
-                onChange={(e) =>
-                  handleDynamicInput(field as keyof AlphaControl, e.target.value)
-                }
-                className="w-full p-2 rounded bg-gray-700 text-white"
+                type="checkbox"
+                checked={isMonthlyClose}
+                onChange={(e) => setIsMonthlyClose(e.target.checked)}
+                className="w-4 h-4 accent-teal-500"
               />
-            </div>
-          ))}
+              Cierre de mes
+            </label>
 
-          <div className="col-span-full flex justify-end gap-3">
-            <button
-              onClick={handleSubmit}
-              className={`${
-                editingId
-                  ? "bg-blue-600 hover:bg-blue-700"
-                  : "bg-green-600 hover:bg-green-700"
-              } text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2`}
-            >
-              {editingId ? <Save size={20} /> : <Plus size={20} />}
-              {editingId ? "Guardar Cambios" : "Agregar"}
-            </button>
-
-            {editingId && (
+            <div className="col-span-full flex justify-end gap-3">
               <button
-                onClick={resetForm}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2"
+                onClick={handleSubmit}
+                className={`${
+                  editingId
+                    ? "bg-blue-600 hover:bg-blue-700"
+                    : "bg-green-600 hover:bg-green-700"
+                } text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2`}
               >
-                <X size={20} /> Cancelar
+                {editingId ? <Save size={20} /> : <Plus size={20} />}
+                {editingId ? "Guardar Cambios" : "Agregar"}
               </button>
-            )}
+
+              {editingId && (
+                <button
+                  onClick={resetForm}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2"
+                >
+                  <X size={20} /> Cancelar
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
