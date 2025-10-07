@@ -317,6 +317,7 @@ const AlphaControlsManagement: React.FC = () => {
     try {
       setExporting(true);
       const doc = new jsPDF({ orientation: "landscape", unit: "pt" });
+      const corporateBlue: [number, number, number] = [38, 72, 131];
 
       // === Logo ===
       if (logoDataUrl) {
@@ -358,10 +359,10 @@ const AlphaControlsManagement: React.FC = () => {
               .locale("es")
               .format("MMMM")
               .toUpperCase()}`,
-        formatDisplay(p.alphaIncome) + " KLG",
-        formatDisplay(p.totalPurchasePrice) + " Bs",
-        formatDisplay(p.outcome) + " KLG",
-        formatDisplay(p.income) + " Bs",
+        formatDisplay(p.alphaIncome),
+        formatDisplay(p.totalPurchasePrice),
+        formatDisplay(p.outcome),
+        formatDisplay(p.income),
       ]);
 
       autoTable(doc, {
@@ -379,9 +380,10 @@ const AlphaControlsManagement: React.FC = () => {
         ],
         body,
         styles: { fontSize: 9, cellPadding: 6 },
+        headStyles: { fillColor: corporateBlue, textColor: 255, fontStyle: "bold" },
       });
 
-      // === Cálculos generales ===
+      // === Totales ===
       const totalIngresoKlg = filteredControls.reduce(
         (sum, c) => sum + c.alphaIncome,
         0
@@ -401,53 +403,77 @@ const AlphaControlsManagement: React.FC = () => {
       const ganancia = totalIngresoBs - totalCompraBs;
 
       // === Fila de pie (totales generales) ===
+      const totalsBlue: [number, number, number] = [113, 146, 190]; 
+      const leftOffset = 50; 
+
       autoTable(doc, {
-        startY: doc.lastAutoTable.finalY + 10,
+        startY: (doc as any).lastAutoTable.finalY + 10,
+        margin: { left: leftOffset },
         body: [
           [
-            { content: "TOTALES EN KLG.", styles: { fontStyle: "bold" } },
-            formatDisplay(totalIngresoKlg) + " KLG.",
-            formatDisplay(totalEgresoKlg) + " KLG.",
+            { content: "TOTALES EN KLG.", styles: { fontStyle: "bold", halign: "left" } },
             "",
             "",
+            { content: formatDisplay(totalIngresoKlg), styles: { halign: "center" } },
+            "",
+            { content: formatDisplay(totalEgresoKlg), styles: { halign: "center" } },
             "",
           ],
           [
-            { content: "TOTALES EN Bs.", styles: { fontStyle: "bold" } },
+            { content: "TOTALES EN Bs.", styles: { fontStyle: "bold", halign: "left" } },
             "",
             "",
-            formatDisplay(totalCompraBs) + " Bs.",
-            formatDisplay(totalIngresoBs) + " Bs.",
             "",
+            { content: formatDisplay(totalCompraBs), styles: { halign: "center" } },
+            "",
+            { content: formatDisplay(totalIngresoBs), styles: { halign: "center" } },
           ],
         ],
         theme: "plain",
-        styles: { fontSize: 10, fillColor: [225, 255, 225] },
+        styles: {
+          fontSize: 10,
+          cellPadding: 5,
+          fillColor: totalsBlue, 
+          textColor: 255,
+          lineColor: false,
+          lineWidth: 0, 
+        },
       });
+
+
+      // === Posiciones base para las tablas pequeñas ===
+      const rightX = 40; 
+      const smallWidth = 280; 
 
       // === Tabla de análisis de resultado ===
       autoTable(doc, {
-        startY: doc.lastAutoTable.finalY + 25,
+        startY: (doc as any).lastAutoTable.finalY + 25,
+        margin: { left: rightX },
+        tableWidth: smallWidth,
         head: [["CONCEPTO", "Bs."]],
         body: [
           ["INGRESOS POR VENTA DE ALFA", formatDisplay(totalIngresoBs)],
           ["EGRESOS POR COMPRA DE ALFA", formatDisplay(totalCompraBs)],
           ["GANANCIA EN VENTA DE ALFA", formatDisplay(ganancia)],
         ],
+        headStyles: { fillColor: corporateBlue, textColor: 255 },
         styles: {
-          fontSize: 10,
+          fontSize: 9,
           cellPadding: 5,
-          fillColor: [255, 240, 220],
+          lineColor: [230, 230, 230],
+          lineWidth: 0.3,
         },
       });
 
       // === Tabla de inventario anual ===
-      const inventarioInicial = 11616; // ⚠️ Traer desde backend en el futuro
+      const inventarioInicial = 11616;
       const inventarioFinal =
         inventarioInicial + totalIngresoKlg - totalEgresoKlg;
 
       autoTable(doc, {
-        startY: doc.lastAutoTable.finalY + 25,
+        startY: (doc as any).lastAutoTable.finalY + 20,
+        margin: { left: rightX },
+        tableWidth: smallWidth,
         head: [["CONCEPTO", "UNIDAD", "VALOR"]],
         body: [
           ["INVENTARIO INICIAL ALFA", "Klg.", formatDisplay(inventarioInicial)],
@@ -462,10 +488,12 @@ const AlphaControlsManagement: React.FC = () => {
             formatDisplay(inventarioFinal),
           ],
         ],
+        headStyles: { fillColor: corporateBlue, textColor: 255 },
         styles: {
-          fontSize: 10,
+          fontSize: 9,
           cellPadding: 5,
-          fillColor: [255, 240, 220],
+          lineColor: [230, 230, 230],
+          lineWidth: 0.3,
         },
       });
 
@@ -479,6 +507,7 @@ const AlphaControlsManagement: React.FC = () => {
       setExporting(false);
     }
   };
+
 
 
 
