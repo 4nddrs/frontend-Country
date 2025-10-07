@@ -74,7 +74,7 @@ const AlphaControlsManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<AlphaControl | null>(null);
-  const [editDisplay, setEditDisplay] = useState({
+  const [, setEditDisplay] = useState({
     alphaIncome: "",
     unitPrice: "",
     outcome: "",
@@ -113,7 +113,14 @@ const AlphaControlsManagement: React.FC = () => {
     try {
       const res = await fetch(API_URL);
       const data = await res.json();
-      setControls(calculateWithBalance(data));
+
+      // 🔹 ordenar siempre por ID (asegura orden ascendente)
+      const sorted = [...data].sort(
+        (a, b) => a.idAlphaControl - b.idAlphaControl
+      );
+
+      // 🔹 recalcular saldo en orden correcto
+      setControls(calculateWithBalance(sorted));
     } catch {
       toast.error("No se pudieron cargar los controles");
     } finally {
@@ -154,7 +161,7 @@ const AlphaControlsManagement: React.FC = () => {
   };
 
   // ===== CRUD =====
-  const createControl = async () => {
+  const handleSubmit = async () => {
     try {
       const payload = {
         ...newControl,
@@ -164,82 +171,104 @@ const AlphaControlsManagement: React.FC = () => {
         income:
           Math.round(newControl.outcome * newControl.salePrice * 100) / 100,
       };
-      const res = await fetch(API_URL, {
-        method: "POST",
+
+      const method = editingId ? "PUT" : "POST";
+      const url = editingId ? `${API_URL}${editingId}` : API_URL;
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error();
-      toast.success("Control creado!");
-      setNewControl({
-        date: "",
-        alphaIncome: 0,
-        unitPrice: 0,
-        totalPurchasePrice: 0,
-        outcome: 0,
-        balance: 0,
-        salePrice: 0,
-        income: 0,
-        fk_idFoodProvider: 1,
-      });
-      setDisplayInputs({
-        alphaIncome: "",
-        unitPrice: "",
-        outcome: "",
-        salePrice: "",
-      });
-      fetchControls();
-    } catch {
-      toast.error("Error al crear control");
+
+      const result = await res.json();
+      let updatedControls: AlphaControl[] = [];
+
+      if (editingId) {
+        toast.success("Control actualizado!");
+        // 🔹 Reemplazamos el registro editado en su posición original
+        updatedControls = controls.map((c) =>
+          c.idAlphaControl === editingId ? result : c
+        );
+      } else {
+        toast.success("Control creado!");
+        // 🔹 Agregamos el nuevo registro al final
+        updatedControls = [...controls, result];
+      }
+
+      // 🔹 Mantener orden por ID antes de recalcular balances
+      updatedControls = updatedControls.sort(
+        (a, b) => (a.idAlphaControl ?? 0) - (b.idAlphaControl ?? 0)
+      );
+
+      // 🔹 Recalcular balances acumulados globalmente
+      updatedControls = calculateWithBalance(updatedControls);
+
+
+      // 🔹 Guardar los nuevos datos recalculados
+      setControls(updatedControls);
+
+      // 🔹 Resetear formulario y salir del modo edición
+      resetForm();
+    } catch (error) {
+      console.error(error);
+      toast.error("Error al guardar control");
     }
   };
 
-  const startEdit = (row: AlphaControl) => {
-    setEditingId(row.idAlphaControl!);
-    setEditData(row);
-    setEditDisplay({
-      alphaIncome: formatDisplay(row.alphaIncome),
-      unitPrice: formatDisplay(row.unitPrice),
-      outcome: formatDisplay(row.outcome),
-      salePrice: formatDisplay(row.salePrice),
+
+
+  const resetForm = () => {
+    setNewControl({
+      date: "",
+      alphaIncome: 0,
+      unitPrice: 0,
+      totalPurchasePrice: 0,
+      outcome: 0,
+      balance: 0,
+      salePrice: 0,
+      income: 0,
+      fk_idFoodProvider: 1,
     });
+    setDisplayInputs({
+      alphaIncome: "",
+      unitPrice: "",
+      outcome: "",
+      salePrice: "",
+    });
+    setEditingId(null);
   };
 
-  const updateControl = async (id: number) => {
-    try {
-      if (!editData) return;
-      const payload = {
-        ...editData,
-        totalPurchasePrice: Math.round(
-          editData.alphaIncome * editData.unitPrice * 100
-        ) / 100,
-        income: Math.round(editData.outcome * editData.salePrice * 100) / 100,
-      };
-      const res = await fetch(`${API_URL}${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error();
-      toast.success("Control actualizado!");
-      setEditingId(null);
-      setEditData(null);
-      fetchControls();
-    } catch {
-      toast.error("Error al actualizar control");
-    }
+  const startEdit = (control: AlphaControl) => {
+    setEditingId(control.idAlphaControl!);
+    setNewControl(control);
+    setDisplayInputs({
+      alphaIncome: formatDisplay(control.alphaIncome),
+      unitPrice: formatDisplay(control.unitPrice),
+      outcome: formatDisplay(control.outcome),
+      salePrice: formatDisplay(control.salePrice),
+    });
+    toast("Modo edición activado ✏️");
+
+    // 🔹 Opcional: hacer scroll automático al formulario superior
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
 
   const deleteControl = async (id: number) => {
     try {
       const res = await fetch(`${API_URL}${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       toast.success("Eliminado correctamente");
+
+      // 🔹 Volver a traer los datos actualizados y recalcular balances
       fetchControls();
     } catch {
       toast.error("Error al eliminar");
     }
   };
+
 
   // ===== PDF =====
   const exportAlphaPDF = async () => {
@@ -314,10 +343,10 @@ const AlphaControlsManagement: React.FC = () => {
         </button>
       </div>
 
-      {/* FORMULARIO */}
+      {/* FORMULARIO (crear / editar) */}
       <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
         <h2 className="text-xl font-semibold mb-4 text-teal-400">
-          Agregar Nuevo Control
+          {editingId ? "Editar Control de Alfalfa" : "Agregar Nuevo Control"}
         </h2>
 
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -354,7 +383,6 @@ const AlphaControlsManagement: React.FC = () => {
             </select>
           </div>
 
-          {/* Inputs numéricos */}
           {[
             { label: "INGRESO KLG.", field: "alphaIncome" },
             { label: "PRECIO UNITARIO Bs.", field: "unitPrice" },
@@ -375,13 +403,27 @@ const AlphaControlsManagement: React.FC = () => {
             </div>
           ))}
 
-          <div className="col-span-full flex justify-end">
+          <div className="col-span-full flex justify-end gap-3">
             <button
-              onClick={createControl}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2"
+              onClick={handleSubmit}
+              className={`${
+                editingId
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-green-600 hover:bg-green-700"
+              } text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2`}
             >
-              <Plus size={20} /> Agregar
+              {editingId ? <Save size={20} /> : <Plus size={20} />}
+              {editingId ? "Guardar Cambios" : "Agregar"}
             </button>
+
+            {editingId && (
+              <button
+                onClick={resetForm}
+                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2"
+              >
+                <X size={20} /> Cancelar
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -412,133 +454,47 @@ const AlphaControlsManagement: React.FC = () => {
             <tbody>
               {controls.map((control) => (
                 <tr key={control.idAlphaControl} className="hover:bg-slate-600">
-                  {editingId === control.idAlphaControl ? (
-                    <>
-                      <td className="p-2 border border-slate-600">
-                        <input
-                          type="date"
-                          value={editData?.date || ""}
-                          onChange={(e) =>
-                            setEditData({ ...editData!, date: e.target.value })
-                          }
-                          className="p-1 rounded-md bg-gray-700 text-white"
-                        />
-                      </td>
-
-                      <td className="p-2 border border-slate-600">
-                        <select
-                          value={editData?.fk_idFoodProvider}
-                          onChange={(e) =>
-                            setEditData({
-                              ...editData!,
-                              fk_idFoodProvider: Number(e.target.value),
-                            })
-                          }
-                          className="p-1 rounded-md bg-gray-700 text-white"
-                        >
-                          {foodProviders.map((p) => (
-                            <option
-                              key={p.idFoodProvider}
-                              value={p.idFoodProvider}
-                            >
-                              {p.supplierName}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-
-                      {[
-                        { field: "alphaIncome" },
-                        { field: "unitPrice" },
-                        { field: "outcome" },
-                        { field: "salePrice" },
-                      ].map(({ field }) => (
-                        <td key={field} className="p-2 border border-slate-600">
-                          <input
-                            type="text"
-                            placeholder="0,00"
-                            value={(editDisplay as any)[field]}
-                            onChange={(e) =>
-                              handleDynamicInput(
-                                field as keyof AlphaControl,
-                                e.target.value,
-                                true
-                              )
-                            }
-                            className="p-1 rounded-md bg-gray-700 text-white"
-                          />
-                        </td>
-                      ))}
-
-                      <td className="p-2 border border-slate-600">
-                        {formatDisplay(
-                          editData!.outcome * editData!.salePrice
-                        )}
-                      </td>
-
-                      <td className="p-2 border border-slate-600 flex gap-2">
-                        <button
-                          onClick={() => updateControl(control.idAlphaControl!)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded-md flex items-center gap-1"
-                        >
-                          <Save size={14} /> Guardar
-                        </button>
-                        <button
-                          onClick={() => {
-                            setEditingId(null);
-                            setEditData(null);
-                          }}
-                          className="bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded-md flex items-center gap-1"
-                        >
-                          <X size={14} /> Cancelar
-                        </button>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td className="p-2 border border-slate-600">
-                        {control.date?.slice(0, 10)}
-                      </td>
-                      <td className="p-2 border border-slate-600">
-                        {control.provider?.supplierName || "N/A"}
-                      </td>
-                      <td className="p-2 border border-slate-600">
-                        {formatDisplay(control.alphaIncome)}
-                      </td>
-                      <td className="p-2 border border-slate-600">
-                        {formatDisplay(control.unitPrice)}
-                      </td>
-                      <td className="p-2 border border-slate-600">
-                        {formatDisplay(control.totalPurchasePrice)}
-                      </td>
-                      <td className="p-2 border border-slate-600">
-                        {formatDisplay(control.outcome)}
-                      </td>
-                      <td className="p-2 border border-slate-600">
-                        {formatDisplay(control.balance)}
-                      </td>
-                      <td className="p-2 border border-slate-600">
-                        {formatDisplay(control.salePrice)}
-                      </td>
-                      <td className="p-2 border border-slate-600">
-                        {formatDisplay(control.outcome * control.salePrice)}
-                      </td>
-                      <td className="p-2 border border-slate-600 flex gap-2">
-                        <button
-                          onClick={() => startEdit(control)}
-                          className="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded-md flex items-center gap-1"
-                        >
-                          <Edit size={14} /> Editar
-                        </button>
-                        <button
-                          onClick={() => deleteControl(control.idAlphaControl!)}
-                          className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-md flex items-center gap-1"
-                        >
-                          <Trash2 size={14} /> Eliminar
-                        </button>
-                      </td>
-                    </>
-                  )}
+                  <td className="p-2 border border-slate-600">
+                    {control.date?.slice(0, 10)}
+                  </td>
+                  <td className="p-2 border border-slate-600">
+                    {control.provider?.supplierName || "N/A"}
+                  </td>
+                  <td className="p-2 border border-slate-600">
+                    {formatDisplay(control.alphaIncome)}
+                  </td>
+                  <td className="p-2 border border-slate-600">
+                    {formatDisplay(control.unitPrice)}
+                  </td>
+                  <td className="p-2 border border-slate-600">
+                    {formatDisplay(control.totalPurchasePrice)}
+                  </td>
+                  <td className="p-2 border border-slate-600">
+                    {formatDisplay(control.outcome)}
+                  </td>
+                  <td className="p-2 border border-slate-600">
+                    {formatDisplay(control.balance)}
+                  </td>
+                  <td className="p-2 border border-slate-600">
+                    {formatDisplay(control.salePrice)}
+                  </td>
+                  <td className="p-2 border border-slate-600">
+                    {formatDisplay(control.outcome * control.salePrice)}
+                  </td>
+                  <td className="p-2 border border-slate-600 flex gap-2">
+                    <button
+                      onClick={() => startEdit(control)}
+                      className="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded-md flex items-center gap-1"
+                    >
+                      <Edit size={14} /> Editar
+                    </button>
+                    <button
+                      onClick={() => deleteControl(control.idAlphaControl!)}
+                      className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-md flex items-center gap-1"
+                    >
+                      <Trash2 size={14} /> Eliminar
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -547,6 +503,7 @@ const AlphaControlsManagement: React.FC = () => {
       </div>
     </div>
   );
+
 
 };
 
