@@ -262,23 +262,29 @@ const AlphaControlsManagement: React.FC = () => {
       salePrice: "",
     });
     setEditingId(null);
+    setIsMonthlyClose(false);
   };
 
   const startEdit = (control: AlphaControl) => {
     setEditingId(control.idAlphaControl!);
     setNewControl(control);
+
+    // 🔹 Formatear inputs visibles
     setDisplayInputs({
       alphaIncome: formatDisplay(control.alphaIncome),
       unitPrice: formatDisplay(control.unitPrice),
       outcome: formatDisplay(control.outcome),
       salePrice: formatDisplay(control.salePrice),
     });
+
+    // 🔹 Ajustar automáticamente el estado del cierre de mes
+    setIsMonthlyClose(control.fk_idFoodProvider === null);
+
     toast("Modo edición activado ✏️");
 
-    // 🔹 Opcional: hacer scroll automático al formulario superior
+    // 🔹 Scroll al formulario superior
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-
 
   const deleteControl = async (id: number) => {
     try {
