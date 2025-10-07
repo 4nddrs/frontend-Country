@@ -6,6 +6,13 @@ import autoTable from "jspdf-autotable";
 import dayjs from "dayjs";
 import 'dayjs/locale/es';
 dayjs.locale('es');
+declare module "jspdf" {
+  interface jsPDF {
+    lastAutoTable: {
+      finalY: number;
+    };
+  }
+}
 
 
 const API_URL = "http://localhost:8000/alpha_controls/";
@@ -86,6 +93,11 @@ const AlphaControlsManagement: React.FC = () => {
   const [exporting, setExporting] = useState(false);
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const [isMonthlyClose, setIsMonthlyClose] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<number>(dayjs().year());
+  const availableYears = Array.from(
+    new Set(controls.map((c) => dayjs(c.date).year()))
+  ).sort((a, b) => b - a);
+
 
 
   // ===== Cargar logo =====
@@ -305,6 +317,8 @@ const AlphaControlsManagement: React.FC = () => {
     try {
       setExporting(true);
       const doc = new jsPDF({ orientation: "landscape", unit: "pt" });
+
+      // === Logo ===
       if (logoDataUrl) {
         const margin = 40;
         const w = 120;
@@ -312,25 +326,44 @@ const AlphaControlsManagement: React.FC = () => {
         const pageW = doc.internal.pageSize.getWidth();
         doc.addImage(logoDataUrl, "PNG", pageW - w - margin, 20, w, h);
       }
+
+      // === Título ===
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
       doc.text(
-        "Reporte de Control de Alfalfa",
+        `Reporte de Control de Alfalfa - ${selectedYear}`,
         doc.internal.pageSize.getWidth() / 2,
         50,
         { align: "center" }
       );
-      const body = controls.map((p, i) => [
+
+      // === Filtrar registros por año ===
+      const filteredControls = controls.filter(
+        (c) => dayjs(c.date).year() === selectedYear
+      );
+
+      if (filteredControls.length === 0) {
+        toast.error(`No hay registros del año ${selectedYear}`);
+        setExporting(false);
+        return;
+      }
+
+      // === Tabla principal ===
+      const body = filteredControls.map((p, i) => [
         i + 1,
         p.date ? new Date(p.date).toLocaleDateString("es-BO") : "—",
         p.provider?.supplierName
           ? p.provider.supplierName
-          : `VENTA DE ALFA - ${dayjs(p.date).locale("es").format("MMMM").toUpperCase()}`,
+          : `VENTA DE ALFA - ${dayjs(p.date)
+              .locale("es")
+              .format("MMMM")
+              .toUpperCase()}`,
         formatDisplay(p.alphaIncome) + " KLG",
         formatDisplay(p.totalPurchasePrice) + " Bs",
         formatDisplay(p.outcome) + " KLG",
         formatDisplay(p.income) + " Bs",
       ]);
+
       autoTable(doc, {
         startY: 110,
         head: [
@@ -339,7 +372,7 @@ const AlphaControlsManagement: React.FC = () => {
             "FECHA",
             "PROVEEDOR",
             "INGRESO KLG.",
-            "PRECIO COMPRA",
+            "PRECIO COMPRA Bs.",
             "EGRESO KLG.",
             "INGRESO Bs.",
           ],
@@ -347,14 +380,106 @@ const AlphaControlsManagement: React.FC = () => {
         body,
         styles: { fontSize: 9, cellPadding: 6 },
       });
-      doc.save(`Alfalfa_${dayjs().format("YYYYMMDD_HHmm")}.pdf`);
-      toast.success("PDF generado");
+
+      // === Cálculos generales ===
+      const totalIngresoKlg = filteredControls.reduce(
+        (sum, c) => sum + c.alphaIncome,
+        0
+      );
+      const totalEgresoKlg = filteredControls.reduce(
+        (sum, c) => sum + c.outcome,
+        0
+      );
+      const totalCompraBs = filteredControls.reduce(
+        (sum, c) => sum + c.totalPurchasePrice,
+        0
+      );
+      const totalIngresoBs = filteredControls.reduce(
+        (sum, c) => sum + c.income,
+        0
+      );
+      const ganancia = totalIngresoBs - totalCompraBs;
+
+      // === Fila de pie (totales generales) ===
+      autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 10,
+        body: [
+          [
+            { content: "TOTALES EN KLG.", styles: { fontStyle: "bold" } },
+            formatDisplay(totalIngresoKlg) + " KLG.",
+            formatDisplay(totalEgresoKlg) + " KLG.",
+            "",
+            "",
+            "",
+          ],
+          [
+            { content: "TOTALES EN Bs.", styles: { fontStyle: "bold" } },
+            "",
+            "",
+            formatDisplay(totalCompraBs) + " Bs.",
+            formatDisplay(totalIngresoBs) + " Bs.",
+            "",
+          ],
+        ],
+        theme: "plain",
+        styles: { fontSize: 10, fillColor: [225, 255, 225] },
+      });
+
+      // === Tabla de análisis de resultado ===
+      autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 25,
+        head: [["CONCEPTO", "Bs."]],
+        body: [
+          ["INGRESOS POR VENTA DE ALFA", formatDisplay(totalIngresoBs)],
+          ["EGRESOS POR COMPRA DE ALFA", formatDisplay(totalCompraBs)],
+          ["GANANCIA EN VENTA DE ALFA", formatDisplay(ganancia)],
+        ],
+        styles: {
+          fontSize: 10,
+          cellPadding: 5,
+          fillColor: [255, 240, 220],
+        },
+      });
+
+      // === Tabla de inventario anual ===
+      const inventarioInicial = 11616; // ⚠️ Traer desde backend en el futuro
+      const inventarioFinal =
+        inventarioInicial + totalIngresoKlg - totalEgresoKlg;
+
+      autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 25,
+        head: [["CONCEPTO", "UNIDAD", "VALOR"]],
+        body: [
+          ["INVENTARIO INICIAL ALFA", "Klg.", formatDisplay(inventarioInicial)],
+          ["COMPRA DE ALFA", "Klg.", formatDisplay(totalIngresoKlg)],
+          ["EGRESOS POR COMPRA DE ALFA", "Klg.", formatDisplay(totalEgresoKlg)],
+          [
+            `INVENTARIO FINAL ${dayjs()
+              .month(0)
+              .format("MMM")
+              .toUpperCase()}/${selectedYear}`,
+            "Klg.",
+            formatDisplay(inventarioFinal),
+          ],
+        ],
+        styles: {
+          fontSize: 10,
+          cellPadding: 5,
+          fillColor: [255, 240, 220],
+        },
+      });
+
+      // === Guardar archivo ===
+      doc.save(`Control_Alfalfa_${selectedYear}.pdf`);
+      toast.success(`PDF del año ${selectedYear} generado correctamente`);
     } catch (err) {
+      console.error(err);
       toast.error("No se pudo generar el PDF");
     } finally {
       setExporting(false);
     }
   };
+
 
 
 
@@ -364,7 +489,22 @@ const AlphaControlsManagement: React.FC = () => {
         Gestión de Control de Alfalfa
       </h1>
 
-      <div className="flex justify-end mb-4">
+      {/* === Exportación y filtro por año === */}
+      <div className="flex flex-col md:flex-row justify-end items-center mb-4 gap-3">
+        <div className="flex items-center gap-2 text-white">
+          <label htmlFor="yearSelect" className="text-sm text-gray-300">Año:</label>
+          <select
+            id="yearSelect"
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            className="bg-gray-700 text-white rounded-md px-3 py-1 border border-gray-600"
+          >
+            {availableYears.map((year) => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+        </div>
+
         <button
           onClick={exportAlphaPDF}
           disabled={exporting}
@@ -374,6 +514,7 @@ const AlphaControlsManagement: React.FC = () => {
           {exporting ? "Generando..." : "Exportar PDF"}
         </button>
       </div>
+
 
       {/* FORMULARIO (crear / editar) */}
       <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
