@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const API_URL = 'https://backend-country-nnxe.onrender.com/income/';
 
@@ -23,6 +25,9 @@ const IncomeManagement = () => {
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [filterMonth, setFilterMonth] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
 
   const fetchIncomes = async () => {
     setLoading(true);
@@ -40,6 +45,16 @@ const IncomeManagement = () => {
 
   useEffect(() => {
     fetchIncomes();
+
+    const LOGO_URL = `${import.meta.env.BASE_URL}image/LogoHipica.png`;
+    fetch(LOGO_URL)
+    .then((r) => r.blob())
+    .then((blob) => {
+        const reader = new FileReader();
+        reader.onloadend = () => setLogoDataUrl(reader.result as string);
+        reader.readAsDataURL(blob);
+    })
+    .catch(() => console.warn("No se pudo cargar el logo"));
   }, []);
 
   const createIncome = async () => {
@@ -90,6 +105,100 @@ const IncomeManagement = () => {
     }
   };
 
+  // === Exportar PDF filtrado por mes ===
+  const exportFilteredPDF = async () => {
+    try {
+      setExporting(true);
+      const doc = new jsPDF({ orientation: "landscape", unit: "pt" });
+
+      // Logo
+      if (logoDataUrl) {
+        const margin = 40;
+        const w = 120;
+        const h = 70;
+        const pageW = doc.internal.pageSize.getWidth();
+        doc.addImage(logoDataUrl, "PNG", pageW - w - margin, 20, w, h);
+      }
+
+      // Título centrado
+      const pageW = doc.internal.pageSize.getWidth();
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      const titulo = filterMonth
+        ? `Ingresos del mes ${new Date(filterMonth).toLocaleDateString("es-ES", {
+            month: "long",
+            year: "numeric",
+          })}`
+        : "Ingresos (sin filtro de mes)";
+      doc.text(titulo, pageW / 2, 50, { align: "center" });
+
+      // Fecha y hora
+      const now = new Date();
+      const fecha = now.toLocaleDateString("es-BO");
+      const hora = now.toLocaleTimeString("es-BO", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(`Fecha: ${fecha}  Hora: ${hora}`, 40, 70);
+
+      // Filtrar ingresos
+      const filtered = filterMonth
+        ? incomes.filter((i) => i.period?.startsWith(filterMonth))
+        : incomes;
+
+      const total = filtered.reduce(
+        (acc, i) => acc + Number(i.amountBsCaptureType || 0),
+        0
+      );
+
+      // Crear cuerpo de tabla
+      const body = filtered.map((i, idx) => [
+        idx + 1,
+        i.date ? new Date(i.date).toLocaleDateString("es-BO") : "—",
+        i.description || "—",
+        `${i.amountBsCaptureType.toFixed(2)} Bs`,
+      ]);
+
+      autoTable(doc, {
+        startY: 100,
+        head: [["#", "Fecha", "Descripción", "Monto (Bs)"]],
+        body,
+        theme: "grid",
+        styles: { fontSize: 10, cellPadding: 6 },
+        headStyles: {
+          fillColor: [38, 72, 131],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+        },
+        foot: [
+          [
+            { content: "TOTAL DEL MES", colSpan: 3, styles: { halign: "right" } },
+            { content: `${total.toFixed(2)} Bs`, styles: { halign: "center" } },
+          ],
+        ],
+        footStyles: {
+          fillColor: [38, 72, 131],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+        },
+      });
+
+      // Guardar PDF
+      const fileName = `Ingresos_${filterMonth || "SinFiltro"}_${now
+        .toISOString()
+        .slice(0, 10)}.pdf`;
+      doc.save(fileName);
+      toast.success("PDF generado correctamente");
+    } catch {
+      toast.error("No se pudo generar el PDF.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+
   return (
     <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
       <h1 className="text-3xl font-bold mb-6 text-center text-teal-400">Gestión de Ingresos</h1>
@@ -120,28 +229,49 @@ const IncomeManagement = () => {
           </div>
           <div>
             <label htmlFor="amountBsCaptureType" className="block mb-1">Monto</label>
-          <input
-            type="number"
-            name="amountBsCaptureType"
-            placeholder="Monto"
-            value={newIncome.amountBsCaptureType}
-            onChange={e => setNewIncome({ ...newIncome, amountBsCaptureType: Number(e.target.value) })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
+            <input
+              type="number"
+              name="amountBsCaptureType"
+              placeholder="Monto"
+              value={newIncome.amountBsCaptureType}
+              onChange={e => setNewIncome({ ...newIncome, amountBsCaptureType: Number(e.target.value) })}
+              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            />
           </div>
           <div>
             <label htmlFor="period" className="block mb-1">Periodo</label>
-          <input
-            type="date"
-            name="period"
-            placeholder="Periodo"
-            value={newIncome.period}
-            onChange={e => setNewIncome({ ...newIncome, period: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
+            <input
+              type="date"
+              name="period"
+              placeholder="Periodo"
+              value={newIncome.period}
+              onChange={e => setNewIncome({ ...newIncome, period: e.target.value })}
+              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            />
           </div>
-          <button onClick={createIncome} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
+          <button onClick={createIncome} 
+            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md font-semibold flex items-center justify-center gap-3 ml-auto text-sm h-[47px]">
             <Plus size={20} /> Agregar
+          </button>
+        </div>
+        {/* === Filtro + Exportar PDF === */}
+        <div className="flex flex-wrap items-center justify-between mt-6 pt-4 border-t border-slate-600">
+          <div className="flex items-center gap-2">
+            <label className="text-white">Filtrar por mes:</label>
+            <input
+              type="month"
+              value={filterMonth}
+              onChange={(e) => setFilterMonth(e.target.value)}
+              className="bg-gray-700 text-white rounded-md p-2"
+            />
+          </div>
+
+          <button
+            onClick={exportFilteredPDF}
+            disabled={exporting}
+            className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2"
+          >
+            {exporting ? "Generando..." : "Exportar PDF"}
           </button>
         </div>
       </div>

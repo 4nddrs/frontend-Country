@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
 
 const API_URL = 'https://backend-country-nnxe.onrender.com/expenses/';
 
@@ -23,6 +26,10 @@ const ExpensesManagement = () => {
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [filterMonth, setFilterMonth] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+
 
   const fetchExpenses = async () => {
     setLoading(true);
@@ -40,6 +47,16 @@ const ExpensesManagement = () => {
 
   useEffect(() => {
     fetchExpenses();
+
+    const LOGO_URL = `${import.meta.env.BASE_URL}image/LogoHipica.png`;
+    fetch(LOGO_URL)
+    .then((r) => r.blob())
+    .then((blob) => {
+        const reader = new FileReader();
+        reader.onloadend = () => setLogoDataUrl(reader.result as string);
+        reader.readAsDataURL(blob);
+    })
+    .catch(() => console.warn("No se pudo cargar el logo"));
   }, []);
 
   const createExpense = async () => {
@@ -89,6 +106,105 @@ const ExpensesManagement = () => {
       toast.error('No se pudo eliminar el gasto.');
     }
   };
+
+
+  // ====== Exportar PDF filtrado por mes ======
+  const exportFilteredPDF = async () => {
+    try {
+      setExporting(true);
+      const doc = new jsPDF({ orientation: "landscape", unit: "pt" });
+      
+      // Logo
+      if (logoDataUrl) {
+        const margin = 40;
+        const w = 120;
+        const h = 70;
+        const pageW = doc.internal.pageSize.getWidth();
+        doc.addImage(logoDataUrl, "PNG", pageW - w - margin, 20, w, h);
+      }
+
+      // ====== Encabezado ======
+      const pageW = doc.internal.pageSize.getWidth();
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+
+      const titulo = filterMonth
+        ? `Egresos del mes ${new Date(filterMonth).toLocaleDateString("es-ES", {
+            month: "long",
+            year: "numeric",
+          })}`
+        : "Egresos (sin filtro de mes)";
+
+      doc.text(titulo, pageW / 2, 50, { align: "center" });
+
+      // ====== Fecha y hora ======
+      const now = new Date();
+      const fecha = now.toLocaleDateString("es-BO");
+      const hora = now.toLocaleTimeString("es-BO", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Fecha: ${fecha}  Hora: ${hora}`, 40, 70);
+
+      // ====== Filtro de datos ======
+      const filtered = filterMonth
+        ? expenses.filter((e) => e.period?.startsWith(filterMonth))
+        : expenses;
+
+      // ====== Cuerpo de tabla ======
+      const body = filtered.map((e, i) => [
+        i + 1,
+        e.date ? new Date(e.date).toLocaleDateString("es-BO") : "—",
+        e.description || "—",
+        `${e.AmountBsCaptureType.toFixed(2)} Bs`,
+      ]);
+
+      const total = filtered.reduce(
+        (acc, e) => acc + Number(e.AmountBsCaptureType || 0),
+        0
+      );
+
+      // ====== Tabla ======
+      autoTable(doc, {
+        startY: 100,
+        head: [["#", "Fecha", "Descripción", "Monto (Bs)"]],
+        body,
+        theme: "grid",
+        styles: { fontSize: 10, cellPadding: 6 },
+        headStyles: {
+          fillColor: [38, 72, 131],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+        },
+        foot: [
+          [
+            { content: "TOTAL DEL MES", colSpan: 3, styles: { halign: "right" } },
+            { content: `${total.toFixed(2)} Bs`, styles: { halign: "center" } },
+          ],
+        ],
+        footStyles: {
+          fillColor: [38, 72, 131],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+        },
+      });
+
+      // ====== Guardar PDF ======
+      const fileName = `Egresos_${filterMonth || "SinFiltro"}_${now
+        .toISOString()
+        .slice(0, 10)}.pdf`;
+      doc.save(fileName);
+      toast.success("PDF generado correctamente");
+    } catch (e) {
+      console.error(e);
+      toast.error("No se pudo generar el PDF.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
 
   return (
     <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
@@ -140,11 +256,35 @@ const ExpensesManagement = () => {
             className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
           />
           </div>
-          <button onClick={createExpense} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
-            <Plus size={20} /> Agregar
+          <button
+            onClick={createExpense}
+            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md font-semibold flex items-center justify-center gap-3 ml-auto text-sm h-[47px]"
+          >
+            <Plus size={30} /> Agregar
           </button>
+        </div>
+        {/* === Filtro y Exportar PDF abajo === */}
+        <div className="flex flex-wrap items-center justify-between mt-6 pt-4 border-t border-slate-600">
+          <div className="flex items-center gap-2">
+            <label className="text-white">Filtrar por mes:</label>
+            <input
+              type="month"
+              value={filterMonth}
+              onChange={(e) => setFilterMonth(e.target.value)}
+              className="bg-gray-700 text-white rounded-md p-2"
+            />
           </div>
+
+          <button
+            onClick={exportFilteredPDF}
+            disabled={exporting}
+            className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2"
+          >
+            {exporting ? "Generando..." : "Exportar PDF"}
+          </button>
+        </div>
       </div>
+
       <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
