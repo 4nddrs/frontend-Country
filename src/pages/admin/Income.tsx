@@ -288,6 +288,12 @@ const IncomeManagement = () => {
         <h2 className="text-xl font-semibold mb-4 text-teal-400">
           {editingId ? "Editar Ingreso" : "Agregar Nuevo Ingreso"}
         </h2>
+        {editingId && (
+          <div className="bg-yellow-800/30 border border-yellow-500 text-yellow-300 px-4 py-2 rounded-md mb-4 text-sm flex items-center gap-2 animate-fade-in">
+            <Edit size={16} /> 
+            <span>Estás editando un gasto existente. Modifica los datos y guarda los cambios.</span>
+          </div>
+        )}
         <div className="flex flex-wrap gap-4 items-end justify-between">
           <div className="flex flex-wrap gap-4">
             <div>
