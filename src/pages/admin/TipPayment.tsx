@@ -154,6 +154,18 @@ const TipPayment: React.FC = () => {
             align: "center",
         });
 
+        // ====== Fecha y hora en la esquina izquierda ======
+        const now = new Date();
+        const fecha = now.toLocaleDateString("es-BO");
+        const hora = now.toLocaleTimeString("es-BO", {
+        hour: "2-digit",
+        minute: "2-digit",
+        });
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Fecha: ${fecha}  Hora: ${hora}`, 40, 70);
+
         // aplicar filtros
         let filtered = [...items];
         if (filterEmployee > 0) {

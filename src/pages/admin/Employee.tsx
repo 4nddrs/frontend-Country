@@ -257,55 +257,68 @@ const Employees = () => {
       setExporting(true);
 
       const doc = new jsPDF();
-      doc.setFontSize(14);
-      doc.text('Planilla de Empleados', 14, 18);
+      const pageWidth = doc.internal.pageSize.getWidth();
 
-      // Cargar logo → DataURL
+      // ====== Título centrado ======
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("Planilla de Empleados", pageWidth / 2, 18, { align: "center" });
+
+      // ====== Fecha y hora en la esquina izquierda ======
+      const now = new Date();
+      const fecha = now.toLocaleDateString("es-BO");
+      const hora = now.toLocaleTimeString("es-BO", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Fecha: ${fecha}  Hora: ${hora}`, 14, 28);
+
+      // ====== Logo en la esquina derecha ======
       try {
         const logoDataUrl = await urlToDataUrl(LOGO_URL);
         if (logoDataUrl) {
-          // Detectar formato por el encabezado del dataURL
-          const isPng = logoDataUrl.startsWith('data:image/png');
-          const isJpg = logoDataUrl.startsWith('data:image/jpeg') || logoDataUrl.startsWith('data:image/jpg');
-          const fmt = isPng ? 'PNG' : (isJpg ? 'JPEG' : 'PNG'); // fallback PNG
+          const isPng = logoDataUrl.startsWith("data:image/png");
+          const isJpg =
+            logoDataUrl.startsWith("data:image/jpeg") ||
+            logoDataUrl.startsWith("data:image/jpg");
+          const fmt = isPng ? "PNG" : isJpg ? "JPEG" : "PNG";
 
-          const pageWidth = doc.internal.pageSize.getWidth();
-          const imgW = 22; // mm
-          const imgH = 22; // mm
+          const imgW = 22;
+          const imgH = 22;
           const x = pageWidth - imgW - 14;
-          const y = 8;
+          const y = 10;
           try {
             doc.addImage(logoDataUrl, fmt as any, x, y, imgW, imgH);
           } catch {
-            // si falla, seguimos sin logo
+            /* si falla, continuar sin logo */
           }
         }
       } catch {
-        // ignorar si el logo falla
+        /* ignorar si falla */
       }
 
-      // Encabezados y filas
-      const head = [['#', 'Empleado', 'Cargo', 'Monto', 'Firma']];
-      const body = employees.map((emp, idx) => {
+      // ====== Encabezados y filas ======
+      const head = [["Empleado", "Cargo", "Sueldo"]];
+      const body = employees.map((emp) => {
         const positionName =
-          positions.find(p => p.idPositionEmployee === emp.fk_idPositionEmployee)?.namePosition || 'Desconocido';
+          positions.find((p) => p.idPositionEmployee === emp.fk_idPositionEmployee)
+            ?.namePosition || "Desconocido";
         return [
-          (idx + 1).toString(),
           emp.fullName,
           positionName,
           formatCurrency(Number(emp.salary || 0)),
-          '' // firma vacía
         ];
       });
 
-      const total = employees.reduce((acc, e) => acc + Number(e.salary || 0), 0);
-
+      // ====== Tabla ======
       autoTable(doc, {
         head,
         body,
-        foot: [['', '', 'TOTAL', formatCurrency(total), '']],
-        startY: 48,
-        theme: 'grid',
+        startY: 38, // debajo de la fecha
+        theme: "grid",
         styles: {
           fontSize: 10,
           cellPadding: 2,
@@ -314,31 +327,30 @@ const Employees = () => {
           lineWidth: 0.1,
         },
         headStyles: {
-          fillColor: [45, 55, 72],   // gris oscuro (no azul)
+          fillColor: [38, 72, 131], // color corporativo
           textColor: [255, 255, 255],
-          fontStyle: 'bold',
-        },
-        footStyles: {
-          fillColor: [241, 245, 249], // gris claro
-          textColor: [30, 30, 30],
-          fontStyle: 'bold',
+          fontStyle: "bold",
         },
         alternateRowStyles: {
-          fillColor: [248, 250, 252], // alterna filas
+          fillColor: [248, 250, 252],
         },
         tableLineColor: [200, 200, 200],
         tableLineWidth: 0.1,
       });
 
-      const fileName = `planilla_empleados_${new Date().toISOString().slice(0,10)}.pdf`;
+      // ====== Guardar PDF ======
+      const fileName = `planilla_empleados_${now.toISOString().slice(0, 10)}.pdf`;
       doc.save(fileName);
-      toast.success('PDF generado');
+      toast.success("PDF generado correctamente");
     } catch {
-      toast.error('No se pudo generar el PDF');
+      toast.error("No se pudo generar el PDF");
     } finally {
       setExporting(false);
     }
   };
+
+
+
 
   return (
     <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
