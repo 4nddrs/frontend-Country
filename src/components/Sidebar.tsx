@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import {
@@ -8,7 +8,6 @@ import {
   ClipboardList,
   User,
   Briefcase,
-  Shield,
   Package,
   Book,
   Layers,
@@ -16,130 +15,177 @@ import {
   List,
   Calendar,
   Search,
+  LogOut,
 } from 'lucide-react';
 
 const menuItems = [
-    { label: 'Home', icon: <Home size={20} />, path: '/' },
-    { label: 'Empleados', icon: <User size={20} />, path: '/employee' },
-    { label: 'Posiciones', icon: <Briefcase size={20} />, path: '/positions' },
-    { label: 'Proveedores de Comida', icon: <Package size={20} />, path: '/food-providers' },
-    { label: 'Stock de Comida', icon: <ClipboardList size={20} />, path: '/food-stocks' },
-    { label: 'Propietarios', icon: <User size={20} />, path: '/owners' },
-    { label: 'Razas', icon: <Layers size={20} />, path: '/races' },
-    { label: 'Caballos', icon: <Flag size={20} />, path: '/horses' },
-    { label: 'Planes Nutricionales', icon: <Book size={20} />, path: '/nutritional-plans' },
-    { label: 'Detalles Plan Nutricional', icon: <List size={20} />, path: '/nutritional-plan-details' },
-    { label: 'Categorías de Tareas', icon: <List size={20} />, path: '/task-categories' },
-    { label: 'Tareas', icon: <Calendar size={20} />, path: '/tasks' },
-    { label: 'Control de Alfalfa', icon: <Calendar size={20} />, path: '/alfalfa-control' },
-    { label: 'Procedimientos Programados', icon: <Calendar size={20} />, path: '/scheduled-procedures' },
-    { label: 'Procedimiento de Solicitud', icon: <Calendar size={20} />, path: '/application-procedures' },
-    { label: 'Medicamentos', icon: <Calendar size={20} />, path: '/medicines' },
-    { label: 'Atención a Caballos', icon: <Calendar size={20} />, path: '/attentionHorses' },
-    { label: 'Ausencias de Empleados', icon: <Calendar size={20} />, path: '/employee-absences' },
-    { label: 'Tipos de Turno', icon: <Calendar size={20} />, path: '/shiftTypes' },
-    { label: 'Empleados por Turno', icon: <Calendar size={20} />, path: '/shiftEmployees' },
-    { label: 'Turnos de Empleados', icon: <Calendar size={20} />, path: '/EmployeesShiftem' },
-    { label: 'Usuarios ERP', icon: <Calendar size={20} />, path: '/ErpUsers' },
-    { label: 'Roles de Usuario ERP', icon: <Calendar size={20} />, path: '/UserRole' },
-    { label: 'Gastos', icon: <Calendar size={20} />, path: '/Expenses' },
-    { label: 'Ingresos', icon: <Calendar size={20} />, path: '/Income' },
-    { label: 'Reportes Mensuales de Propietario', icon: <Calendar size={20} />, path: '/OwnerReportMonth' },
-    { label: 'Control Total', icon: <Calendar size={20} />, path: '/TotalControl' },
-    { label: 'Control de Vacunación', icon: <Calendar size={20} />, path: '/VaccinationPlan' },
-    { label: 'Aplicación de Vacunación', icon: <Calendar size={20} />, path: '/VaccinationPlanApplication' },
-    { label: 'Control de Consumo de Alfalfa', icon: <Calendar size={20} />, path: '/AlphaConsumptionControl' },
-    { label: 'Pagos de Salarios', icon: <Calendar size={20} />, path: '/SalaryPayments' },
-    { label: 'Pago de Propinas', icon: <Calendar size={20} />, path: '/TipPayment' }
+  { label: 'Home', icon: <Home size={18} />, path: '/' },
+  { label: 'Empleados', icon: <User size={18} />, path: '/employee' },
+  { label: 'Posiciones', icon: <Briefcase size={18} />, path: '/positions' },
+  { label: 'Proveedores de Comida', icon: <Package size={18} />, path: '/food-providers' },
+  { label: 'Stock de Comida', icon: <ClipboardList size={18} />, path: '/food-stocks' },
+  { label: 'Propietarios', icon: <User size={18} />, path: '/owners' },
+  { label: 'Razas', icon: <Layers size={18} />, path: '/races' },
+  { label: 'Caballos', icon: <Flag size={18} />, path: '/horses' },
+  { label: 'Planes Nutricionales', icon: <Book size={18} />, path: '/nutritional-plans' },
+  { label: 'Detalles Plan Nutricional', icon: <List size={18} />, path: '/nutritional-plan-details' },
+  { label: 'Categorias de Tareas', icon: <List size={18} />, path: '/task-categories' },
+  { label: 'Tareas', icon: <Calendar size={18} />, path: '/tasks' },
+  { label: 'Control de Alfalfa', icon: <Calendar size={18} />, path: '/alfalfa-control' },
+  { label: 'Procedimientos Programados', icon: <Calendar size={18} />, path: '/scheduled-procedures' },
+  { label: 'Procedimiento de Solicitud', icon: <Calendar size={18} />, path: '/application-procedures' },
+  { label: 'Medicamentos', icon: <Calendar size={18} />, path: '/medicines' },
+  { label: 'Atencion a Caballos', icon: <Calendar size={18} />, path: '/attentionHorses' },
+  { label: 'Ausencias de Empleados', icon: <Calendar size={18} />, path: '/employee-absences' },
+  { label: 'Tipos de Turno', icon: <Calendar size={18} />, path: '/shiftTypes' },
+  { label: 'Empleados por Turno', icon: <Calendar size={18} />, path: '/shiftEmployees' },
+  { label: 'Turnos de Empleados', icon: <Calendar size={18} />, path: '/EmployeesShiftem' },
+  { label: 'Usuarios ERP', icon: <Calendar size={18} />, path: '/ErpUsers' },
+  { label: 'Roles de Usuario ERP', icon: <Calendar size={18} />, path: '/UserRole' },
+  { label: 'Gastos', icon: <Calendar size={18} />, path: '/Expenses' },
+  { label: 'Ingresos', icon: <Calendar size={18} />, path: '/Income' },
+  { label: 'Reportes Mensuales de Propietario', icon: <Calendar size={18} />, path: '/OwnerReportMonth' },
+  { label: 'Control Total', icon: <Calendar size={18} />, path: '/TotalControl' },
+  { label: 'Control de Vacunacion', icon: <Calendar size={18} />, path: '/VaccinationPlan' },
+  { label: 'Aplicacion de Vacunacion', icon: <Calendar size={18} />, path: '/VaccinationPlanApplication' },
+  { label: 'Control de Consumo de Alfalfa', icon: <Calendar size={18} />, path: '/AlphaConsumptionControl' },
+  { label: 'Pagos de Salarios', icon: <Calendar size={18} />, path: '/SalaryPayments' },
+  { label: 'Pago de Propinas', icon: <Calendar size={18} />, path: '/TipPayment' },
 ];
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(''); 
+  const [searchTerm, setSearchTerm] = useState('');
   const location = useLocation();
 
   const closeSidebar = () => setIsOpen(false);
+  const logoUrl = `${import.meta.env.BASE_URL}image/LogoHipica.png`;
 
-   const filteredMenuItems = useMemo(() => {
-        if (!searchTerm) {
-            return menuItems;
-        }
-        const lowerCaseSearch = searchTerm.toLowerCase();
-        return menuItems.filter(item => 
-            item.label.toLowerCase().includes(lowerCaseSearch)
-        );
-    }, [searchTerm]);
+  const filteredMenuItems = useMemo(() => {
+    if (!searchTerm) {
+      return menuItems;
+    }
+    const lowerCaseSearch = searchTerm.toLowerCase();
+    return menuItems.filter((item) => item.label.toLowerCase().includes(lowerCaseSearch));
+  }, [searchTerm]);
 
   return (
     <>
-      <div className="lg:hidden fixed top-4 right-4 z-50">
+      <div className="fixed right-4 top-4 z-50 lg:hidden">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="p-2 text-white bg-gray-800 rounded-md"
+          className="flex items-center gap-2 rounded-2xl bg-sidebar-gradient px-4 py-2 text-sm font-semibold text-white shadow-sidebar-pill transition hover:bg-sidebar-surface/80"
         >
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
+          {isOpen ? <X size={20} /> : <Menu size={20} />}
+          <span>{isOpen ? 'Cerrar' : 'Menu'}</span>
         </button>
       </div>
 
-    
       <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-gray-800 text-white shadow-xl transform transition-transform duration-300 ease-in-out z-40 flex flex-col
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
-        >
-        <div className="flex items-center justify-between h-20 px-4 border-b border-gray-700">
-          <span className="text-2xl font-bold tracking-wide">PANEL DE CONTROL</span>
-        </div>
-        
-         <div className="p-4">
-                    <div className="relative">
-                        <input
-                            type="text"
-                            placeholder="Buscar..."
-                            className="w-full py-2 pl-10 pr-4 bg-gray-900 rounded-md text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                        <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    </div>
+        className={`fixed inset-y-0 left-0 z-40 flex w-[19rem] max-w-[20rem] transform flex-col px-3 py-5 transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="relative flex h-full flex-col overflow-hidden rounded-3xl bg-sidebar-gradient text-white shadow-sidebar-inner ring-1 ring-white/5 shadow-[0_0_60px_rgba(48,217,151,0.25),0_0_90px_rgba(31,165,255,0.25)]">
+          <div className="pointer-events-none absolute inset-[-32px] opacity-95">
+            <div className="h-full w-full bg-sidebar-glow" />
           </div>
 
-        <nav className="flex-1 py-4 overflow-y-auto">
-          <ul className="space-y-2">
-            {filteredMenuItems.map(item => (
-              <li key={item.path}>
-                <Link
-                  to={item.path}
-                  onClick={closeSidebar}
-                  className={`flex items-center gap-3 px-6 py-3 rounded-md hover:bg-gray-900 transition ${
-                    location.pathname === item.path ? 'bg-gray-900 font-semibold' : ''
-                  }`}
-                >
-                  {item.icon}
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-        
-        <div className="mt-auto p-4 text-xs text-gray-400 border-t border-gray-700">
-          &copy; {new Date().getFullYear()} Country Club - Hipica
-          <button
-            onClick={async () => {
-              await supabase.auth.signOut();
-            }}
-            className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md mt-4 w-full"
-           >
-            Cerrar sesión
-          </button>
+          <div className="relative flex items-center gap-2 px-4.5 pb-5 pt-5">
+            <img
+              src={logoUrl}
+              alt="Country Club Hipica"
+              className="h-[6rem] w-[6rem] rounded-[32px] object-cover shadow-sidebar-pill"
+            />
+            <div>
+              <p className="text-xs uppercase tracking-[0.25em] text-sidebar-muted">
+                Country Club
+              </p>
+              <h1 className="text-[1.45rem] font-semibold text-white">Panel Hípica</h1>
+            </div>
+          </div>
+
+
+          <div className="relative px-6 pb-4">
+            <div className="relative group">
+              <input
+                type="text"
+                placeholder="Buscar modulo..."
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-12 py-3 text-sm text-white placeholder:text-sidebar-muted focus:border-sidebar-active focus:outline-none focus:ring-2 focus:ring-sidebar-active/40"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <Search
+                size={18}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-sidebar-muted transition group-focus-within:text-sidebar-active"
+              />
+            </div>
+          </div>
+
+          <nav className="relative flex-1 overflow-y-auto px-0 pb-8 soft-scrollbar">
+            <div className="space-y-6">
+              <div className="rounded-[32px] border border-white/10 bg-white/5 px-4 py-5 backdrop-blur-2xl shadow-inner shadow-black/20">
+                <ul className="space-y-3">
+                  {filteredMenuItems.map((item) => {
+                    const isActive = location.pathname === item.path;
+                    return (
+                      <li key={item.path} className="group flex items-center">
+                        <span
+                          className={`relative z-10 flex h-11 w-11 shrink-0 -translate-x-1 items-center justify-center rounded-full border transition-all duration-300 ${
+                            isActive
+                              ? 'border-[#37f713] bg-[#37f713]/15 text-[#37f713] shadow-[0_0_20px_#37f713]'
+
+                              : 'border-white/12 bg-sidebar-pill/60 text-sidebar-icon group-hover:-translate-x-0.5 group-hover:border-sidebar-active-green/80 group-hover:bg-sidebar-active-green/10 group-hover:text-sidebar-active-green group-hover:shadow-sidebar-pill'
+                          }`}
+                        >
+                          {item.icon}
+                        </span>
+                        <Link
+                          to={item.path}
+                          onClick={closeSidebar}
+                          className={`group relative ml-[-0.2rem] flex-1 rounded-[23px] border pl-3 pr-4 py-3 transition-all duration-300 ${
+                            isActive
+                              ? 'border-[#37f713] bg-[#37f713]/10 text-[#37f713] shadow-[0_0_25px_#37f713] ring-1 ring-[#37f713]/40'
+                              : 'border-transparent bg-sidebar-surface/70 text-sidebar-muted transition-transform hover:scale-[1.05] hover:border-[#08f2ff]/80 hover:bg-sidebar-surface/80'
+                          }`}
+                        >
+                          <span
+                            className={`text-sm font-semibold tracking-wide transition-colors duration-300 ${
+                              isActive
+                                ? 'text-[#37f713]'
+                                : 'text-[#ffffff] group-hover:text-[#3CC9F6]'
+                            }`}
+                          >
+                            {item.label}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </div>
+          </nav>
+
+          <div className="relative mt-auto px-6 pb-3 pt-5">
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut();
+              }}
+              className="flex w-full items-center justify-center gap-3 rounded-2xl border border-[#3CC9F6] bg-[#3CC9F6] px-4 py-3 text-sm font-semibold text-white shadow-[0_0_35px_#3CC9F677] transition hover:bg-[#37B6E0] hover:shadow-[0_0_40px_#3CC9F6]"
+            >
+              <LogOut size={18} />
+              Cerrar sesión
+            </button>
+            <p className="mt-4 text-center text-[11px] uppercase tracking-[0.35em] text-sidebar-muted">
+              Copyright {new Date().getFullYear()} Country Club Hipica
+            </p>
+          </div>
         </div>
       </aside>
 
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-black opacity-50 z-30 lg:hidden"
-          onClick={closeSidebar}
-        ></div>
+        <div className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden" onClick={closeSidebar} />
       )}
     </>
   );

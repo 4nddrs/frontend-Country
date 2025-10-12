@@ -79,3 +79,25 @@ html, body, #root {
   bottom: 0;
  
 }
+
+.soft-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(31, 165, 255, 0.45) transparent;
+}
+
+.soft-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.soft-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.soft-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(31, 165, 255, 0.45), rgba(126, 82, 255, 0.35));
+  border-radius: 9999px;
+}
+
+.soft-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(31, 165, 255, 0.6), rgba(126, 82, 255, 0.5));
+}
