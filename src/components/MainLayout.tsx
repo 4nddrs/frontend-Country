@@ -34,6 +34,7 @@ import VaccinationPlanApplication from '../pages/admin/VaccinationPlanApplicatio
 import AlphaConsumptionControl from '../pages/admin/AlphaConsumptionControl';
 import SalaryPayments from '../pages/admin/SalaryPayment';
 import TipPayment from '../pages/admin/TipPayment';
+import HorseAssignmentsManagement from '../pages/admin/HorseAssignmentsManagement';
 
 const MainLayout = () => {
   return (
@@ -73,6 +74,7 @@ const MainLayout = () => {
           <Route path="/AlphaConsumptionControl" element={<AlphaConsumptionControl />} />
           <Route path="/SalaryPayments" element={<SalaryPayments />} />
           <Route path="/TipPayment" element={<TipPayment />} />
+          <Route path="/HorseAssignmentsManagement" element={<HorseAssignmentsManagement />} />
         </Routes>
       </main>
       <Toaster position="bottom-right" />

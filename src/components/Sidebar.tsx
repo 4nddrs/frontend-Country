@@ -51,6 +51,7 @@ const menuItems = [
   { label: 'Control de Consumo de Alfalfa', icon: <Calendar size={18} />, path: '/AlphaConsumptionControl' },
   { label: 'Pagos de Salarios', icon: <Calendar size={18} />, path: '/SalaryPayments' },
   { label: 'Pago de Propinas', icon: <Calendar size={18} />, path: '/TipPayment' },
+  { label: 'Asignacion de Caballos', icon: <ClipboardList size={18} />, path: '/HorseAssignmentsManagement' },
 ];
 
 const Sidebar = () => {

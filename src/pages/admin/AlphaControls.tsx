@@ -116,7 +116,7 @@ const AlphaControlsManagement: React.FC = () => {
   // ===== Fetch datos =====
   const fetchFoodProviders = async () => {
     try {
-      const res = await fetch("http://localhost:8000/food-providers/");
+      const res = await fetch("https://backend-country-nnxe.onrender.com/food-providers/");
       if (!res.ok) throw new Error();
       const data = await res.json();
       setFoodProviders(data);
