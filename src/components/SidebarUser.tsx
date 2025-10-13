@@ -9,23 +9,24 @@ import {
   Flag,
   DollarSign,
   User,
-  Search
+  Search,
+  LogOut,
 } from "lucide-react";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
 
 const menuItems = [
-  { label: "Inicio", icon: <Home size={20} />, path: "/user/home" },
-  { label: "Mi Caballo", icon: <Flag size={20} />, path: "/user/horses" },
-  { label: "Cámara del Establo", icon: <Video size={20} />, path: "/user/camera" },
-  { label: "Pagos y Estado Económico", icon: <DollarSign size={20} />, path: "/user/payments" },
-  { label: "Perfil", icon: <User size={20} />, path: "/user/profile" },
+  { label: "Inicio", icon: Home, path: "/user/home" },
+  { label: "Mi Caballo", icon: Flag, path: "/user/horses" },
+  { label: "Cámara del Establo", icon: Video, path: "/user/camera" },
+  { label: "Pagos y Estado Económico", icon: DollarSign, path: "/user/payments" },
+  { label: "Perfil", icon: User, path: "/user/profile" },
 ];
 
-const SidebarUser = () => {
+export default function SidebarUser() {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const location = useLocation();
-
-  const closeSidebar = () => setIsOpen(false);
 
   const filteredMenuItems = useMemo(() => {
     if (!searchTerm) return menuItems;
@@ -33,86 +34,100 @@ const SidebarUser = () => {
     return menuItems.filter((item) => item.label.toLowerCase().includes(lower));
   }, [searchTerm]);
 
+  const closeSidebar = () => setIsOpen(false);
+
   return (
     <>
-      {/* Botón hamburguesa */}
-      <div className="lg:hidden fixed top-4 right-4 z-50">
+  {/* Botón hamburguesa móvil (flotante) */}
+  <div className="lg:hidden fixed top-4 right-4 z-60">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="p-2 text-white bg-gray-800 rounded-md"
+          className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/20 transition-all hover:from-emerald-600 hover:to-emerald-700"
         >
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
-      {/* Sidebar */}
+      {/* Backdrop móvil */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300"
+          onClick={closeSidebar}
+        />
+      )}
+
+      {/* Sidebar principal */}
       <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-gray-800 text-white shadow-xl transform transition-transform duration-300 ease-in-out z-40 flex flex-col
-          ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+        className={`fixed top-0 left-0 h-full w-80 bg-gradient-to-b from-slate-900/95 to-slate-950/95 backdrop-blur-xl border-r border-slate-800/50 z-40 transition-transform duration-300 flex flex-col ${
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
       >
-        <div className="flex items-center justify-between h-20 px-4 border-b border-gray-700">
-          <span className="text-2xl font-bold tracking-wide">MI ESPACIO</span>
+        {/* Header */}
+        <div className="p-6 border-b border-slate-800/50 flex items-center justify-between">
+          <h2 className="text-xl text-white tracking-wide font-semibold">
+            MI ESPACIO
+          </h2>
+          {/* internal close removed to avoid duplicate controls on mobile; use floating button */}
         </div>
 
-        {/* Buscar */}
-        <div className="p-4">
+        {/* Buscador */}
+        <div className="p-4 border-b border-slate-800/50">
           <div className="relative">
-            <input
-              type="text"
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <Input
               placeholder="Buscar..."
-              className="w-full py-2 pl-10 pr-4 bg-gray-900 rounded-md text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="pl-10 bg-slate-800/40 border-slate-700/40 text-white placeholder:text-slate-500 focus-visible:ring-emerald-500/40"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <Search
-              size={18}
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
             />
           </div>
         </div>
 
-        {/* Menú */}
-        <nav className="flex-1 py-4 overflow-y-auto">
-          <ul className="space-y-2">
-            {filteredMenuItems.map((item) => (
-              <li key={item.path}>
+        {/* Navegación */}
+        <nav className="flex-1 p-4 overflow-y-auto">
+          <div className="space-y-2">
+            {filteredMenuItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+
+              return (
                 <Link
+                  key={item.path}
                   to={item.path}
                   onClick={closeSidebar}
-                  className={`flex items-center gap-3 px-6 py-3 rounded-md hover:bg-gray-900 transition ${
-                    location.pathname === item.path ? "bg-gray-900 font-semibold" : ""
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                    isActive
+                      ? "bg-gradient-to-r from-emerald-500/20 to-emerald-600/20 text-emerald-400 border border-emerald-500/30 shadow-inner"
+                      : "text-slate-400 hover:text-white hover:bg-slate-800/40"
                   }`}
                 >
-                  {item.icon}
-                  {item.label}
+                  <Icon className="w-5 h-5" />
+                  <span className="text-sm">{item.label}</span>
                 </Link>
-              </li>
-            ))}
-          </ul>
+              );
+            })}
+          </div>
         </nav>
 
-        <div className="mt-auto p-4 text-xs text-gray-400 border-t border-gray-700">
-          &copy; {new Date().getFullYear()} Country Club - Usuario
-          <button
+        {/* Footer */}
+        <div className="p-4 border-t border-slate-800/50">
+          <div className="mb-4 p-4 rounded-xl bg-slate-800/30 border border-slate-700/50">
+            <p className="text-xs text-slate-500 mb-1">Country Club</p>
+            <p className="text-sm text-slate-300">Usuario</p>
+          </div>
+
+          <Button
             onClick={async () => {
               await supabase.auth.signOut();
               window.location.reload();
             }}
-            className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md mt-4 w-full"
+            className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg shadow-emerald-500/20"
           >
+            <LogOut className="w-4 h-4 mr-2" />
             Cerrar sesión
-          </button>
+          </Button>
         </div>
       </aside>
-
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black opacity-50 z-30 lg:hidden"
-          onClick={closeSidebar}
-        ></div>
-      )}
     </>
   );
-};
-
-export default SidebarUser;
+}
