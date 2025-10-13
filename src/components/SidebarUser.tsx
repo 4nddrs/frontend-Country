@@ -94,7 +94,10 @@ const SidebarUser = () => {
         <div className="mt-auto p-4 text-xs text-gray-400 border-t border-gray-700">
           &copy; {new Date().getFullYear()} Country Club - Usuario
           <button
-            onClick={async () => await supabase.auth.signOut()}
+            onClick={async () => {
+              await supabase.auth.signOut();
+              window.location.reload();
+            }}
             className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md mt-4 w-full"
           >
             Cerrar sesión

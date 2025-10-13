@@ -35,6 +35,7 @@ import AlphaConsumptionControl from '../pages/admin/AlphaConsumptionControl';
 import SalaryPayments from '../pages/admin/SalaryPayment';
 import TipPayment from '../pages/admin/TipPayment';
 import HorseAssignmentsManagement from '../pages/admin/HorseAssignmentsManagement';
+import PendingUsers from '../pages/admin/PendingUsers';
 
 const MainLayout = () => {
   return (
@@ -75,6 +76,7 @@ const MainLayout = () => {
           <Route path="/SalaryPayments" element={<SalaryPayments />} />
           <Route path="/TipPayment" element={<TipPayment />} />
           <Route path="/HorseAssignmentsManagement" element={<HorseAssignmentsManagement />} />
+          <Route path="/PendingUsers" element={<PendingUsers />} />
         </Routes>
       </main>
       <Toaster position="bottom-right" />

@@ -52,6 +52,7 @@ const menuItems = [
   { label: 'Pagos de Salarios', icon: <Calendar size={18} />, path: '/SalaryPayments' },
   { label: 'Pago de Propinas', icon: <Calendar size={18} />, path: '/TipPayment' },
   { label: 'Asignacion de Caballos', icon: <ClipboardList size={18} />, path: '/HorseAssignmentsManagement' },
+  { label: 'Usuarios Pendientes', icon: <User size={18} />, path: '/PendingUsers' },
 ];
 
 const Sidebar = () => {
@@ -172,6 +173,7 @@ const Sidebar = () => {
             <button
               onClick={async () => {
                 await supabase.auth.signOut();
+                window.location.reload();
               }}
               className="flex w-full items-center justify-center gap-3 rounded-2xl border border-[#3CC9F6] bg-[#3CC9F6] px-4 py-3 text-sm font-semibold text-white shadow-[0_0_35px_#3CC9F677] transition hover:bg-[#37B6E0] hover:shadow-[0_0_40px_#3CC9F6]"
             >
