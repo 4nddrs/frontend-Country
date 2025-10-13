@@ -135,7 +135,7 @@ const Sidebar = () => {
                         <span
                           className={`relative z-10 flex h-11 w-11 shrink-0 -translate-x-1 items-center justify-center rounded-full border transition-all duration-300 ${
                             isActive
-                              ? 'border-[#37f713] bg-[#37f713]/15 text-[#37f713] shadow-[0_0_20px_#37f713]'
+                              ? 'border-[#3CC9F6] bg-[#3CC9F6]/15 text-[#3CC9F6] shadow-[0_0_20px_#3CC9F6]'
 
                               : 'border-white/12 bg-sidebar-pill/60 text-sidebar-icon group-hover:-translate-x-0.5 group-hover:border-sidebar-active-green/80 group-hover:bg-sidebar-active-green/10 group-hover:text-sidebar-active-green group-hover:shadow-sidebar-pill'
                           }`}
@@ -147,14 +147,14 @@ const Sidebar = () => {
                           onClick={closeSidebar}
                           className={`group relative ml-[-0.2rem] flex-1 rounded-[23px] border pl-3 pr-4 py-3 transition-all duration-300 ${
                             isActive
-                              ? 'border-[#37f713] bg-[#37f713]/10 text-[#37f713] shadow-[0_0_25px_#37f713] ring-1 ring-[#37f713]/40'
+                              ? 'border-[#3CC9F6] bg-[#3CC9F6]/10 text-[#3CC9F6] shadow-[0_0_25px_#3CC9F6] ring-1 ring-[#3CC9F6]/40'
                               : 'border-transparent bg-sidebar-surface/70 text-sidebar-muted transition-transform hover:scale-[1.05] hover:border-[#08f2ff]/80 hover:bg-sidebar-surface/80'
                           }`}
                         >
                           <span
                             className={`text-sm font-semibold tracking-wide transition-colors duration-300 ${
                               isActive
-                                ? 'text-[#37f713]'
+                                ? 'text-[#3CC9F6]'
                                 : 'text-[#ffffff] group-hover:text-[#3CC9F6]'
                             }`}
                           >
