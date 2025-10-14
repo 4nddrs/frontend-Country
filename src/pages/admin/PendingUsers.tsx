@@ -25,14 +25,14 @@ export default function PendingUsers() {
       console.log('🟡 Intentando aprobar usuario:', user);
 
       // 🧩 Validación previa
-      if (!user?.fk_idAuthUser || typeof user.fk_idAuthUser !== 'string') {
-        alert('⚠️ Error: el usuario no tiene un fk_idAuthUser válido.');
+      if (!user?.uid || typeof user.uid !== 'string') {
+        alert('⚠️ Error: el usuario no tiene un uid válido.');
         return;
       }
 
       // ✅ 1. Confirmar correo en Auth (marca el email como verificado)
       const { error: confirmError } = await supabaseAdmin.auth.admin.updateUserById(
-        user.fk_idAuthUser,
+        user.uid,
         { email_confirm: true }
       );
 
@@ -49,7 +49,7 @@ export default function PendingUsers() {
           isapproved: true,
           approved_at: new Date().toISOString(),
         })
-        .eq('fk_idAuthUser', user.fk_idAuthUser);
+        .eq('uid', user.uid);
 
       if (updateError) {
         console.error('❌ Error al actualizar usuario:', updateError);
@@ -80,11 +80,11 @@ export default function PendingUsers() {
       ) : (
         pending.map((u) => (
           <div
-            key={u.idErpUser || u.fk_idAuthUser}
+            key={u.uid || u.username}
             className="flex justify-between bg-gray-800 p-4 mb-2 rounded-lg"
           >
             <span>
-              {u.username} — {u.email}
+                {u.username} — {u.email}
             </span>
             <button
               onClick={() => approveUser(u)}

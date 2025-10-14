@@ -38,7 +38,7 @@ export default function AuthForm() {
     const { data, error } = await supabase
       .from('erp_user')
       .select('fk_idUserRole, isapproved')
-      .eq('fk_idAuthUser', authUserId)
+      .eq('uid', authUserId)
       .single();
 
     if (error) throw new Error('No se pudo obtener el rol del usuario.');
@@ -92,15 +92,17 @@ export default function AuthForm() {
         const user = data.user;
 
         if (user?.id) {
+          // Asignar siempre el rol "user" con id = 7
+          const roleId = 7;
+
           const { error: insertError } = await supabaseAdmin.from('erp_user').insert([
             {
+              uid: user.id,
               username: form.username,
               email: form.email,
-              fk_idAuthUser: user.id,
-              fk_idOwner: 10,
-              fk_idEmployee: 37,
-              fk_idUserRole: 5,
               isapproved: false, // pendiente de aprobación
+              fk_idUserRole: roleId,
+              approved_at: null,
             },
           ]);
 
@@ -117,8 +119,8 @@ export default function AuthForm() {
   };
 
   // 🔸 Mostrar vistas según rol
-  if (role === 4) return <MainLayout />;
-  if (role === 5) return <AppUser />;
+  if (role === 6) return <MainLayout />;
+  if (role === 7) return <AppUser />;
 
   // 🔸 Formulario base
   return (

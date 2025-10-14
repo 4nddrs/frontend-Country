@@ -32,7 +32,7 @@ export default function App() {
         const { data: erpUser, error } = await supabase
           .from('erp_user')
           .select('fk_idUserRole, isapproved')
-          .eq('fk_idAuthUser', userId)
+          .eq('uid', userId)
           .maybeSingle(); // evita error si no existe
 
         if (error) {
@@ -87,7 +87,7 @@ export default function App() {
           const { data: erpUser, error } = await supabase
             .from('erp_user')
             .select('fk_idUserRole, isapproved')
-            .eq('fk_idAuthUser', session.user.id)
+            .eq('uid', session.user.id)
             .maybeSingle();
 
           if (error) {
@@ -146,9 +146,9 @@ export default function App() {
   if (!session) return <AuthForm />;
 
   // Si hay sesión y rol -> renderizar según rol
-  if (role === 4) {
+  if (role === 6) {
     return <MainLayout />;
-  } else if (role === 5) {
+  } else if (role === 7) {
     return <AppUser />;
   } else {
     // Rol desconocido -> desalojar por seguridad
