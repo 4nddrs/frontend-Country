@@ -28,22 +28,13 @@ export default function AuthForm() {
   const [form, setForm] = useState({ username: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<number | null>(null);
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const getUserData = async (authUserId: string) => {
-    const { data, error } = await supabase
-      .from('erp_user')
-      .select('fk_idUserRole, isapproved')
-      .eq('uid', authUserId)
-      .single();
-
-    if (error) throw new Error('No se pudo obtener el rol del usuario.');
-    return data;
-  };
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,30 +43,18 @@ export default function AuthForm() {
     try {
       if (isLogin) {
         // 🔹 LOGIN
-        const { data, error: signInError } = await supabase.auth.signInWithPassword({
-          email: form.email,
-          password: form.password,
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: form.email,
+          password: form.password,
         });
         if (signInError) {
           setError(signInError.message);
           return;
         }
-
-        const user = data.user;
-        if (!user) {
-          setError('No se pudo autenticar el usuario.');
-          return;
-        }
-
-        const userData = await getUserData(user.id);
-
-        if (!userData.isapproved) {
-          setError('❌ Tu cuenta aún no fue aprobada por un administrador.');
-          await supabase.auth.signOut();
-          return;
-        }
-
-        setRole(userData.fk_idUserRole);
+          setTimeout(() => {
+            window.location.reload(); 
+        }, 100);
+        
       } else {
         // 🔹 REGISTRO (pendiente de aprobación)
         const { data, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
@@ -119,8 +98,7 @@ export default function AuthForm() {
   };
 
   // 🔸 Mostrar vistas según rol
-  if (role === 6) return <MainLayout />;
-  if (role === 7) return <AppUser />;
+ 
 
   // 🔸 Formulario base
   return (
@@ -224,6 +202,7 @@ export default function AuthForm() {
   
           <button
             type="submit"
+            
             className={`w-full ${isLogin ? 'mt-0' : 'mt-4'} bg-emerald-500 hover:bg-emerald-600  font-semibold py-3 rounded-lg transition duration-200 ease-in-out shadow-md shadow-emerald-500/30`}
           >
             {isLogin ? 'Entrar' : 'Crear cuenta'}

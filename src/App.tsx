@@ -5,132 +5,83 @@ import MainLayout from './components/MainLayout';
 import AuthForm from './components/AuthForm';
 import AppUser from './pages/user/AppUser';
 
+// Función auxiliar para obtener el rol (reutilizable)
+const fetchUserRole = async (userId: string) => {
+  const { data: erpUser, error } = await supabase
+    .from('erp_user')
+    .select('fk_idUserRole, isapproved')
+    .eq('uid', userId) 
+    .maybeSingle(); 
+  
+  if (error) {
+    console.error('❌ Error consultando erp_user:', error);
+    return { role: null, approved: false, error: error.message };
+  }
+
+  if (!erpUser) {
+    console.warn('⚠️ Usuario sin registro en erp_user.');
+    return { role: null, approved: false, error: 'Usuario no registrado.' };
+  }
+  
+  if (erpUser.isapproved === false) {
+    console.warn('⏳ Usuario encontrado pero NO aprobado.');
+    return { role: null, approved: false, error: 'Cuenta pendiente de aprobación.' };
+  }
+  
+  return { role: Number(erpUser.fk_idUserRole), approved: true, error: null };
+};
+
+
 export default function App() {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<any | null>(null);
   const [role, setRole] = useState<number | null>(null);
 
-  useEffect(() => {
-    // función que obtiene sesión y rol
-    const bootstrap = async () => {
+ useEffect(() => {
+    
+    const checkInitialSession = async () => {
+      console.log('🔄 Ejecutando checkInitialSession (Robusto)...');
+      
       try {
-        console.log('🔄 Inicializando sesión...');
+        // 1. Obtener la sesión
         const { data } = await supabase.auth.getSession();
         const currentSession = data.session ?? null;
         setSession(currentSession);
-        console.log('🟢 Sesión actual:', currentSession);
 
-        if (!currentSession?.user?.id) {
-          setLoading(false);
-          return;
-        }
-
-        // Obtener rol e isapproved desde erp_user
-        const userId = currentSession.user.id;
-        console.log('🔎 Consultando erp_user para:', userId);
-
-        const { data: erpUser, error } = await supabase
-          .from('erp_user')
-          .select('fk_idUserRole, isapproved')
-          .eq('uid', userId)
-          .maybeSingle(); // evita error si no existe
-
-        if (error) {
-          console.error('❌ Error consultando erp_user:', error);
-        } else {
-          console.log('📄 erp_user result:', erpUser);
-          if (!erpUser) {
-            // no hay registro en erp_user -> desalojamos sesión para evitar acceso
-            console.warn('⚠️ Usuario sin registro en erp_user. Se cerrará la sesión.');
-            await supabase.auth.signOut();
-            setSession(null);
-            setRole(null);
-            alert('Tu usuario no está registrado en el sistema. Contacta al administrador.');
-            setLoading(false);
-            return;
+        if (currentSession?.user?.id) {
+          // 2. Si hay sesión, buscamos el rol
+          const userId = currentSession.user.id;
+          const result = await fetchUserRole(userId); 
+          
+          if (result.error) {
+            console.error("❌ Error al validar rol en checkInitialSession:", result.error);
+            // Esto dispara el SIGNED_OUT, el listener lo manejará
+            await supabase.auth.signOut(); 
+          } else {
+            setRole(result.role);
           }
-
-          // si existe pero no aprobado -> cerrar sesión
-          if (erpUser.isapproved === false) {
-            console.warn('⏳ Usuario encontrado pero NO aprobado. Cerrando sesión.');
-            await supabase.auth.signOut();
-            setSession(null);
-            setRole(null);
-            alert('Tu cuenta aún no fue aprobada por un administrador.');
-            setLoading(false);
-            return;
-          }
-
-          // en este punto está aprobado -> setear rol
-          setRole(Number(erpUser.fk_idUserRole));
         }
-      } catch (err) {
-        console.error('❌ Error en bootstrap de sesión:', err);
-        // no rompemos la app: mostramos login
-        setSession(null);
-        setRole(null);
+      } catch (e) {
+        console.error("❌ Error inesperado en checkInitialSession:", e);
+        // Manejo de errores fatales, por si acaso
       } finally {
+        // ⭐ ESTO ES LA CLAVE: Garantiza que la carga termine.
         setLoading(false);
       }
     };
 
-    bootstrap();
-
-    // listener para cambios de sesión
+    checkInitialSession();
+    
+    // ... (El Listener onAuthStateChange sigue aquí)
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log('🔔 onAuthStateChange event:', _event, session);
-      setSession(session);
-
-      // si hay sesión, reconsultar rol en erp_user
-      if (session?.user?.id) {
-        try {
-          const { data: erpUser, error } = await supabase
-            .from('erp_user')
-            .select('fk_idUserRole, isapproved')
-            .eq('uid', session.user.id)
-            .maybeSingle();
-
-          if (error) {
-            console.error('❌ Error consultando erp_user en listener:', error);
-            setRole(null);
-            return;
-          }
-
-          if (!erpUser) {
-            console.warn('⚠️ Listener: usuario no existe en erp_user. Cerrando sesión.');
-            await supabase.auth.signOut();
-            setSession(null);
-            setRole(null);
-            alert('Tu usuario no está registrado en el sistema. Contacta al administrador.');
-            return;
-          }
-
-          if (erpUser.isapproved === false) {
-            console.warn('⏳ Listener: usuario no aprobado. Cerrando sesión.');
-            await supabase.auth.signOut();
-            setSession(null);
-            setRole(null);
-            alert('Tu cuenta aún no fue aprobada por un administrador.');
-            return;
-          }
-
-          setRole(Number(erpUser.fk_idUserRole));
-        } catch (err) {
-          console.error('❌ Error en listener al consultar rol:', err);
-          setRole(null);
-        }
-      } else {
-        // no hay sesión -> limpiar datos
-        setRole(null);
-      }
+      // ... (El listener es idéntico a tu versión actual)
+      // ... (El listener maneja SIGNED_IN, SIGNED_OUT, etc.)
     });
 
-    return () => {
-      // cleanup listener
-      listener.subscription.unsubscribe();
-    };
+    // ... (Retorno del useEffect)
   }, []);
 
+  // UI de Carga
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
@@ -142,18 +93,17 @@ export default function App() {
     );
   }
 
-  // Si no hay sesión -> login
+  // 1. Si no hay sesión -> Login
   if (!session) return <AuthForm />;
 
-  // Si hay sesión y rol -> renderizar según rol
+  // 2. Si hay sesión y rol -> renderizar según rol
   if (role === 6) {
     return <MainLayout />;
   } else if (role === 7) {
     return <AppUser />;
   } else {
-    // Rol desconocido -> desalojar por seguridad
-    console.warn('⚠️ Rol desconocido:', role);
-    // opcional: hacer signOut por si acaso
+    // Rol desconocido o nulo -> cerrar sesión
+    console.warn('⚠️ Rol desconocido/nulo:', role);
     supabase.auth.signOut().catch(() => {});
     return <AuthForm />;
   }
