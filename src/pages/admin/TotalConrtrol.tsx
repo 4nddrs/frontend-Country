@@ -846,7 +846,7 @@ const TotalControlManagement = () => {
       });
 
 
-      doc.save(`PlanillaDeControl_${dayjs().format("YYYYMMDD_HHmm")}.pdf`);
+      doc.save(`Planilla Control-${dayjs().format("YYYY-MM-DD")}.pdf`);
       toast.success("PDF generado correctamente.");
     } catch (error) {
       console.error(error);
