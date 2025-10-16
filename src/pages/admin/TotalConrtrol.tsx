@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { ChangeEvent } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import dayjs from 'dayjs';
 
 const API_URL = 'https://backend-country-nnxe.onrender.com/total_control/';
 const BOX_CHARGE = 100;
@@ -152,6 +155,15 @@ const normalizeDateForInput = (value?: string | null) => {
   const [datePart] = trimmed.split("T");
   return datePart;
 };
+
+const formatNumberForPdf = (value: unknown) => {
+  const numeric = safeNumber(value);
+  const formatted = formatNumberForInput(numeric);
+  return formatted === "" ? "0,00" : formatted;
+};
+
+const formatCurrencyForPdf = (value: unknown) =>
+  `${formatNumberForPdf(value)} Bs`;
 
 const RequiredMark = () => <span className="text-red-400 ml-1">*</span>;
 
@@ -360,6 +372,21 @@ const TotalControlManagement = () => {
   const [horses, setHorses] = useState<any[]>([]);
   const [selectedOwner, setSelectedOwner] = useState<number | null>(null);
   const [horseLookup, setHorseLookup] = useState<Record<number, string>>({});
+  const [exporting, setExporting] = useState(false);
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+  const [filterMonth, setFilterMonth] = useState<string>("");
+  const [filterYear, setFilterYear] = useState<string>("");
+
+  const availableYears = useMemo(() => {
+    const yearSet = new Set<string>();
+    controls.forEach((control) => {
+      const normalized = normalizeDateForInput(control.period);
+      if (normalized) {
+        yearSet.add(normalized.slice(0, 4));
+      }
+    });
+    return Array.from(yearSet).sort();
+  }, [controls]);
 
   const handleNumericInputChange =
     (field: NumericField) => (event: ChangeEvent<HTMLInputElement>) => {
@@ -522,6 +549,20 @@ const TotalControlManagement = () => {
   };
 
 
+  const loadLogo = async () => {
+    try {
+      const LOGO_URL = `${import.meta.env.BASE_URL}image/LogoHipica.png`;
+      const response = await fetch(LOGO_URL);
+      if (!response.ok) return;
+      const blob = await response.blob();
+      const reader = new FileReader();
+      reader.onloadend = () => setLogoDataUrl(reader.result as string);
+      reader.readAsDataURL(blob);
+    } catch {
+      console.warn("No se pudo cargar el logo para el PDF.");
+    }
+  };
+
   const fetchControls = async () => {
     setLoading(true);
     try {
@@ -550,6 +591,7 @@ const TotalControlManagement = () => {
     fetchControls();
     fetchOwners();
     fetchAllHorses();
+    loadLogo();
   }, []);
 
   const createControl = async () => {
@@ -595,7 +637,226 @@ const TotalControlManagement = () => {
       toast.error('No se pudo eliminar el control.');
     }
   };
-  
+
+  const exportFilteredPDF = async () => {
+    try {
+      setExporting(true);
+
+      const monthFilter = filterMonth.trim();
+      const yearFilter = filterYear.trim();
+
+      let filtered = controls;
+      if (monthFilter) {
+        filtered = controls.filter((control) =>
+          normalizeDateForInput(control.period).startsWith(monthFilter)
+        );
+      } else if (yearFilter) {
+        filtered = controls.filter((control) =>
+          normalizeDateForInput(control.period).startsWith(yearFilter)
+        );
+      }
+
+      if (!filtered.length) {
+        toast.error("No hay registros para el periodo seleccionado.");
+        return;
+      }
+
+      const doc = new jsPDF({ orientation: "landscape", unit: "pt" });
+
+      if (logoDataUrl) {
+        const margin = 40;
+        const w = 120;
+        const h = 70;
+        const pageW = doc.internal.pageSize.getWidth();
+        doc.addImage(logoDataUrl, "PNG", pageW - w - margin, 20, w, h);
+      }
+
+      let titulo = "PLANILLA DE CONTROL";
+      if (monthFilter) {
+        const [year, month] = monthFilter.split("-");
+        const fecha = new Date(Number(year), Number(month) - 1);
+        const mesNombre = fecha.toLocaleDateString("es-ES", { month: "long" }).toUpperCase();
+        titulo = `PLANILLA DE CONTROL POR EL MES DE - ${mesNombre} ${year}`;
+      } else if (yearFilter) {
+        titulo = `PLANILLA DE CONTROL DEL - AÑO ${yearFilter}`;
+      }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text(titulo, doc.internal.pageSize.getWidth() / 2, 45, { align: "center" });
+
+      const now = new Date();
+      const fecha = now.toLocaleDateString("es-BO");
+      const hora = now.toLocaleTimeString("es-BO", { hour: "2-digit", minute: "2-digit" });
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Fecha: ${fecha}  Hora: ${hora}`, 40, 65);
+
+      const totals = filtered.reduce(
+        (acc, control) => {
+          acc.box += safeNumber(control.box);
+          acc.section += safeNumber(control.section);
+          acc.basket += safeNumber(control.basket);
+          acc.toCaballerizo += safeNumber(control.toCaballerizo);
+          acc.vaccines += safeNumber(control.vaccines);
+          acc.anemia += safeNumber(control.anemia);
+          acc.deworming += safeNumber(control.deworming);
+          acc.consumptionAlfaDiaKlg += safeNumber(control.consumptionAlfaDiaKlg);
+          acc.consumptionAlphaMonthKlg += safeNumber(control.consumptionAlphaMonthKlg);
+          acc.costTotalAlphaBs += safeNumber(control.costTotalAlphaBs);
+          acc.cubeChala += safeNumber(control.cubeChala);
+          acc.costTotalChalaBs += safeNumber(control.costTotalChalaBs);
+          acc.totalCharge += safeNumber(control.totalCharge);
+          return acc;
+        },
+        {
+          box: 0,
+          section: 0,
+          basket: 0,
+          toCaballerizo: 0,
+          vaccines: 0,
+          anemia: 0,
+          deworming: 0,
+          consumptionAlfaDiaKlg: 0,
+          consumptionAlphaMonthKlg: 0,
+          costTotalAlphaBs: 0,
+          cubeChala: 0,
+          costTotalChalaBs: 0,
+          totalCharge: 0,
+        }
+      );
+
+      const body = filtered.map((control, index) => {
+        const ownerName =
+          owners.find((o) => o.idOwner === control.fk_idOwner)?.name ||
+          (control.fk_idOwner ? String(control.fk_idOwner) : "—");
+
+        const horseName =
+          horseLookup[control.fk_idHorse] ??
+          horses.find((h) => h.idHorse === control.fk_idHorse)?.horseName ??
+          (control.fk_idHorse ? String(control.fk_idHorse) : "—");
+
+        return [
+          index + 1,
+          ownerName, // ✅ muestra nombre del propietario
+          horseName, // ✅ muestra nombre del caballo
+          formatCurrencyForPdf(control.box),
+          formatCurrencyForPdf(control.section),
+          formatNumberForPdf(control.basket),
+          formatCurrencyForPdf(control.toCaballerizo),
+          formatCurrencyForPdf(control.vaccines),
+          formatCurrencyForPdf(control.anemia),
+          formatCurrencyForPdf(control.deworming),
+          formatNumberForPdf(control.consumptionAlfaDiaKlg),
+          formatNumberForPdf(control.consumptionAlphaMonthKlg),
+          formatCurrencyForPdf(control.costTotalAlphaBs),
+          formatNumberForPdf(control.cubeChala),
+          formatCurrencyForPdf(control.costTotalChalaBs),
+          formatCurrencyForPdf(control.totalCharge),
+        ];
+      });
+
+      autoTable(doc, {
+        startY: 100,
+        theme: "striped",
+        margin: { left: 20, right: 15 },
+
+        head: [[
+          "NRO.",
+          "PROPIETARIO",
+          "CABALLO",
+          "BOX",
+          "SECCIÓN",
+          "CANASTO",
+          "A CABALLERIZO",
+          "VACUNAS",
+          "ANEMIA",
+          "DESPARASITACIÓN",
+          "CONS. ALFALFA DÍA (KG)",
+          "CONS. ALFALFA MES (KG)",
+          "COSTO TOT. ALFALFA (BS)",
+          "CUBO CHALA",
+          "COSTO TOT. CHALA (BS)",
+          "TOTAL COBRAR (BS)",
+        ]],
+
+        body: body, // ✅ cuerpo corregido con nombres
+
+        styles: {
+          fontSize: 4.2,
+          cellPadding: 1.2,
+          overflow: "linebreak",
+          valign: "middle",
+        },
+        bodyStyles: { fontSize: 3.9 },
+        headStyles: {
+          fillColor: [38, 72, 131],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+          halign: "center",
+          valign: "middle",
+          fontSize: 4.5,
+          cellPadding: 1.1,
+        },
+        footStyles: {
+          fillColor: [38, 72, 131],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+          halign: "center",
+          valign: "middle",
+          fontSize: 4.3,
+        },
+
+        columnStyles: {
+          0: { cellWidth: 20, halign: "center" },
+          1: { cellWidth: 70, halign: "left" },  // propietario
+          2: { cellWidth: 65, halign: "left" },  // caballo
+          3: { cellWidth: 35, halign: "center" },
+          4: { cellWidth: 40, halign: "center" },
+          5: { cellWidth: 40, halign: "center" },
+          6: { cellWidth: 45, halign: "center" },
+          7: { cellWidth: 45, halign: "center" },
+          8: { cellWidth: 45, halign: "center" },
+          9: { cellWidth: 50, halign: "center" },
+          10: { cellWidth: 55, halign: "center" },
+          11: { cellWidth: 55, halign: "center" },
+          12: { cellWidth: 60, halign: "center" },
+          13: { cellWidth: 50, halign: "center" },
+          14: { cellWidth: 60, halign: "center" },
+          15: { cellWidth: 65, halign: "center" },
+        },
+
+        foot: [[
+          { content: "TOTAL", colSpan: 3, styles: { halign: "right", fontStyle: "bold" } },
+          formatCurrencyForPdf(totals.box),
+          formatCurrencyForPdf(totals.section),
+          formatNumberForPdf(totals.basket),
+          formatCurrencyForPdf(totals.toCaballerizo),
+          formatCurrencyForPdf(totals.vaccines),
+          formatCurrencyForPdf(totals.anemia),
+          formatCurrencyForPdf(totals.deworming),
+          formatNumberForPdf(totals.consumptionAlfaDiaKlg),
+          formatNumberForPdf(totals.consumptionAlphaMonthKlg),
+          formatCurrencyForPdf(totals.costTotalAlphaBs),
+          formatNumberForPdf(totals.cubeChala),
+          formatCurrencyForPdf(totals.costTotalChalaBs),
+          formatCurrencyForPdf(totals.totalCharge),
+        ]],
+      });
+
+
+      doc.save(`PlanillaDeControl_${dayjs().format("YYYYMMDD_HHmm")}.pdf`);
+      toast.success("PDF generado correctamente.");
+    } catch (error) {
+      console.error(error);
+      toast.error("No se pudo generar el PDF.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+
   const resetForm = () => {
     const baseControl = applyDerivedValues(
       createInitialControl({ fk_idOwner: 0, fk_idHorse: 0 })
@@ -999,6 +1260,63 @@ const TotalControlManagement = () => {
             </button>
           )}
         </div>
+      </div>
+      <div className="bg-slate-800 p-4 rounded-lg shadow-xl mb-8 border border-slate-700 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-col gap-4 w-full md:flex-row">
+          <div className="w-full md:w-auto">
+            <label htmlFor="filterMonth" className="block mb-1 text-sm font-semibold text-teal-300">
+              Filtrar por mes
+            </label>
+            <input
+              type="month"
+              name="filterMonth"
+              id="filterMonth"
+              value={filterMonth}
+              onChange={(e) => {
+                const value = e.target.value;
+                setFilterMonth(value);
+                if (value) {
+                  setFilterYear("");
+                }
+              }}
+              className="p-2 rounded-md bg-gray-700 text-white w-full md:w-56"
+            />
+          </div>
+          <div className="w-full md:w-auto">
+            <label htmlFor="filterYear" className="block mb-1 text-sm font-semibold text-teal-300">
+              O filtrar por año
+            </label>
+            <select
+              name="filterYear"
+              id="filterYear"
+              value={filterYear}
+              onChange={(e) => {
+                const value = e.target.value;
+                setFilterYear(value);
+                if (value) {
+                  setFilterMonth("");
+                }
+              }}
+              className="p-2 rounded-md bg-gray-700 text-white w-full md:w-48"
+            >
+              <option value="">-- Todos los años --</option>
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={exportFilteredPDF}
+          disabled={exporting}
+          className="bg-teal-500 hover:bg-teal-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2 justify-center"
+        >
+          {exporting && <Loader size={18} className="animate-spin" />}
+          {exporting ? "Generando PDF..." : "Exportar PDF"}
+        </button>
       </div>
       <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
         {loading ? (
