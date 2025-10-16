@@ -3,7 +3,7 @@ import type { ChangeEvent } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
 
-const API_URL = 'http://localhost:8000/total_control/';
+const API_URL = 'https://backend-country-nnxe.onrender.com/total_control/';
 const BOX_CHARGE = 100;
 const SECTION_CHARGE = 200;
 
@@ -145,6 +145,14 @@ const roundToTwo = (value: number) =>
 const safeNumber = (value: unknown) =>
   typeof value === "number" && Number.isFinite(value) ? value : 0;
 
+const normalizeDateForInput = (value?: string | null) => {
+  if (!value) return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  const [datePart] = trimmed.split("T");
+  return datePart;
+};
+
 const RequiredMark = () => <span className="text-red-400 ml-1">*</span>;
 
 interface TotalControl {
@@ -164,6 +172,7 @@ interface TotalControl {
   totalCharge: number;
   fk_idOwner: number;
   fk_idHorse: number;
+  period: string;
   created_at?: string;
   box: number;
   section: number;
@@ -262,6 +271,7 @@ const applyDerivedValues = (control: TotalControl): TotalControl => {
     costTotalAlphaBs,
     costTotalChalaBs,
     totalCharge,
+    period: normalizeDateForInput(control.period),
   };
 };
 
@@ -285,27 +295,33 @@ const getDerivedFormValues = (
 
 const createInitialControl = (
   overrides: Partial<TotalControl> = {}
-): TotalControl => ({
-  toCaballerizo: 0,
-  vaccines: 0,
-  anemia: 0,
-  deworming: 0,
-  consumptionAlfaDiaKlg: 0,
-  costAlfaBs: 0,
-  daysConsumptionMonth: 0,
-  consumptionAlphaMonthKlg: 0,
-  costTotalAlphaBs: 0,
-  cubeChala: 0,
-  UnitCostChalaBs: 0,
-  costTotalChalaBs: 0,
-  totalCharge: 0,
-  fk_idOwner: 0,
-  fk_idHorse: 0,
-  box: 0,
-  section: 0,
-  basket: 0,
-  ...overrides,
-});
+): TotalControl => {
+  const normalizedPeriod = normalizeDateForInput(overrides.period);
+
+  return {
+    idTotalControl: overrides.idTotalControl,
+    toCaballerizo: overrides.toCaballerizo ?? 0,
+    vaccines: overrides.vaccines ?? 0,
+    anemia: overrides.anemia ?? 0,
+    deworming: overrides.deworming ?? 0,
+    consumptionAlfaDiaKlg: overrides.consumptionAlfaDiaKlg ?? 0,
+    costAlfaBs: overrides.costAlfaBs ?? 0,
+    daysConsumptionMonth: overrides.daysConsumptionMonth ?? 0,
+    consumptionAlphaMonthKlg: overrides.consumptionAlphaMonthKlg ?? 0,
+    costTotalAlphaBs: overrides.costTotalAlphaBs ?? 0,
+    cubeChala: overrides.cubeChala ?? 0,
+    UnitCostChalaBs: overrides.UnitCostChalaBs ?? 0,
+    costTotalChalaBs: overrides.costTotalChalaBs ?? 0,
+    totalCharge: overrides.totalCharge ?? 0,
+    fk_idOwner: overrides.fk_idOwner ?? 0,
+    fk_idHorse: overrides.fk_idHorse ?? 0,
+    box: overrides.box ?? 0,
+    section: overrides.section ?? 0,
+    basket: overrides.basket ?? 0,
+    period: normalizedPeriod,
+    created_at: overrides.created_at,
+  };
+};
 
 const formatControlToForm = (
   control: TotalControl,
@@ -395,6 +411,11 @@ const TotalControlManagement = () => {
       return false;
     }
 
+    if (!normalizeDateForInput(newControl.period)) {
+      toast.error("Selecciona el periodo.");
+      return false;
+    }
+
     const missingField = REQUIRED_NUMERIC_FIELDS.find((field) => {
       const value = formValues[field];
       return value === undefined || value.trim() === "";
@@ -450,7 +471,7 @@ const TotalControlManagement = () => {
 
   const fetchOwners = async () => {
     try {
-      const res = await fetch("http://localhost:8000/owner/");
+      const res = await fetch("https://backend-country-nnxe.onrender.com/owner/");
       if (!res.ok) throw new Error("Error al obtener propietarios");
       const data = await res.json();
       setOwners(data);
@@ -461,7 +482,7 @@ const TotalControlManagement = () => {
 
   const fetchAllHorses = async () => {
     try {
-      const res = await fetch("http://localhost:8000/horses/");
+      const res = await fetch("https://backend-country-nnxe.onrender.com/horses/");
       if (!res.ok) throw new Error("Error al obtener caballos");
       const data = await res.json();
 
@@ -481,7 +502,7 @@ const TotalControlManagement = () => {
 
   const fetchHorsesByOwner = async (ownerId: number) => {
     try {
-      const res = await fetch(`http://localhost:8000/horses/by_owner/${ownerId}`);
+      const res = await fetch(`https://backend-country-nnxe.onrender.com/horses/by_owner/${ownerId}`);
       if (!res.ok) throw new Error("Error al obtener caballos del propietario");
       const data = await res.json();
       setHorses(data);
@@ -507,7 +528,17 @@ const TotalControlManagement = () => {
       const res = await fetch(API_URL);
       if (!res.ok) throw new Error('Error al obtener controles');
       const data = await res.json();
-      setControls(data);
+      const normalizedData: TotalControl[] = Array.isArray(data)
+        ? data.map((item: any) =>
+            applyDerivedValues(
+              createInitialControl({
+                ...item,
+                period: normalizeDateForInput(item?.period),
+              })
+            )
+          )
+        : [];
+      setControls(normalizedData);
     } catch {
       toast.error('No se pudieron cargar los controles.');
     } finally {
@@ -633,6 +664,27 @@ const TotalControlManagement = () => {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label htmlFor="period" className="block mb-1">
+              Periodo
+              <RequiredMark />
+            </label>
+            <input
+              type="date"
+              name="period"
+              value={normalizeDateForInput(newControl.period)}
+              onChange={(e) => {
+                const value = normalizeDateForInput(e.target.value);
+                setNewControl((prev) => ({
+                  ...prev,
+                  period: value,
+                }));
+              }}
+              className="p-2 rounded-md bg-gray-700 text-white w-full"
+              required
+            />
           </div>
 
           <div>
@@ -971,6 +1023,7 @@ const TotalControlManagement = () => {
                     horses.find((h) => h.idHorse === control.fk_idHorse)?.horseName ??
                     control.fk_idHorse}
                 </p>
+                <p>Periodo: {normalizeDateForInput(control.period) || "Sin periodo"}</p>
                 <p>Box: {control.box}</p>
                 <p>Sección: {control.section}</p>
                 <p>Canasta: {control.basket}</p>
