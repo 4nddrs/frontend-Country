@@ -1,11 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useMemo, useRef } from 'react';
 import type { ChangeEvent } from 'react';
+import dayjs from 'dayjs';
+import 'dayjs/locale/es';
+import jsPDF from 'jspdf';
+import autoTable, { type CellInput } from 'jspdf-autotable';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import { Plus, Edit, Save, Trash2, Loader, X, Download } from 'lucide-react';
 
 const API_URL = 'http://localhost:8000/owner_report_month/';
 const OWNERS_URL = 'http://localhost:8000/owner/';
 const HORSES_URL = 'http://localhost:8000/horses/';
+
+const TABLE_ACCENT_COLOR: [number, number, number] = [38, 72, 131];
+const TABLE_ACCENT_TEXT: [number, number, number] = [255, 255, 255];
 
 interface HorseReport {
   fk_idHorse: number;
@@ -49,6 +56,13 @@ interface OwnerOption {
 interface HorseOption {
   idHorse: number;
   horseName: string;
+}
+
+interface NormalizedHorseUsage {
+  fk_idHorse: number;
+  days: number;
+  alphaKg: number;
+  monthlyAlphaKg: number;
 }
 
 const createInitialReport = (): OwnerReportMonth => ({
@@ -109,7 +123,7 @@ const normalizeDateForInput = (value?: string | null) => {
 };
 
 const formatDateForDisplay = (value?: string | null) => {
-  if (!value) return '—';
+  if (!value) return ' ';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return value.split('T')[0] ?? value;
@@ -145,6 +159,52 @@ const formatNumberDisplay = (value: number | string | null | undefined): string 
   }).format(numeric);
 };
 
+const normalizeHorseReports = (horseReports?: HorseReport[]): NormalizedHorseUsage[] =>
+  (horseReports ?? []).map((horse) => {
+    const days = Number(horse.days) || 0;
+    const alphaKg = Number(horse.alphaKg) || 0;
+    return {
+      fk_idHorse: horse.fk_idHorse,
+      days,
+      alphaKg,
+      monthlyAlphaKg: days * alphaKg,
+    };
+  });
+
+const summarizeHorseReports = (horseReports?: HorseReport[]) => {
+  const horses = normalizeHorseReports(horseReports);
+  const totals = horses.reduce(
+    (acc, horse) => {
+      acc.totalDays += horse.days;
+      acc.totalAlphaMonthly += horse.monthlyAlphaKg;
+      return acc;
+    },
+    { totalDays: 0, totalAlphaMonthly: 0 }
+  );
+
+  return {
+    horses,
+    horsesCount: horses.length,
+    totalDays: totals.totalDays,
+    totalAlphaMonthly: totals.totalAlphaMonthly,
+  };
+};
+
+dayjs.locale('es');
+
+const formatCurrency = (value: number): string =>
+  new Intl.NumberFormat('es-BO', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+
+const formatMonthLabel = (value?: string | null) => {
+  if (!value) return '';
+  const parsed = dayjs(value);
+  if (!parsed.isValid()) return value;
+  return parsed.format('MMMM YYYY');
+};
+
 const NUMERIC_FIELDS = [
   'priceAlpha',
   'box',
@@ -173,6 +233,16 @@ const createInitialNumericDisplays = (): Record<NumericField, string> =>
     {} as Record<NumericField, string>
   );
 
+const parseNumericValue = (raw: unknown): number => {
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+  if (typeof raw === 'string') {
+    const parsed = parseNumberInput(raw);
+    if (parsed !== null) return parsed;
+  }
+  const numeric = Number(raw);
+  return Number.isFinite(numeric) ? numeric : 0;
+};
+
 const RequiredMark = () => <span className="text-red-400 ml-1">*</span>;
 
 const OwnerReportMonthManagement = () => {
@@ -188,9 +258,323 @@ const OwnerReportMonthManagement = () => {
   const [horses, setHorses] = useState<HorseOption[]>([]);
   const [ownerHorses, setOwnerHorses] = useState<HorseOption[]>([]);
   const [loadingOwnerHorses, setLoadingOwnerHorses] = useState(false);
+  const [filterStart, setFilterStart] = useState<string>('');
+  const [filterEnd, setFilterEnd] = useState<string>('');
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const reportsSectionRef = useRef<HTMLDivElement | null>(null);
 
   const isEditing = editingId !== null;
+
+  const filteredReports = useMemo(() => {
+    if (!filterStart && !filterEnd) return reports;
+
+    let startDate = filterStart ? dayjs(filterStart).startOf('month') : null;
+    let endDate = filterEnd ? dayjs(filterEnd).endOf('month') : null;
+
+    if (startDate && endDate && startDate.isAfter(endDate)) {
+      const temp = startDate;
+      startDate = endDate.startOf('month');
+      endDate = temp.endOf('month');
+    }
+
+    return reports.filter((report) => {
+      if (!report.period) return false;
+      const periodDate = dayjs(report.period);
+      if (!periodDate.isValid()) return false;
+      if (startDate && periodDate.isBefore(startDate, 'day')) return false;
+      if (endDate && periodDate.isAfter(endDate, 'day')) return false;
+      return true;
+    });
+  }, [reports, filterStart, filterEnd]);
+
+  const reportsToDisplay = filteredReports;
+  const isReversedRange = useMemo(
+    () => filterStart && filterEnd && dayjs(filterStart).isAfter(dayjs(filterEnd)),
+    [filterStart, filterEnd]
+  );
+
+  const getOwnerName = (ownerId: number) => {
+    const owner = owners.find((item) => item.idOwner === ownerId);
+    return owner ? formatOwnerName(owner) : `Propietario ${ownerId}`;
+  };
+
+  const getHorseName = (horseId: number) => {
+    const horse = horses.find((item) => item.idHorse === horseId);
+    return horse?.horseName ?? `Caballo ${horseId}`;
+  };
+
+  const buildChargesSummary = (report: OwnerReportMonth, totalAlphaKg: number, horsesCount: number) => {
+    const priceAlpha = parseNumericValue(report.priceAlpha);
+    const box = parseNumericValue(report.box);
+    const section = parseNumericValue(report.section);
+    const aBasket = parseNumericValue(report.aBasket);
+    const contribution = parseNumericValue(report.contributionCabFlyer);
+    const vaccine = parseNumericValue(report.VaccineApplication);
+    const deworming = parseNumericValue(report.deworming);
+    const amenia = parseNumericValue(report.AmeniaExam);
+    const teacher = parseNumericValue(report.externalTeacher);
+    const fine = parseNumericValue(report.fine);
+    const saleChala = parseNumericValue(report.saleChala);
+    const costPerBucket = parseNumericValue(report.costPerBucket);
+    const healthCard = parseNumericValue(report.healthCardPayment);
+    const other = parseNumericValue(report.other);
+
+    const cabCount = Number.isFinite(horsesCount) ? horsesCount : 0;
+    const cabDetail = cabCount ? `Caballos: ${formatNumberDisplay(cabCount)}` : '';
+
+    const baseCharges = [
+      {
+        label: 'ALFA',
+        detail: totalAlphaKg
+          ? `Total Kg mes: ${formatNumberDisplay(totalAlphaKg)} x Precio: ${formatCurrency(priceAlpha)}`
+          : '',
+        amount: priceAlpha * totalAlphaKg,
+      },
+      { label: 'BOX', detail: cabDetail, amount: box * cabCount },
+      { label: 'SECCION', detail: cabDetail, amount: section * cabCount },
+      { label: 'A/CANASTON', detail: cabDetail, amount: aBasket * cabCount },
+      { label: 'APORTE CAB. VOLANTE', detail: cabDetail, amount: contribution * cabCount },
+      { label: 'APLICACION VACUNA', detail: cabDetail, amount: vaccine * cabCount },
+      { label: 'DESPARASITACION', detail: cabDetail, amount: deworming * cabCount },
+      { label: 'TOMA EXAMEN DE ANEMIA', detail: cabDetail, amount: amenia * cabCount },
+      { label: 'PROFESOR EXTERNO', detail: cabDetail, amount: teacher * cabCount },
+      { label: 'MULTA', detail: '', amount: fine },
+    ];
+
+    const saleDetail =
+      saleChala || costPerBucket
+        ? `${formatNumberDisplay(saleChala) || '0'} cubos`
+        : '';
+
+    const extraCharges = [
+      { label: 'VENTA DE CHALA', detail: saleDetail, amount: saleChala * costPerBucket },
+      {
+        label: 'COSTO POR CUBO',
+        detail: costPerBucket ? `Bs. ${formatNumberDisplay(costPerBucket)}` : '',
+        amount: 0,
+      },
+      { label: 'PAGO CARTILLA SANITARIA', detail: cabDetail, amount: healthCard * cabCount },
+      { label: 'OTROS', detail: '', amount: other },
+    ];
+
+    const subTotal = baseCharges.reduce((sum, item) => sum + item.amount, 0);
+    const extraTotal = extraCharges.reduce((sum, item) => sum + item.amount, 0);
+    const total = subTotal + extraTotal;
+
+    return {
+      baseCharges,
+      extraCharges,
+      subTotal,
+      total,
+    };
+  };
+
+  const appendReportToPdf = (doc: jsPDF, report: OwnerReportMonth) => {
+    const marginX = 40;
+    let currentY = 50;
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    const logoTop = 20;
+    const logoMargin = 40;
+    const logoWidth = 110;
+    const logoHeight = 80;
+    let headerBaseY = currentY;
+    let downloadTimestampX = marginX;
+    let downloadTimestampY = currentY + 12;
+    if (logoDataUrl) {
+      doc.addImage(logoDataUrl, 'PNG', logoMargin, logoTop, logoWidth, logoHeight);
+      headerBaseY = Math.max(currentY, logoTop + logoHeight / 2 - 20);
+      downloadTimestampX = logoMargin;
+      downloadTimestampY = logoTop + logoHeight + 20;
+    }
+
+    const ownerName = getOwnerName(report.fk_idOwner);
+    const periodLabel = formatMonthLabel(report.period);
+    const {
+      horses: normalizedHorses,
+      horsesCount,
+      totalDays,
+      totalAlphaMonthly,
+    } = summarizeHorseReports(report.horses_report);
+
+    const horsesData = normalizedHorses.map((horse) => ({
+      name: getHorseName(horse.fk_idHorse),
+      days: horse.days,
+      alphaKg: horse.alphaKg,
+      monthlyAlphaKg: horse.monthlyAlphaKg,
+    }));
+
+    const charges = buildChargesSummary(report, totalAlphaMonthly, horsesCount);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.text(ownerName.toUpperCase(), pageWidth / 2, headerBaseY + 8, { align: 'center' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(12);
+    const periodText = periodLabel ? `(${periodLabel})` : `(${report.period})`;
+    doc.text(periodText, pageWidth / 2, headerBaseY + 26, { align: 'center' });
+
+    const generatedAt = dayjs().format('DD/MM/YYYY HH:mm');
+    doc.setFontSize(10);
+    doc.text(`Descargado: ${generatedAt}`, downloadTimestampX, downloadTimestampY, {
+      align: 'left',
+    });
+    doc.setFont('helvetica', 'normal');
+
+    const contentStartY = headerBaseY + 12;
+    const logoBottomY = logoDataUrl ? logoTop + logoHeight + 30 : 0;
+    currentY = Math.max(contentStartY, logoBottomY);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+
+    if (horsesData.length > 0) {
+      const horsesTableBody = horsesData.map((horse) => [
+        horse.name,
+        formatNumberDisplay(horse.days) || '0',
+        formatNumberDisplay(horse.alphaKg) || '0',
+        formatNumberDisplay(horse.monthlyAlphaKg) || '0',
+      ]);
+      const horsesTableFoot = [
+        [
+          `Total caballos: ${formatNumberDisplay(horsesCount) || '0'}`,
+          formatNumberDisplay(totalDays) || '0',
+          '',
+          formatNumberDisplay(totalAlphaMonthly) || '0',
+        ],
+      ];
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Caballo', 'Dias', 'Kg Alfalfa', 'Total Kg Mes']],
+        body: horsesTableBody,
+        foot: horsesTableFoot,
+        theme: 'grid',
+        headStyles: { fillColor: TABLE_ACCENT_COLOR, textColor: TABLE_ACCENT_TEXT },
+        footStyles: {
+          fillColor: TABLE_ACCENT_COLOR,
+          textColor: TABLE_ACCENT_TEXT,
+          fontStyle: 'bold',
+        },
+        styles: { fontSize: 10, halign: 'center' },
+        columnStyles: {
+          0: { halign: 'left' },
+          3: { halign: 'center' },
+        },
+      });
+      currentY = (doc as any).lastAutoTable.finalY + 20;
+    } else {
+      doc.setFont('helvetica', 'italic');
+      doc.text('Sin caballos registrados en este periodo.', marginX, currentY);
+      doc.setFont('helvetica', 'normal');
+      currentY += 20;
+    }
+
+    type TableRow = CellInput[];
+    const chargesBody: TableRow[] = charges.baseCharges.map((item) => [
+      item.label,
+      item.detail,
+      formatCurrency(item.amount),
+    ]);
+    const subTotalRowIndex = chargesBody.length;
+    chargesBody.push(['SUB TOTAL', '', formatCurrency(charges.subTotal)]);
+    const hasCostPerBucketRow = charges.extraCharges.some(
+      (item) => item.label === 'COSTO POR CUBO',
+    );
+    let mergedAmountApplied = false;
+    charges.extraCharges.forEach((item) => {
+      if (item.label === 'VENTA DE CHALA') {
+        const amountCell: CellInput =
+          hasCostPerBucketRow && !mergedAmountApplied
+            ? {
+                content: formatCurrency(item.amount),
+                rowSpan: 2,
+                styles: { halign: 'right' },
+              }
+            : formatCurrency(item.amount);
+        chargesBody.push([item.label, item.detail, amountCell]);
+        if (hasCostPerBucketRow) mergedAmountApplied = true;
+        return;
+      }
+      if (item.label === 'COSTO POR CUBO' && mergedAmountApplied) {
+        chargesBody.push([item.label, item.detail, '']);
+        return;
+      }
+      chargesBody.push([item.label, item.detail, formatCurrency(item.amount)]);
+    });
+    const chargesFoot = [['TOTAL', '', formatCurrency(charges.total)]];
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Concepto', 'Detalle', 'Monto (Bs.)']],
+      body: chargesBody,
+      foot: chargesFoot,
+      theme: 'grid',
+      headStyles: { fillColor: TABLE_ACCENT_COLOR, textColor: TABLE_ACCENT_TEXT },
+      footStyles: {
+        fillColor: TABLE_ACCENT_COLOR,
+        textColor: TABLE_ACCENT_TEXT,
+        fontStyle: 'bold',
+      },
+      styles: { fontSize: 10, halign: 'left' },
+      columnStyles: {
+        2: { halign: 'right' },
+      },
+      didParseCell: (data) => {
+        if (data.row.section === 'body' && data.row.index === subTotalRowIndex) {
+          data.cell.styles.fillColor = TABLE_ACCENT_COLOR;
+          data.cell.styles.textColor = TABLE_ACCENT_TEXT;
+          data.cell.styles.fontStyle = 'bold';
+        }
+        if (data.row.section === 'foot') {
+          data.cell.styles.fillColor = TABLE_ACCENT_COLOR;
+          data.cell.styles.textColor = TABLE_ACCENT_TEXT;
+          data.cell.styles.fontStyle = 'bold';
+        }
+      },
+    });
+  };
+
+  const createFileName = (report: OwnerReportMonth) => {
+    const ownerName = getOwnerName(report.fk_idOwner)
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    const periodDate = dayjs(report.period);
+    const periodSlug = periodDate.isValid() ? periodDate.format('YYYY-MM') : 'periodo';
+    return `Reporte-${ownerName}-${periodSlug}.pdf`;
+  };
+
+  const handleDownloadReport = (report: OwnerReportMonth) => {
+    const doc = new jsPDF('p', 'pt', 'letter');
+    appendReportToPdf(doc, report);
+    doc.save(createFileName(report));
+  };
+
+  const handleDownloadFilteredReports = () => {
+    if (!reportsToDisplay.length) {
+      toast.error('No hay reportes en el rango seleccionado.');
+      return;
+    }
+
+    const doc = new jsPDF('p', 'pt', 'letter');
+    reportsToDisplay.forEach((report, index) => {
+      if (index > 0) doc.addPage();
+      appendReportToPdf(doc, report);
+    });
+    const fileSuffix =
+      filterStart || filterEnd
+        ? `${filterStart || 'inicio'}_${filterEnd || 'fin'}`
+            .replace(/[^0-9a-zA-Z_-]+/g, '')
+        : 'todos';
+    doc.save(`reportes-${fileSuffix}.pdf`);
+  };
+
+  const handleResetFilters = () => {
+    setFilterStart('');
+    setFilterEnd('');
+  };
 
   const fetchOwners = async () => {
     try {
@@ -211,6 +595,24 @@ const OwnerReportMonthManagement = () => {
       setHorses(data);
     } catch {
       toast.error('No se pudieron cargar caballos');
+    }
+  };
+
+  const loadLogo = async () => {
+    try {
+      const LOGO_URL = `${import.meta.env.BASE_URL}image/LogoHipica.png`;
+      const response = await fetch(LOGO_URL);
+      if (!response.ok) return;
+      const blob = await response.blob();
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          setLogoDataUrl(reader.result);
+        }
+      };
+      reader.readAsDataURL(blob);
+    } catch {
+      console.warn('No se pudo cargar el logo para el PDF.');
     }
   };
 
@@ -268,6 +670,7 @@ const OwnerReportMonthManagement = () => {
     fetchReports();
     fetchOwners();
     fetchHorses();
+    loadLogo();
   }, []);
 
   useEffect(() => {
@@ -367,12 +770,12 @@ const OwnerReportMonthManagement = () => {
 
   const createReport = async () => {
     if (!newReport.fk_idOwner) {
-      toast.error('Selecciona un propietario válido.');
+      toast.error('Selecciona un propietario v lido.');
       return;
     }
 
     if (!newReport.period) {
-      toast.error('Ingresa un periodo válido.');
+      toast.error('Ingresa un periodo v lido.');
       return;
     }
 
@@ -384,7 +787,7 @@ const OwnerReportMonthManagement = () => {
     );
 
     if (invalidHorse) {
-      toast.error('Completa días y alfalfa (Kg) para cada caballo registrado.');
+      toast.error('Completa d as y alfalfa (Kg) para cada caballo registrado.');
       return;
     }
 
@@ -425,7 +828,7 @@ const OwnerReportMonthManagement = () => {
     );
 
     if (invalidHorse) {
-      toast.error('Completa días y alfalfa (Kg) para cada caballo registrado.');
+      toast.error('Completa d as y alfalfa (Kg) para cada caballo registrado.');
       return;
     }
 
@@ -552,11 +955,28 @@ const OwnerReportMonthManagement = () => {
 
         {isEditing && (
           <div className="mb-4 text-teal-400 font-semibold text-lg animate-pulse text-center">
-            Modo edición activo, actualiza los campos y guarda los cambios
+            Modo edici n activo, actualiza los campos y guarda los cambios
           </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+          <div>
+            <label className="block mb-1 text-sm text-slate-200">
+              Propietario<RequiredMark />
+            </label>
+            <select
+              value={newReport.fk_idOwner}
+              onChange={handleReportChange('fk_idOwner')}
+              className="w-full p-2 rounded-md bg-gray-700 text-white"
+            >
+              <option value={0}>Selecciona propietario</option>
+              {owners.map((owner) => (
+                <option key={owner.idOwner} value={owner.idOwner}>
+                  {formatOwnerName(owner)}
+                </option>
+              ))}
+            </select>
+          </div>
           <div>
             <label className="block mb-1 text-sm text-slate-200">
               Periodo<RequiredMark />
@@ -615,7 +1035,7 @@ const OwnerReportMonthManagement = () => {
           </div>
           <div>
             <label className="block mb-1 text-sm text-slate-200">
-              Canasto A<RequiredMark />
+              A/Canaston<RequiredMark />
             </label>
             <input
               type="text"
@@ -628,7 +1048,7 @@ const OwnerReportMonthManagement = () => {
           </div>
           <div>
             <label className="block mb-1 text-sm text-slate-200">
-              Contribución Cab. Flyer<RequiredMark />
+              Aporte Cab. Volante<RequiredMark />
             </label>
             <input
               type="text"
@@ -667,7 +1087,7 @@ const OwnerReportMonthManagement = () => {
           </div>
           <div>
             <label className="block mb-1 text-sm text-slate-200">
-              Examen Amenia<RequiredMark />
+              Toma Examen Amenia<RequiredMark />
             </label>
             <input
               type="text"
@@ -680,7 +1100,7 @@ const OwnerReportMonthManagement = () => {
           </div>
           <div>
             <label className="block mb-1 text-sm text-slate-200">
-              Docente Externo<RequiredMark />
+              Profesor Externo<RequiredMark />
             </label>
             <input
               type="text"
@@ -719,7 +1139,7 @@ const OwnerReportMonthManagement = () => {
           </div>
           <div>
             <label className="block mb-1 text-sm text-slate-200">
-              Costo por Balde<RequiredMark />
+              Costo por Cubo de Chala <RequiredMark />
             </label>
             <input
               type="text"
@@ -732,7 +1152,7 @@ const OwnerReportMonthManagement = () => {
           </div>
           <div>
             <label className="block mb-1 text-sm text-slate-200">
-              Pago Carnet Salud<RequiredMark />
+              Pago Cartilla Sanitaria<RequiredMark />
             </label>
             <input
               type="text"
@@ -755,23 +1175,6 @@ const OwnerReportMonthManagement = () => {
               onChange={handleReportChange('other')}
               className="w-full p-2 rounded-md bg-gray-700 text-white"
             />
-          </div>
-          <div>
-            <label className="block mb-1 text-sm text-slate-200">
-              Propietario<RequiredMark />
-            </label>
-            <select
-              value={newReport.fk_idOwner}
-              onChange={handleReportChange('fk_idOwner')}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
-            >
-              <option value={0}>Selecciona propietario</option>
-              {owners.map((owner) => (
-                <option key={owner.idOwner} value={owner.idOwner}>
-                  {formatOwnerName(owner)}
-                </option>
-              ))}
-            </select>
           </div>
           <div>
             <label className="block mb-1 text-sm text-slate-200">Fecha de pago</label>
@@ -888,7 +1291,59 @@ const OwnerReportMonthManagement = () => {
               <X size={18} /> Cancelar
             </button>
           )}
+      </div>
+    </div>
+
+      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold text-teal-300">Filtrar reportes por periodo</h3>
+            <p className="text-xs text-slate-300">
+              Selecciona mes y anio inicial/final para limitar la lista y descargar los reportes en
+              bloque.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col">
+              <label className="text-xs text-slate-300 mb-1">Desde</label>
+              <input
+                type="month"
+                value={filterStart}
+                onChange={(event) => setFilterStart(event.target.value)}
+                className="bg-gray-700 text-white rounded-md px-3 py-2 border border-slate-600"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-xs text-slate-300 mb-1">Hasta</label>
+              <input
+                type="month"
+                value={filterEnd}
+                onChange={(event) => setFilterEnd(event.target.value)}
+                className="bg-gray-700 text-white rounded-md px-3 py-2 border border-slate-600"
+              />
+            </div>
+            <div className="flex items-end gap-2">
+              <button
+                onClick={handleDownloadFilteredReports}
+                className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-md px-4 py-2"
+              >
+                Descargar filtrados
+              </button>
+              <button
+                onClick={handleResetFilters}
+                className="flex items-center gap-2 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-md px-4 py-2"
+              >
+                Limpiar
+              </button>
+            </div>
+          </div>
         </div>
+        {isReversedRange && (
+          <p className="mt-3 text-xs text-red-300">
+            El mes inicial es posterior al final. Se invertir  el rango autom ticamente para el
+            filtrado.
+          </p>
+        )}
       </div>
 
       <div
@@ -899,11 +1354,15 @@ const OwnerReportMonthManagement = () => {
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
             <Loader size={24} className="animate-spin" /> Cargando reportes...
           </div>
-        ) : reports.length === 0 ? (
-          <p className="text-center text-slate-300">No hay reportes registrados.</p>
+        ) : reportsToDisplay.length === 0 ? (
+          <p className="text-center text-slate-300">
+            {filterStart || filterEnd
+              ? 'No hay reportes en el periodo filtrado.'
+              : 'No hay reportes registrados.'}
+          </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {reports.map((report) => (
+            {reportsToDisplay.map((report) => (
               <div
                 key={report.idOwnerReportMonth}
                 className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between border border-slate-600"
@@ -914,11 +1373,11 @@ const OwnerReportMonthManagement = () => {
                   </h3>
                   <p>Precio alfalfa: {report.priceAlpha}</p>
                   <p>Box: {report.box}</p>
-                  <p>Sección: {report.section}</p>
+                  <p>Secci n: {report.section}</p>
                   <p>Canasto A: {report.aBasket}</p>
-                  <p>Contribución Cab. Flyer: {report.contributionCabFlyer}</p>
-                  <p>Aplicación vacuna: {report.VaccineApplication}</p>
-                  <p>Desparasitación: {report.deworming}</p>
+                  <p>Contribuci n Cab. Flyer: {report.contributionCabFlyer}</p>
+                  <p>Aplicaci n vacuna: {report.VaccineApplication}</p>
+                  <p>Desparasitaci n: {report.deworming}</p>
                   <p>Examen amenia: {report.AmeniaExam}</p>
                   <p>Docente externo: {report.externalTeacher}</p>
                   <p>Multa: {report.fine}</p>
@@ -947,7 +1406,7 @@ const OwnerReportMonthManagement = () => {
                             horse.fk_idHorse;
                           return (
                             <li key={`${report.idOwnerReportMonth}-horse-${index}`}>
-                              {horseName} — Días: {horse.days}, Alfalfa Kg: {horse.alphaKg}
+                              {horseName}   D as: {horse.days}, Alfalfa Kg: {horse.alphaKg}
                             </li>
                           );
                         })}
@@ -959,6 +1418,12 @@ const OwnerReportMonthManagement = () => {
                 </div>
 
                 <div className="flex justify-end gap-2 mt-4">
+                  <button
+                    onClick={() => handleDownloadReport(report)}
+                    className="bg-teal-600 hover:bg-teal-500 text-white p-2 rounded-md flex items-center gap-1"
+                  >
+                    <Download size={16} /> Descargar
+                  </button>
                   <button
                     onClick={() => startEditing(report)}
                     className="bg-yellow-600 hover:bg-yellow-500 text-white p-2 rounded-md flex items-center gap-1"

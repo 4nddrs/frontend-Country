@@ -608,7 +608,7 @@ const TotalControlManagement = () => {
         if (!res.ok) throw new Error("Error al actualizar control");
         toast.success("Actualización realizada correctamente", { position: "top-right" });
       } else {
-        // Ã°Å¸â€Â¹ Crear nuevo
+    
         const res = await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -618,11 +618,10 @@ const TotalControlManagement = () => {
         toast.success("Registro creado correctamente", { position: "top-right" });
       }
 
-      // Reiniciar formulario y seleccionar valores base
       resetForm();
       fetchControls();
     } catch {
-      toast.error("Ã¢Å¡Â Ã¯Â¸Â No se pudo procesar la acción.");
+      toast.error(" No se pudo procesar la acción.");
     }
   };
 
