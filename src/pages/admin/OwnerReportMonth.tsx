@@ -5,7 +5,8 @@ import 'dayjs/locale/es';
 import jsPDF from 'jspdf';
 import autoTable, { type CellInput } from 'jspdf-autotable';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X, Download } from 'lucide-react';
+import { Plus, Edit, Save, Trash2, Loader, X, Download ,ChevronUp,ChevronDown,} from 'lucide-react';
+
 
 const API_URL = 'http://localhost:8000/owner_report_month/';
 const OWNERS_URL = 'http://localhost:8000/owner/';
@@ -64,6 +65,24 @@ interface NormalizedHorseUsage {
   alphaKg: number;
   monthlyAlphaKg: number;
 }
+
+const statusStyles: Record<
+  string,
+  { dot: string; bg: string }
+> = {
+  Pagado: {
+    dot: "bg-emerald-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]",
+    bg: "from-emerald-500/10 via-slate-900/60 to-slate-900/90",
+  },
+  Pendiente: {
+    dot: "bg-amber-400 shadow-[0_0_12px_rgba(250,204,21,0.6)]",
+    bg: "from-amber-400/10 via-slate-900/60 to-slate-900/90",
+  },
+  Anulado: {
+    dot: "bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.6)]",
+    bg: "from-rose-500/10 via-slate-900/60 to-slate-900/90",
+  },
+};
 
 const createInitialReport = (): OwnerReportMonth => ({
   period: '',
@@ -933,6 +952,8 @@ const OwnerReportMonthManagement = () => {
       document.querySelector<HTMLInputElement>('input[name="period"]')?.focus();
     }, 300);
   };
+  
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
 
   return (
     <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
@@ -955,7 +976,7 @@ const OwnerReportMonthManagement = () => {
 
         {isEditing && (
           <div className="mb-4 text-teal-400 font-semibold text-lg animate-pulse text-center">
-            Modo edici n activo, actualiza los campos y guarda los cambios
+            Modo edición activo, actualiza los campos y guarda los cambios
           </div>
         )}
 
@@ -1348,7 +1369,7 @@ const OwnerReportMonthManagement = () => {
 
       <div
         ref={reportsSectionRef}
-        className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700"
+          className="bg-gradient-to-br from-black via-slate-950 to-slate-900 p-6 rounded-2xl shadow-2xl mb-8 border border-slate-900"
       >
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
@@ -1362,83 +1383,130 @@ const OwnerReportMonthManagement = () => {
           </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {reportsToDisplay.map((report) => (
-              <div
-                key={report.idOwnerReportMonth}
-                className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between border border-slate-600"
-              >
-                <div className="space-y-1 text-sm text-white">
-                  <h3 className="text-lg font-semibold text-teal-300">
-                    Reporte periodo: {formatDateForDisplay(report.period)}
-                  </h3>
-                  <p>Precio alfalfa: {report.priceAlpha}</p>
-                  <p>Box: {report.box}</p>
-                  <p>Secci n: {report.section}</p>
-                  <p>Canasto A: {report.aBasket}</p>
-                  <p>Contribuci n Cab. Flyer: {report.contributionCabFlyer}</p>
-                  <p>Aplicaci n vacuna: {report.VaccineApplication}</p>
-                  <p>Desparasitaci n: {report.deworming}</p>
-                  <p>Examen amenia: {report.AmeniaExam}</p>
-                  <p>Docente externo: {report.externalTeacher}</p>
-                  <p>Multa: {report.fine}</p>
-                  <p>Venta chala: {report.saleChala}</p>
-                  <p>Costo por balde: {report.costPerBucket}</p>
-                  <p>Pago carnet de salud: {report.healthCardPayment}</p>
-                  <p>Otro: {report.other}</p>
-                  {report.paymentDate && (
-                    <p>Fecha de pago: {formatDateForDisplay(report.paymentDate)}</p>
-                  )}
-                  <p>Estado: {report.state}</p>
-                  <p>
-                    Propietario:{' '}
-                    {(() => {
-                      const owner = owners.find((o) => o.idOwner === report.fk_idOwner);
-                      return owner ? formatOwnerName(owner) : report.fk_idOwner;
-                    })()}
-                  </p>
-                  <div className="mt-3 bg-slate-800 rounded-md p-3 border border-slate-600">
-                    <h4 className="text-sm font-semibold text-teal-200 mb-2">Caballos</h4>
-                    {report.horses_report && report.horses_report.length > 0 ? (
-                      <ul className="space-y-1 text-xs text-slate-200">
-                        {report.horses_report.map((horse, index) => {
-                          const horseName =
-                            horses.find((item) => item.idHorse === horse.fk_idHorse)?.horseName ??
-                            horse.fk_idHorse;
-                          return (
-                            <li key={`${report.idOwnerReportMonth}-horse-${index}`}>
-                              {horseName}   D as: {horse.days}, Alfalfa Kg: {horse.alphaKg}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    ) : (
-                      <p className="text-xs text-slate-400">Sin caballos registrados.</p>
+            {reportsToDisplay.map((report) => {
+              const stateKey = report.state ?? "Pendiente";
+              const statusMeta = statusStyles[stateKey] || statusStyles["Pendiente"];
+              const isExpanded = expanded[report.idOwnerReportMonth ?? 0] ?? false;
+
+              return (
+                <div
+                  key={report.idOwnerReportMonth}
+                  className={`rounded-2xl border border-slate-800/60 bg-gradient-to-br ${statusMeta.bg} shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-emerald-500/20`}
+                >
+                  {/* Círculo de estado */}
+                  <div className="flex flex-col items-center gap-2 py-5">
+                    <span className={`h-4 w-4 rounded-full ${statusMeta.dot}`} />
+                    <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                      {stateKey}
+                    </span>
+                  </div>
+
+                  <div className="px-6 pb-6 space-y-4 text-sm text-slate-200">
+                    <div className="text-center space-y-1">
+                      <h3 className="text-lg font-semibold text-teal-300">
+                        Propietario:{' '}
+                        {(() => {
+                          const owner = owners.find((o) => o.idOwner === report.fk_idOwner);
+                          return owner ? formatOwnerName(owner) : 'Propietario no encontrado';
+                        })()}
+                      </h3>
+                      <p className="text-slate-400">
+                        {' '}
+                        <span className="font-medium text-slate-200">
+                          {formatDateForDisplay(report.period)}
+                        </span>
+                      </p>
+                    </div>
+
+                    {/* Botón expandir/contraer */}
+                    <button
+                      onClick={() =>
+                        setExpanded((prev) => ({
+                          ...prev,
+                          [report.idOwnerReportMonth ?? 0]:
+                            !prev[report.idOwnerReportMonth ?? 0],
+                        }))
+                      }
+                      className="flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 py-2 text-sm font-medium text-emerald-300 transition hover:bg-emerald-500/15"
+                    >
+                      {isExpanded ? (
+                        <>
+                          <ChevronUp size={16} /> Ver menos
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown size={16} /> Ver más
+                        </>
+                      )}
+                    </button>
+
+                    {isExpanded && (
+                      <div className="rounded-xl border border-slate-800/80 bg-slate-900/70 p-4 text-xs leading-relaxed">
+                        <ul className="space-y-1">
+                          <li>Precio alfalfa: {report.priceAlpha}</li>
+                          <li>Box: {report.box}</li>
+                          <li>Sección: {report.section}</li>
+                          <li>Canasto A: {report.aBasket}</li>
+                          <li>Contribución Cab. Flyer: {report.contributionCabFlyer}</li>
+                          <li>Aplicación vacuna: {report.VaccineApplication}</li>
+                          <li>Desparasitación: {report.deworming}</li>
+                          <li>Examen amenia: {report.AmeniaExam}</li>
+                          <li>Docente externo: {report.externalTeacher}</li>
+                          <li>Multa: {report.fine}</li>
+                          <li>Venta chala: {report.saleChala}</li>
+                          <li>Costo por balde: {report.costPerBucket}</li>
+                          <li>Pago carnet de salud: {report.healthCardPayment}</li>
+                          <li>Otro: {report.other}</li>
+                        </ul>
+
+                        <div className="mt-3 bg-slate-800 rounded-md p-3 border border-slate-600">
+                          <h4 className="text-sm font-semibold text-teal-200 mb-2">Caballos</h4>
+                          {report.horses_report?.length ? (
+                            <ul className="space-y-1 text-xs text-slate-200">
+                              {report.horses_report.map((horse, i) => {
+                                const horseName =
+                                  horses.find((h) => h.idHorse === horse.fk_idHorse)
+                                    ?.horseName ?? horse.fk_idHorse;
+                                return (
+                                  <li key={i}>
+                                    {horseName} — Días: {horse.days}, Alfalfa Kg: {horse.alphaKg}
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          ) : (
+                            <p className="text-xs text-slate-400">Sin caballos registrados.</p>
+                          )}
+                        </div>
+                      </div>
                     )}
+
+                    {/* Botones de acción */}
+                    <div className="flex items-center justify-between gap-2 border-t border-slate-800 pt-4">
+                      <button
+                        onClick={() => handleDownloadReport(report)}
+                        className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-500/80 py-2 text-sm font-semibold text-slate-900 hover:bg-emerald-400 transition"
+                      >
+                        <Download size={16} /> Descargar
+                      </button>
+                      <button
+                        onClick={() => startEditing(report)}
+                        className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-amber-400/80 py-2 text-sm font-semibold text-slate-900 hover:bg-amber-300 transition"
+                      >
+                        <Edit size={16} /> Editar
+                      </button>
+                      <button
+                        onClick={() => deleteReport(report.idOwnerReportMonth!)}
+                        className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-rose-500/80 py-2 text-sm font-semibold text-slate-900 hover:bg-rose-400 transition"
+                      >
+                        <Trash2 size={16} /> Eliminar
+                      </button>
+                    </div>
                   </div>
                 </div>
+              );
+            })}
 
-                <div className="flex justify-end gap-2 mt-4">
-                  <button
-                    onClick={() => handleDownloadReport(report)}
-                    className="bg-teal-600 hover:bg-teal-500 text-white p-2 rounded-md flex items-center gap-1"
-                  >
-                    <Download size={16} /> Descargar
-                  </button>
-                  <button
-                    onClick={() => startEditing(report)}
-                    className="bg-yellow-600 hover:bg-yellow-500 text-white p-2 rounded-md flex items-center gap-1"
-                  >
-                    <Edit size={16} /> Editar
-                  </button>
-                  <button
-                    onClick={() => deleteReport(report.idOwnerReportMonth!)}
-                    className="bg-red-600 hover:bg-red-500 text-white p-2 rounded-md flex items-center gap-1"
-                  >
-                    <Trash2 size={16} /> Eliminar
-                  </button>
-                </div>
-              </div>
-            ))}
           </div>
         )}
       </div>
