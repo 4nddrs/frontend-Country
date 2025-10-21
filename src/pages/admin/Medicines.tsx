@@ -2,7 +2,7 @@
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
 
-const API_URL = 'http://localhost:8000/medicines/';
+const API_URL = 'https://backend-country-nnxe.onrender.com/medicines/';
 const MEDICATION_TYPE_OPTIONS = [
   'Antibióticos',
   'Antiinflamatorios y analgésicos',
