@@ -32,10 +32,6 @@ const menuItems = [
   { label: 'Categorias de Tareas', icon: <List size={18} />, path: '/task-categories' },
   { label: 'Tareas', icon: <Calendar size={18} />, path: '/tasks' },
   { label: 'Control de Alfalfa', icon: <Calendar size={18} />, path: '/alfalfa-control' },
-  { label: 'Procedimientos Programados', icon: <Calendar size={18} />, path: '/scheduled-procedures' },
-  { label: 'Procedimiento de Solicitud', icon: <Calendar size={18} />, path: '/application-procedures' },
-  { label: 'Medicamentos', icon: <Calendar size={18} />, path: '/medicines' },
-  { label: 'Atencion a Caballos', icon: <Calendar size={18} />, path: '/attentionHorses' },
   { label: 'Ausencias de Empleados', icon: <Calendar size={18} />, path: '/employee-absences' },
   { label: 'Tipos de Turno', icon: <Calendar size={18} />, path: '/shiftTypes' },
   { label: 'Empleados por Turno', icon: <Calendar size={18} />, path: '/shiftEmployees' },
@@ -46,13 +42,20 @@ const menuItems = [
   { label: 'Ingresos', icon: <Calendar size={18} />, path: '/Income' },
   { label: 'Reportes Mensuales de Propietario', icon: <Calendar size={18} />, path: '/OwnerReportMonth' },
   { label: 'Control Total', icon: <Calendar size={18} />, path: '/TotalControl' },
-  { label: 'Control de Vacunacion', icon: <Calendar size={18} />, path: '/VaccinationPlan' },
-  { label: 'Aplicacion de Vacunacion', icon: <Calendar size={18} />, path: '/VaccinationPlanApplication' },
   { label: 'Control de Consumo de Alfalfa', icon: <Calendar size={18} />, path: '/AlphaConsumptionControl' },
   { label: 'Pagos de Salarios', icon: <Calendar size={18} />, path: '/SalaryPayments' },
   { label: 'Pago de Propinas', icon: <Calendar size={18} />, path: '/TipPayment' },
   { label: 'Asignacion de Caballos', icon: <ClipboardList size={18} />, path: '/HorseAssignmentsManagement' },
   { label: 'Usuarios Pendientes', icon: <User size={18} />, path: '/PendingUsers' },
+
+  { label: 'Atencion a Caballos', icon: <Calendar size={18} />, path: '/attentionHorses' },
+  { label: 'Medicamentos', icon: <Calendar size={18} />, path: '/medicines' },
+
+  { label: 'Gestión del Plan Sanitario (Vacunas)', icon: <Calendar size={18} />, path: '/VaccinationPlan' },
+  { label: 'Ejecución del Plan Sanitario (Vacunas)', icon: <Calendar size={18} />, path: '/VaccinationPlanApplication' },
+
+  { label: 'Procedimientos Sanitarios Programados', icon: <Calendar size={18} />, path: '/scheduled-procedures' },
+  { label: 'Ejecución de Procedimientos Sanitarios', icon: <Calendar size={18} />, path: '/application-procedures' },
 ];
 
 const Sidebar = () => {
@@ -61,7 +64,7 @@ const Sidebar = () => {
   const location = useLocation();
 
   const closeSidebar = () => setIsOpen(false);
-  const logoUrl = `${import.meta.env.BASE_URL}image/LogoHipica.png`;
+  const logoUrl = `${import.meta.env.BASE_URL}image/Logo9.png`;
 
   const filteredMenuItems = useMemo(() => {
     if (!searchTerm) {
@@ -93,26 +96,33 @@ const Sidebar = () => {
             <div className="h-full w-full bg-sidebar-glow" />
           </div>
 
-          <div className="relative flex items-center gap-2 px-4.5 pb-5 pt-5">
-            <img
-              src={logoUrl}
-              alt="Country Club Hipica"
-              className="h-[6rem] w-[6rem] rounded-[32px] object-cover shadow-sidebar-pill"
-            />
-            <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-sidebar-muted">
-                Country Club
-              </p>
-              <h1 className="text-[1.45rem] font-semibold text-white">Panel Hípica</h1>
+          <div className="relative flex flex-col items-center scale-65 translate-y-[-3.5rem]">
+            {/* LOGO */}
+            <div className="flex justify-center px-8 pb-2 pt-3">
+              <img
+                src={logoUrl}
+                alt="Country Club Hipica"
+                className="h-[15rem] w-[15rem] rounded-[60px] object-cover shadow-sidebar-pill"
+              />
+            </div>
+
+            {/* TEXTO */}
+            <div className="text-center">
+              <h2 className="text-[2.6rem] font-semibold tracking-[0.25em] bg-gradient-to-r from-[#F8F4E3] via-[#EED9A5] to-[#C9A34E] bg-clip-text text-transparent leading-tight">
+                COUNTRY CLUB
+              </h2>
+              <h2 className="text-[1rem] font-medium tracking-[0.22em] bg-gradient-to-r from-[#F3EAD0] via-[#E7CA84] to-[#C8A13A] bg-clip-text text-transparent mt-1">
+                COCHABAMBA
+              </h2>
             </div>
           </div>
 
-
-          <div className="relative px-6 pb-4">
+          {/* SEARCH INPUT */}
+          <div className="relative px-6 pb-2 mt-[-6.2rem]">
             <div className="relative group">
               <input
                 type="text"
-                placeholder="Buscar modulo..."
+                placeholder="Buscar módulo..."
                 className="w-full rounded-2xl border border-white/10 bg-white/5 px-12 py-3 text-sm text-white placeholder:text-sidebar-muted focus:border-sidebar-active focus:outline-none focus:ring-2 focus:ring-sidebar-active/40"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -175,7 +185,7 @@ const Sidebar = () => {
                 await supabase.auth.signOut();
                 window.location.reload();
               }}
-              className="flex w-full items-center justify-center gap-3 rounded-2xl border border-[#3CC9F6] bg-[#3CC9F6] px-4 py-3 text-sm font-semibold text-white shadow-[0_0_35px_#3CC9F677] transition hover:bg-[#37B6E0] hover:shadow-[0_0_40px_#3CC9F6]"
+              className="flex w-full items-center justify-center gap-3 rounded-2xl border border-[#276a97] bg-[#276a97] px-4 py-3 text-sm font-semibold text-[#0B1A2A] shadow-[0_0_25px_rgba(201,163,78,0.4)] transition hover:bg-[#E7CA84] hover:shadow-[0_0_35px_rgba(201,163,78,0.6)]"
             >
               <LogOut size={18} />
               Cerrar sesión

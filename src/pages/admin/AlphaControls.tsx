@@ -526,9 +526,42 @@ const AlphaControlsManagement: React.FC = () => {
 
   return (
     <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700 overflow-x-auto">
-      <h1 className="text-3xl font-bold mb-6 text-center text-teal-400">
-        Gestión de Control de Alfalfa
-      </h1>
+      <div className="flex items-center justify-center h-[15vh]">
+        <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]
+               filter drop-shadow-[0_0_10px_rgba(222,179,98,0.75)]
+               drop-shadow-[0_0_26px_rgba(222,179,98,0.45)]
+               drop-shadow-[0_0_30px_rgba(255,243,211,0.28)]">
+          <span className="title-letter">G</span>
+          <span className="title-letter">e</span>
+          <span className="title-letter">s</span>
+          <span className="title-letter">t</span>
+          <span className="title-letter">i</span>
+          <span className="title-letter">ó</span>
+          <span className="title-letter">n</span>
+          <span className="title-letter">&nbsp;</span>
+          <span className="title-letter">d</span>
+          <span className="title-letter">e</span>
+          <span className="title-letter">&nbsp;</span>
+          <span className="title-letter">C</span>
+          <span className="title-letter">o</span>
+          <span className="title-letter">n</span>
+          <span className="title-letter">t</span>
+          <span className="title-letter">r</span>
+          <span className="title-letter">o</span>
+          <span className="title-letter">l</span>
+          <span className="title-letter">&nbsp;</span>
+          <span className="title-letter">d</span>
+          <span className="title-letter">e</span>
+          <span className="title-letter">&nbsp;</span>
+          <span className="title-letter">A</span>
+          <span className="title-letter">l</span>
+          <span className="title-letter">f</span>
+          <span className="title-letter">a</span>
+          <span className="title-letter">l</span>
+          <span className="title-letter">f</span>
+          <span className="title-letter">a</span>
+        </h1>
+      </div>
 
       {/* === Exportación y filtro por año === */}
       <div className="flex flex-col md:flex-row justify-end items-center mb-4 gap-3">
@@ -692,7 +725,12 @@ const AlphaControlsManagement: React.FC = () => {
           </div>
         ) : (
           <table className="w-full border-collapse text-sm text-gray-200">
-            <thead className="bg-slate-700 text-gray-100">
+            <thead
+              className="text-white"
+              style={{
+                background: "linear-gradient(90deg, #09203F 0%, #177e7a 100%)",
+              }}
+            >
               <tr>
                 <th className="p-2 border border-slate-600">FECHA</th>
                 <th className="p-2 border border-slate-600">PROVEEDOR</th>

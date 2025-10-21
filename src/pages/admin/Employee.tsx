@@ -354,9 +354,32 @@ const Employees = () => {
 
   return (
     <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
-      <h1 className="text-3xl font-bold mb-8 text-center text-teal-400">
-        Gestión de Empleados
-      </h1>
+      
+      <div className="flex items-center justify-center h-[15vh]">
+        <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]
+               filter drop-shadow-[0_0_10px_rgba(222,179,98,0.75)]
+               drop-shadow-[0_0_26px_rgba(222,179,98,0.45)]
+               drop-shadow-[0_0_30px_rgba(255,243,211,0.28)]">
+          <span className="title-letter">G</span>
+          <span className="title-letter">e</span>
+          <span className="title-letter">s</span>
+          <span className="title-letter">t</span>
+          <span className="title-letter">i</span>
+          <span className="title-letter">ó</span>
+          <span className="title-letter">n&nbsp;</span>
+          <span className="title-letter">d</span>
+          <span className="title-letter">e&nbsp;</span>
+          <span className="title-letter">E</span>
+          <span className="title-letter">m</span>
+          <span className="title-letter">p</span>
+          <span className="title-letter">l</span>
+          <span className="title-letter">e</span>
+          <span className="title-letter">a</span>
+          <span className="title-letter">d</span>
+          <span className="title-letter">o</span>
+          <span className="title-letter">s</span>
+        </h1>
+      </div>
 
       <form
         onSubmit={handleCreateOrUpdate}
@@ -469,7 +492,12 @@ const Employees = () => {
       {!loading && !error && (
         <div className="overflow-x-auto bg-slate-800 rounded-lg shadow-xl border border-slate-700">
           <table className="min-w-full divide-y divide-slate-700">
-            <thead className="bg-slate-700">
+            <thead
+              className="text-white"
+              style={{
+                background: "linear-gradient(90deg, #09203F 0%, #177e7a 100%)",
+              }}
+            >
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Foto</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Nombre</th>
