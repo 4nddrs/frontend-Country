@@ -271,7 +271,7 @@ const AlphaConsumptionControl: React.FC = () => {
 
   return (
     <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
-      <div className="flex items-center justify-center h-[15vh]">
+      <div className="flex items-center justify-center h-[10vh]">
         <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]
                filter drop-shadow-[0_0_10px_rgba(222,179,98,0.75)]
                drop-shadow-[0_0_26px_rgba(222,179,98,0.45)]

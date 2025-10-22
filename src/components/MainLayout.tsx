@@ -38,7 +38,7 @@ import PendingUsers from '../pages/admin/PendingUsers';
 
 const MainLayout = () => {
   return (
-     <div className="bg-slate-950 text-white font-sans flex h-screen overflow-hidden text-base leading-normal">
+     <div className="bg-black text-white font-sans flex h-screen overflow-hidden text-base leading-normal">
       <Sidebar />
       <main className="flex-1 p-4 lg:p-8 overflow-y-auto lg:ml-80">
         <Routes>

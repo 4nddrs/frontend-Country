@@ -97,7 +97,7 @@ export default function App() {
   if (!session) return <AuthForm />;
 
   // 2. Si hay sesión y rol -> renderizar según rol
-  if (role === 6) {
+  if (role === 6 || role === 8) {
     return <MainLayout />;
   } else if (role === 7) {
     return <AppUser />;

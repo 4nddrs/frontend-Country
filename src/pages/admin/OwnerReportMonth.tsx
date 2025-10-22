@@ -957,7 +957,7 @@ const OwnerReportMonthManagement = () => {
 
   return (
     <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
-      <div className="flex items-center justify-center h-[15vh]">
+      <div className="flex items-center justify-center h-[10vh]">
         <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]
                filter drop-shadow-[0_0_10px_rgba(222,179,98,0.75)]
                drop-shadow-[0_0_26px_rgba(222,179,98,0.45)]
@@ -1528,24 +1528,39 @@ const OwnerReportMonthManagement = () => {
                     )}
 
                     {/* Botones de acción */}
-                    <div className="flex items-center justify-between gap-2 border-t border-slate-800 pt-4">
+                    <div className="flex items-center justify-center gap-6 border-t border-slate-800 pt-6 pb-2">
                       <button
                         onClick={() => handleDownloadReport(report)}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-500/80 py-2 text-sm font-semibold text-slate-900 hover:bg-emerald-400 transition"
+                        className="relative flex items-center justify-center w-16 h-16 rounded-[20px]
+                                    bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                                    shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
+                                    hover:scale-[1.1]
+                                    active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                                    transition-all duration-300 ease-in-out"
                       >
-                        <Download size={16} /> Descargar
+                        <Download size={28} className="text-[#8FE3E6] drop-shadow-[0_0_12px_rgba(120,240,255,0.9)] transition-transform duration-300 hover:translate-y-[2px]"/> 
                       </button>
                       <button
                         onClick={() => startEditing(report)}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-amber-400/80 py-2 text-sm font-semibold text-slate-900 hover:bg-amber-300 transition"
+                        className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
+                                    bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                                    shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
+                                    hover:scale-[1.1]
+                                    active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                                    transition-all duration-300 ease-in-out"
                       >
-                        <Edit size={16} /> Editar
+                        <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" /> 
                       </button>
                       <button
                         onClick={() => deleteReport(report.idOwnerReportMonth!)}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-rose-500/80 py-2 text-sm font-semibold text-slate-900 hover:bg-rose-400 transition"
+                        className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
+                                  bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                                  shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
+                                  hover:scale-[1.1]
+                                  active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                                  transition-all duration-300 ease-in-out"
                       >
-                        <Trash2 size={16} /> Eliminar
+                        <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
                       </button>
                     </div>
                   </div>

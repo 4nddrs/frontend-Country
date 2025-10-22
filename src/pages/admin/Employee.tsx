@@ -355,7 +355,7 @@ const Employees = () => {
   return (
     <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
       
-      <div className="flex items-center justify-center h-[15vh]">
+      <div className="flex items-center justify-center h-[10vh]">
         <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]
                filter drop-shadow-[0_0_10px_rgba(222,179,98,0.75)]
                drop-shadow-[0_0_26px_rgba(222,179,98,0.45)]
@@ -533,9 +533,31 @@ const Employees = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{employee.startTime ? new Date(employee.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{employee.exitTime ? new Date(employee.exitTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{employee.startContractDate ? new Date(employee.startContractDate).toLocaleDateString() : 'N/A'} - {employee.endContractDate ? new Date(employee.endContractDate).toLocaleDateString() : 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button onClick={() => startEdit(employee)} className="text-teal-400 hover:text-teal-600 transition-colors mr-4"><Edit size={20} /></button>
-                      <button onClick={() => handleDelete(employee.idEmployee!)} className="text-red-400 hover:text-red-600 transition-colors"><Trash2 size={20} /></button>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-4">
+                      <button
+                        onClick={() => startEdit(employee)}
+                        className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
+                                  bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                                  shadow-[8px_8px_16px_rgba(0,0,0,0.8),-5px_-5px_12px_rgba(255,255,255,0.07)]
+                                  hover:scale-[1.08] active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.85),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                                  transition-all duration-300 ease-in-out
+                                  before:absolute before:inset-0 before:rounded-[20px]
+                                  before:bg-gradient-to-b before:from-white/10 before:to-transparent before:opacity-25"
+                      >
+                        <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_6px_rgba(255,215,100,0.85)]" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(employee.idEmployee!)}
+                        className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
+                                  bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                                  shadow-[8px_8px_16px_rgba(0,0,0,0.8),-5px_-5px_12px_rgba(255,255,255,0.07)]
+                                  hover:scale-[1.08] active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.85),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                                  transition-all duration-300 ease-in-out
+                                  before:absolute before:inset-0 before:rounded-[20px]
+                                  before:bg-gradient-to-b before:from-white/10 before:to-transparent before:opacity-25"
+                      >
+                        <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_7px_rgba(255,80,80,0.9)]" />
+                      </button>
                     </td>
                   </tr>
                 );

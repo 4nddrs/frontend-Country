@@ -185,7 +185,10 @@ const Sidebar = () => {
                 await supabase.auth.signOut();
                 window.location.reload();
               }}
-              className="flex w-full items-center justify-center gap-3 rounded-2xl border border-[#276a97] bg-[#276a97] px-4 py-3 text-sm font-semibold text-[#0B1A2A] shadow-[0_0_25px_rgba(201,163,78,0.4)] transition hover:bg-[#E7CA84] hover:shadow-[0_0_35px_rgba(201,163,78,0.6)]"
+              className="flex w-full items-center justify-center gap-3 rounded-2xl 
+                        border border-[#167C79] bg-transparent px-4 py-3 text-sm font-semibold 
+                        text-[#EFFFFF] shadow-[0_0_16px_#167C79,0_0_28px_rgba(22,124,121,0.7)] 
+                        transition-all duration-500 hover:scale-[1.05] hover:shadow-[0_0_22px_#167C79,0_0_38px_rgba(22,124,121,0.85)]"
             >
               <LogOut size={18} />
               Cerrar sesión

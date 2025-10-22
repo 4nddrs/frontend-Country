@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { Plus, Save, X } from "lucide-react";
+import { Edit, Plus, Save, Trash2, X } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dayjs from "dayjs";
@@ -378,13 +378,9 @@ const SalaryPayments: React.FC = () => {
     }
   };
 
-
-
-
-
   return (
     <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
-      <div className="flex items-center justify-center h-[15vh]">
+      <div className="flex items-center justify-center h-[10vh]">
         <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]
                filter drop-shadow-[0_0_10px_rgba(222,179,98,0.75)]
                drop-shadow-[0_0_26px_rgba(222,179,98,0.45)]
@@ -541,7 +537,7 @@ const SalaryPayments: React.FC = () => {
           </thead>
           <tbody>
             {items.map((row) => (
-              <tr key={row.idSalaryPayment} className="border-t border-gray-600">
+              <tr key={row.idSalaryPayment} className="border-t border-gray-600 text-center align-middle px-6 py-4">
                 <td className="p-2">{row.idSalaryPayment}</td>
                 <td className="p-2">{row.employee?.fullName ?? "—"}</td>
                 <td className="p-2">
@@ -556,33 +552,45 @@ const SalaryPayments: React.FC = () => {
                 </td>
                 <td className="p-2">{row.state}</td>
                 <td className="p-2">{fmtDateView(row.paymentDate)}</td>
-                <td className="p-2 flex gap-2">
-                  <button
-                    onClick={() => {
-                      setEditingRow(row);
-                      setForm({
-                        amount: row.amount,
-                        state: row.state,
-                        paymentDate: row.paymentDate ?? null,
-                        fk_idEmployee: row.fk_idEmployee,
-                      });
-                      setAmountInput(
-                        new Intl.NumberFormat("es-BO", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        }).format(row.amount)
-                      );
-                    }}
-                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => deleteItem(row.idSalaryPayment)}
-                    className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded"
-                  >
-                    Eliminar
-                  </button>
+                <td className="p-2 border-t border-gray-600 align-middle text-center">
+                  <div className="flex items-center justify-center gap-6">
+                    <button
+                      onClick={() => {
+                        setEditingRow(row);
+                        setForm({
+                          amount: row.amount,
+                          state: row.state,
+                          paymentDate: row.paymentDate ?? null,
+                          fk_idEmployee: row.fk_idEmployee,
+                        });
+                        setAmountInput(
+                          new Intl.NumberFormat("es-BO", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }).format(row.amount)
+                        );
+                      }}
+                      className="relative flex items-center justify-center w-13 h-13 rounded-[20px]
+                                      bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                                      shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
+                                      hover:scale-[1.1]
+                                      active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                                      transition-all duration-300 ease-in-out"
+                    >
+                      <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" />
+                    </button>
+                    <button
+                      onClick={() => deleteItem(row.idSalaryPayment)}
+                      className="relative flex items-center justify-center w-13 h-13 rounded-[20px]
+                                    bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                                    shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
+                                    hover:scale-[1.1]
+                                    active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                                    transition-all duration-300 ease-in-out"
+                    >
+                      <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

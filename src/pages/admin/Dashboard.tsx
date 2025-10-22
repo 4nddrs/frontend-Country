@@ -11,7 +11,22 @@ const Dashboard = () => {
     <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <div className="flex items-center justify-center h-[10vh]">
+            <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]
+                  filter drop-shadow-[0_0_10px_rgba(222,179,98,0.75)]
+                  drop-shadow-[0_0_26px_rgba(222,179,98,0.45)]
+                  drop-shadow-[0_0_30px_rgba(255,243,211,0.28)]">
+              <span className="title-letter">D</span>
+              <span className="title-letter">a</span>
+              <span className="title-letter">s</span>
+              <span className="title-letter">h</span>
+              <span className="title-letter">b</span>
+              <span className="title-letter">o</span>
+              <span className="title-letter">a</span>
+              <span className="title-letter">r</span>
+              <span className="title-letter">d</span>
+            </h1>
+          </div>
           <p className="text-gray-400 mt-1">Welcome to your dashboard</p>
         </div>
         <button className="mt-4 md:mt-0 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold">
