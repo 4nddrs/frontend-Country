@@ -281,32 +281,7 @@ const IncomeManagement = () => {
 
   return (
     <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
-      <div className="flex items-center justify-center h-[10vh]">
-        <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]
-               filter drop-shadow-[0_0_10px_rgba(222,179,98,0.75)]
-               drop-shadow-[0_0_26px_rgba(222,179,98,0.45)]
-               drop-shadow-[0_0_30px_rgba(255,243,211,0.28)]">
-          <span className="title-letter">G</span>
-          <span className="title-letter">e</span>
-          <span className="title-letter">s</span>
-          <span className="title-letter">t</span>
-          <span className="title-letter">i</span>
-          <span className="title-letter">ó</span>
-          <span className="title-letter">n</span>
-          <span className="title-letter">&nbsp;</span>
-          <span className="title-letter">d</span>
-          <span className="title-letter">e</span>
-          <span className="title-letter">&nbsp;</span>
-          <span className="title-letter">I</span>
-          <span className="title-letter">n</span>
-          <span className="title-letter">g</span>
-          <span className="title-letter">r</span>
-          <span className="title-letter">e</span>
-          <span className="title-letter">s</span>
-          <span className="title-letter">o</span>
-          <span className="title-letter">s</span>
-        </h1>
-      </div>
+      <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Ingresos</h1>
 
       {/* === Formulario principal (crear / editar) === */}
       <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">

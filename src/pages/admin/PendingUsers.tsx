@@ -73,48 +73,8 @@ export default function PendingUsers() {
   // 🔹 Render
   return (
     <div className="p-6 text-white">
+      <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Usuarios pendientes de aprobación</h1>
       
-      <div className="flex items-center justify-center h-[15vh]">
-        <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]
-               filter drop-shadow-[0_0_10px_rgba(222,179,98,0.75)]
-               drop-shadow-[0_0_26px_rgba(222,179,98,0.45)]
-               drop-shadow-[0_0_30px_rgba(255,243,211,0.28)]">
-          <span className="title-letter">U</span>
-          <span className="title-letter">s</span>
-          <span className="title-letter">u</span>
-          <span className="title-letter">a</span>
-          <span className="title-letter">r</span>
-          <span className="title-letter">i</span>
-          <span className="title-letter">o</span>
-          <span className="title-letter">s</span>
-          <span className="title-letter">&nbsp;</span>
-          <span className="title-letter">p</span>
-          <span className="title-letter">e</span>
-          <span className="title-letter">n</span>
-          <span className="title-letter">d</span>
-          <span className="title-letter">i</span>
-          <span className="title-letter">e</span>
-          <span className="title-letter">n</span>
-          <span className="title-letter">t</span>
-          <span className="title-letter">e</span>
-          <span className="title-letter">s</span>
-          <span className="title-letter">&nbsp;</span>
-          <span className="title-letter">d</span>
-          <span className="title-letter">e</span>
-          <span className="title-letter">&nbsp;</span>
-          <span className="title-letter">a</span>
-          <span className="title-letter">p</span>
-          <span className="title-letter">r</span>
-          <span className="title-letter">o</span>
-          <span className="title-letter">b</span>
-          <span className="title-letter">a</span>
-          <span className="title-letter">c</span>
-          <span className="title-letter">i</span>
-          <span className="title-letter">ó</span>
-          <span className="title-letter">n</span>
-        </h1>
-      </div>
-
       {pending.length === 0 ? (
         <p className="text-gray-400">No hay usuarios pendientes.</p>
       ) : (
