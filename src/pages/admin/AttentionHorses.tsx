@@ -522,10 +522,10 @@ const AttentionHorsesManagement = () => {
     employees.find(emp => emp.idEmployee === id)?.fullName || id.toString();
 
   return (
-    <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+    <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Atenciones a Caballos</h1>
       
-      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Atencion</h2>
         <div className="flex gap-4 flex-wrap">
           <div className="flex-1 min-w-[200px]">
@@ -676,7 +676,7 @@ const AttentionHorsesManagement = () => {
           </div>
         </div>
       </div>
-      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Exportacion a PDF</h2>
         <div className="flex flex-wrap items-end gap-4">
           <div className="min-w-[200px]">
@@ -749,7 +749,7 @@ const AttentionHorsesManagement = () => {
           </div>
         </div>
       </div>
-      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Registros</h2>
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">

@@ -270,11 +270,11 @@ const AlphaConsumptionControl: React.FC = () => {
   };
 
   return (
-    <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+    <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Control Consumo Alfa</h1>
       
       {/* Filtros */}
-      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
         <div className="flex items-center justify-between gap-4 mb-4">
           <h2 className="text-xl font-semibold">Filtros</h2>
 
@@ -355,7 +355,7 @@ const AlphaConsumptionControl: React.FC = () => {
       ) : (
         <>
           {/* Resumen */}
-          <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+          <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
             <h2 className="text-xl font-semibold mb-4">Resumen</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <div className="bg-gray-700 p-4 rounded-md">
@@ -386,7 +386,7 @@ const AlphaConsumptionControl: React.FC = () => {
           </div>
 
           {/* Tabla */}
-          <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+          <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
             <h2 className="text-xl font-semibold mb-4">Detalle por Caballo</h2>
             <div className="overflow-auto border border-gray-700 rounded">
               <table className="min-w-full text-sm">

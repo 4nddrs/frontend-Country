@@ -155,10 +155,10 @@ const VaccinationPlanApplicationManagement = () => {
   };
 
   return (
-    <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+    <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Ejecución del Plan Sanitario (Vacunas)</h1>
       
-      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Aplicación</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"> {/* Added mb-6 for spacing */}
           <div className="flex flex-col"> {/* Use flex-col for label-input stacking */}
@@ -234,7 +234,7 @@ const VaccinationPlanApplicationManagement = () => {
         </div>
       </div>
 
-      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
         <h2 className="text-xl font-semibold mb-4">Lista de Aplicaciones</h2>
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400 p-8">

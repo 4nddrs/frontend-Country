@@ -72,7 +72,7 @@ export default function PendingUsers() {
 
   // 🔹 Render
   return (
-    <div className="p-6 text-white">
+    <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Usuarios pendientes de aprobación</h1>
       
       {pending.length === 0 ? (
@@ -81,7 +81,7 @@ export default function PendingUsers() {
         pending.map((u) => (
           <div
             key={u.uid || u.username}
-            className="flex justify-between bg-gray-800 p-4 mb-2 rounded-lg"
+            className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]"
           >
             <span>
                 {u.username} — {u.email}

@@ -521,7 +521,7 @@ const AlphaControlsManagement: React.FC = () => {
   };
 
   return (
-    <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700 overflow-x-auto">
+    <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Control de Alfalfa</h1>
       
       {/* === Exportación y filtro por año === */}
@@ -552,7 +552,7 @@ const AlphaControlsManagement: React.FC = () => {
 
 
       {/* FORMULARIO (crear / editar) */}
-      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
         <h2 className="text-xl font-semibold mb-4 text-teal-400">
           {editingId ? "Editar Control de Alfalfa" : "Agregar Nuevo Control"}
         </h2>
@@ -679,13 +679,13 @@ const AlphaControlsManagement: React.FC = () => {
       </div>
 
       {/* TABLA */}
-      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700 overflow-x-auto">
+      <div className="overflow-x-auto bg-slate-800 rounded-lg shadow-xl border border-slate-700">
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
             <Loader size={24} className="animate-spin" /> Cargando controles...
           </div>
         ) : (
-          <table className="w-full border-collapse text-sm text-gray-200">
+           <table className="min-w-full divide-y divide-slate-700">
             <thead
               className="text-white"
               style={{
@@ -750,7 +750,7 @@ const AlphaControlsManagement: React.FC = () => {
                   <td className="p-2 border border-slate-600 flex gap-2">
                     <button
                       onClick={() => startEdit(control)}
-                      className="relative flex items-center justify-center w-13 h-13 rounded-[20px]
+                      className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
                                   bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
                                   shadow-[8px_8px_16px_rgba(0,0,0,0.8),-5px_-5px_12px_rgba(255,255,255,0.07)]
                                   hover:scale-[1.08] active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.85),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
@@ -762,7 +762,7 @@ const AlphaControlsManagement: React.FC = () => {
                     </button>
                     <button
                       onClick={() => deleteControl(control.idAlphaControl!)}
-                      className="relative flex items-center justify-center w-13 h-13 rounded-[20px]
+                      className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
                                   bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
                                   shadow-[8px_8px_16px_rgba(0,0,0,0.8),-5px_-5px_12px_rgba(255,255,255,0.07)]
                                   hover:scale-[1.08] active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.85),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]

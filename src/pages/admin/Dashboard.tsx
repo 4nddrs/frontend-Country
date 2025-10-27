@@ -8,7 +8,7 @@ const Dashboard = () => {
   ]);
 
   return (
-    <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+    <div  className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Dashboard</h1>

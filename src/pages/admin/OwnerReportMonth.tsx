@@ -956,11 +956,11 @@ const OwnerReportMonthManagement = () => {
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
 
   return (
-    <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+    <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión Reportes Mensuales de Propietarios</h1>
 
       <div
-        className={`p-6 rounded-lg shadow-xl mb-8 transition-all duration-500 ${
+        className={`bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3] ${
           isEditing
             ? "bg-slate-800 border-2 border-teal-400 shadow-[0_0_20px_#14b8a6]"
             : "bg-slate-800 border border-slate-700"
@@ -1313,7 +1313,7 @@ const OwnerReportMonthManagement = () => {
       </div>
     </div>
 
-      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
             <h3 className="text-lg font-semibold text-teal-300">Filtrar reportes por periodo</h3>
@@ -1367,7 +1367,7 @@ const OwnerReportMonthManagement = () => {
 
       <div
         ref={reportsSectionRef}
-          className="bg-gradient-to-br from-black via-slate-950 to-slate-900 p-6 rounded-2xl shadow-2xl mb-8 border border-slate-900"
+          className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]"
       >
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">

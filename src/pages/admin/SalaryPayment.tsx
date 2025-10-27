@@ -379,11 +379,11 @@ const SalaryPayments: React.FC = () => {
   };
 
   return (
-    <div className="bg-slate-900 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+    <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Pagos de Salario</h1>
       
       {/* Formulario único */}
-      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
         <h2 className="text-xl font-semibold mb-4 text-teal-400">
           {editingRow ? "Editar Pago" : "Agregar Pago"}
         </h2>
@@ -480,93 +480,94 @@ const SalaryPayments: React.FC = () => {
       </div>
 
       {/* Tabla de Pagos */}
-      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
         <h2 className="text-xl font-semibold mb-2 text-teal-400">
           Pagos Registrados
         </h2>
-
-        <table className="w-full text-sm mb-8">
-          <thead
-              className="text-white"
-              style={{
-                background: "linear-gradient(90deg, #09203F 0%, #177e7a 100%)",
-              }}
-          >
-            <tr>
-              <th className="p-2">ID</th>
-              <th className="p-2">Empleado</th>
-              <th className="p-2">Cargo</th>
-              <th className="p-2">Monto</th>
-              <th className="p-2">Estado</th>
-              <th className="p-2">Fecha Pago</th>
-              <th className="p-2">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((row) => (
-              <tr key={row.idSalaryPayment} className="border-t border-gray-600 text-center align-middle px-6 py-4">
-                <td className="p-2">{row.idSalaryPayment}</td>
-                <td className="p-2">{row.employee?.fullName ?? "—"}</td>
-                <td className="p-2">
-                  {row.employee?.employee_position?.namePosition ?? "—"}
-                </td>
-                <td className="p-2">
-                  {new Intl.NumberFormat("es-BO", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }).format(row.amount)}{" "}
-                  Bs
-                </td>
-                <td className="p-2">{row.state}</td>
-                <td className="p-2">{fmtDateView(row.paymentDate)}</td>
-                <td className="p-2 border-t border-gray-600 align-middle text-center">
-                  <div className="flex items-center justify-center gap-6">
-                    <button
-                      onClick={() => {
-                        setEditingRow(row);
-                        setForm({
-                          amount: row.amount,
-                          state: row.state,
-                          paymentDate: row.paymentDate ?? null,
-                          fk_idEmployee: row.fk_idEmployee,
-                        });
-                        setAmountInput(
-                          new Intl.NumberFormat("es-BO", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          }).format(row.amount)
-                        );
-                      }}
-                      className="relative flex items-center justify-center w-13 h-13 rounded-[20px]
+        <div className="overflow-x-auto bg-slate-800 rounded-lg shadow-xl border border-slate-700">
+          <table className="w-full text-sm mb-8">
+            <thead
+                className="text-white"
+                style={{
+                  background: "linear-gradient(90deg, #09203F 0%, #177e7a 100%)",
+                }}
+            >
+              <tr>
+                <th className="p-2">ID</th>
+                <th className="p-2">Empleado</th>
+                <th className="p-2">Cargo</th>
+                <th className="p-2">Monto</th>
+                <th className="p-2">Estado</th>
+                <th className="p-2">Fecha Pago</th>
+                <th className="p-2">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((row) => (
+                <tr key={row.idSalaryPayment} className="border-t border-gray-600 text-center align-middle px-6 py-4">
+                  <td className="p-2">{row.idSalaryPayment}</td>
+                  <td className="p-2">{row.employee?.fullName ?? "—"}</td>
+                  <td className="p-2">
+                    {row.employee?.employee_position?.namePosition ?? "—"}
+                  </td>
+                  <td className="p-2">
+                    {new Intl.NumberFormat("es-BO", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }).format(row.amount)}{" "}
+                    Bs
+                  </td>
+                  <td className="p-2">{row.state}</td>
+                  <td className="p-2">{fmtDateView(row.paymentDate)}</td>
+                  <td className="p-2 border-t border-gray-600 align-middle text-center">
+                    <div className="flex items-center justify-center gap-6">
+                      <button
+                        onClick={() => {
+                          setEditingRow(row);
+                          setForm({
+                            amount: row.amount,
+                            state: row.state,
+                            paymentDate: row.paymentDate ?? null,
+                            fk_idEmployee: row.fk_idEmployee,
+                          });
+                          setAmountInput(
+                            new Intl.NumberFormat("es-BO", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }).format(row.amount)
+                          );
+                        }}
+                        className="relative flex items-center justify-center w-13 h-13 rounded-[20px]
+                                        bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                                        shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
+                                        hover:scale-[1.1]
+                                        active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                                        transition-all duration-300 ease-in-out"
+                      >
+                        <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" />
+                      </button>
+                      <button
+                        onClick={() => deleteItem(row.idSalaryPayment)}
+                        className="relative flex items-center justify-center w-13 h-13 rounded-[20px]
                                       bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
                                       shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
                                       hover:scale-[1.1]
                                       active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
                                       transition-all duration-300 ease-in-out"
-                    >
-                      <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" />
-                    </button>
-                    <button
-                      onClick={() => deleteItem(row.idSalaryPayment)}
-                      className="relative flex items-center justify-center w-13 h-13 rounded-[20px]
-                                    bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
-                                    shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
-                                    hover:scale-[1.1]
-                                    active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
-                                    transition-all duration-300 ease-in-out"
-                    >
-                      <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                      >
+                        <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Exportar PDF */}
-      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
         <h2 className="text-xl font-semibold mb-4 text-teal-400">
           Exportar PDF de Salarios
         </h2>
@@ -625,45 +626,47 @@ const SalaryPayments: React.FC = () => {
       </div>
 
       {/* Tabla de Expenses */}
-      <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">
+      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
         <h2 className="text-xl font-semibold mb-2 text-teal-400">
           Registros en Expenses
         </h2>
-        <table className="w-full text-sm">
-          <thead
-              className="text-white"
-              style={{
-                background: "linear-gradient(90deg, #09203F 0%, #177e7a 100%)",
-              }}
-          >
-            <tr>
-              <th className="p-2">ID</th>
-              <th className="p-2">Fecha</th>
-              <th className="p-2">Descripción</th>
-              <th className="p-2">Monto</th>
-              <th className="p-2">Periodo</th>
-            </tr>
-          </thead>
-          <tbody>
-            {expenses
-              .filter((ex) => ex.description?.startsWith("Pago de salario"))
-              .map((ex) => (
-                <tr key={ex.idExpenses} className="border-t border-gray-600">
-                  <td className="p-2">{ex.idExpenses}</td>
-                  <td className="p-2">{fmtDateView(ex.date)}</td>
-                  <td className="p-2">{ex.description}</td>
-                  <td className="p-2">
-                    {new Intl.NumberFormat("es-BO", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    }).format(ex.AmountBsCaptureType)}{" "}
-                    Bs
-                  </td>
-                  <td className="p-2">{fmtDateView(ex.period)}</td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto bg-slate-800 rounded-lg shadow-xl border border-slate-700">
+          <table className="w-full text-sm">
+            <thead
+                className="text-white"
+                style={{
+                  background: "linear-gradient(90deg, #09203F 0%, #177e7a 100%)",
+                }}
+            >
+              <tr>
+                <th className="p-2">ID</th>
+                <th className="p-2">Fecha</th>
+                <th className="p-2">Descripción</th>
+                <th className="p-2">Monto</th>
+                <th className="p-2">Periodo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {expenses
+                .filter((ex) => ex.description?.startsWith("Pago de salario"))
+                .map((ex) => (
+                  <tr key={ex.idExpenses} className="border-t border-gray-600">
+                    <td className="p-2">{ex.idExpenses}</td>
+                    <td className="p-2">{fmtDateView(ex.date)}</td>
+                    <td className="p-2">{ex.description}</td>
+                    <td className="p-2">
+                      {new Intl.NumberFormat("es-BO", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }).format(ex.AmountBsCaptureType)}{" "}
+                      Bs
+                    </td>
+                    <td className="p-2">{fmtDateView(ex.period)}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

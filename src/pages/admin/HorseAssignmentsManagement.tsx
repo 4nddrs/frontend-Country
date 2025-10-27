@@ -351,11 +351,11 @@ const HorseAssignmentsManagement = () => {
 
   // === UI ===
   return (
-    <div className="bg-slate-900 p-6 rounded-lg shadow-xl border border-slate-700">
+    <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Asignaciones de Caballos</h1>
 
       {/* === FORM === */}
-      <div className="bg-slate-800 p-6 rounded-lg shadow-lg mb-8 border border-slate-700">
+      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
         <h2 className="text-xl font-semibold mb-4 text-teal-400">
           {editingId ? "Editar Asignación" : "Nueva Asignación"}
         </h2>
@@ -483,79 +483,81 @@ const HorseAssignmentsManagement = () => {
             <Loader size={22} className="animate-spin" /> Cargando asignaciones...
           </div>
         ) : (
-          <table className="w-full border-collapse text-sm text-left">
-            <thead
-              className="text-white"
-              style={{
-                background: "linear-gradient(90deg, #09203F 0%, #177e7a 100%)",
-              }}
-            >
-              <tr>
-                <th className="p-3 border border-slate-700">Caballo</th>
-                <th className="p-3 border border-slate-700">Empleado</th>
-                <th className="p-3 border border-slate-700">Cargo</th>
-                <th className="p-3 border border-slate-700">Fecha Asignación</th>
-                <th className="p-3 border border-slate-700">Fecha Fin</th>
-                <th className="p-3 border border-slate-700 text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {assignments.length === 0 ? (
+          <div className="overflow-x-auto bg-slate-800 rounded-lg shadow-xl border border-slate-700">
+            <table className="w-full border-collapse text-sm text-left">
+              <thead
+                className="text-white"
+                style={{
+                  background: "linear-gradient(90deg, #09203F 0%, #177e7a 100%)",
+                }}
+              >
                 <tr>
-                  <td colSpan={6} className="text-center p-4 text-gray-400">
-                    No hay asignaciones registradas.
-                  </td>
+                  <th className="p-3 border border-slate-700">Caballo</th>
+                  <th className="p-3 border border-slate-700">Empleado</th>
+                  <th className="p-3 border border-slate-700">Cargo</th>
+                  <th className="p-3 border border-slate-700">Fecha Asignación</th>
+                  <th className="p-3 border border-slate-700">Fecha Fin</th>
+                  <th className="p-3 border border-slate-700 text-center">Acciones</th>
                 </tr>
-              ) : (
-                assignments.map((a) => (
-                  <tr
-                    key={a.idHorseAssignments}
-                    className="hover:bg-slate-800 transition text-gray-200"
-                  >
-                    <td className="p-3 border border-slate-700">
-                      {a.horse?.horseName || "—"}
+              </thead>
+              <tbody>
+                {assignments.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center p-4 text-gray-400">
+                      No hay asignaciones registradas.
                     </td>
-                    <td className="p-3 border border-slate-700">
-                      {a.employee?.fullName || "—"}
-                    </td>
-                    <td className="p-3 border border-slate-700">
-                      {a.employee?.employee_position?.namePosition || "—"}
-                    </td>
-                    <td className="p-3 border border-slate-700">
-                      {a.assignmentDate}
-                    </td>
-                    <td className="p-3 border border-slate-700">
-                      {a.endDate}
-                    </td>
-                    <td className="p-3 border border-slate-700 text-center flex gap-6 justify-center">
-                      <button
-                        onClick={() => startEdit(a)}
-                        className="relative flex items-center justify-center w-13 h-13 rounded-[20px]
+                  </tr>
+                ) : (
+                  assignments.map((a) => (
+                    <tr
+                      key={a.idHorseAssignments}
+                      className="hover:bg-slate-800 transition text-gray-200"
+                    >
+                      <td className="p-3 border border-slate-700">
+                        {a.horse?.horseName || "—"}
+                      </td>
+                      <td className="p-3 border border-slate-700">
+                        {a.employee?.fullName || "—"}
+                      </td>
+                      <td className="p-3 border border-slate-700">
+                        {a.employee?.employee_position?.namePosition || "—"}
+                      </td>
+                      <td className="p-3 border border-slate-700">
+                        {a.assignmentDate}
+                      </td>
+                      <td className="p-3 border border-slate-700">
+                        {a.endDate}
+                      </td>
+                      <td className="p-3 border border-slate-700 text-center flex gap-6 justify-center">
+                        <button
+                          onClick={() => startEdit(a)}
+                          className="relative flex items-center justify-center w-13 h-13 rounded-[20px]
+                                      bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                                      shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
+                                      hover:scale-[1.1]
+                                      active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                                      transition-all duration-300 ease-in-out"
+                        >
+                          <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" />
+                        </button>
+                        <button
+                          onClick={() => deleteAssignment(a.idHorseAssignments!)}
+                          className="relative flex items-center justify-center w-13 h-13 rounded-[20px]
                                     bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
                                     shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
                                     hover:scale-[1.1]
                                     active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
                                     transition-all duration-300 ease-in-out"
-                      >
-                        <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" />
-                      </button>
-                      <button
-                        onClick={() => deleteAssignment(a.idHorseAssignments!)}
-                        className="relative flex items-center justify-center w-13 h-13 rounded-[20px]
-                                  bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
-                                  shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
-                                  hover:scale-[1.1]
-                                  active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
-                                  transition-all duration-300 ease-in-out"
-                      >
-                       <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                        >
+                        <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
