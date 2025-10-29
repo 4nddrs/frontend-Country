@@ -7,6 +7,7 @@ import AuthForm from './components/AuthForm';
 import AppUser from './pages/user/AppUser';
 import ResetPassword from './pages/ResetPassword';
 import { handleSignOut } from './utils/auth';
+import CaballerizoDashboard from './pages/caballerizo/CaballerizoDashboard';
 
 // Función auxiliar para obtener el rol (reutilizable)
 const fetchUserRole = async (userId: string) => {
@@ -242,6 +243,8 @@ export default function App() {
                 <MainLayout />
               ) : role === 7 ? (
                 <AppUser />
+              ) : role === 9 ? (
+                <CaballerizoDashboard />    
               ) : (
                 // Rol null -> Mostrar loading (evita parpadeo durante validación inicial)
                 <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
