@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { supabase, supabaseAdmin } from "../supabaseClient";
-import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Phone, Hash, CheckCircle } from "lucide-react";
 
 const IMG_LOGIN = "/image/HourseLogin_wide.jpg";
 const IMG_REGISTER = "/image/HourseCreate_wide.jpg";
@@ -43,13 +43,31 @@ export default function AuthForm() {
   const [error, setError] = useState("");
   const [showPwLogin, setShowPwLogin] = useState(false);
   const [showPwReg, setShowPwReg] = useState(false);
+  const [showPwConfirm, setShowPwConfirm] = useState(false);
   const [loadingLogin, setLoadingLogin] = useState(false);
   const [loadingReg, setLoadingReg] = useState(false);
 
   const [login, setLogin] = useState({ email: "", password: "" });
-  const [reg, setReg] = useState({ username: "", email: "", password: "" });
+  const [reg, setReg] = useState({
+    username: "",
+    email: "",
+    password: "",
+    name: "",
+    firstName: "",
+    secondName: "",
+    ci: "",
+    phoneNumber: "",
+    confirmPassword: "",
+  });
+  const [success, setSuccess] = useState("");
 
   const isLogin = mode === "login";
+
+  const sanitizeNameInput = (value: string) => value.replace(/[0-9]/g, "");
+  const passwordsMatch =
+    reg.password.length > 0 &&
+    reg.confirmPassword.length > 0 &&
+    reg.password === reg.confirmPassword;
 
   useEffect(() => {
     return () => {
@@ -96,6 +114,7 @@ export default function AuthForm() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setLoadingLogin(true);
     try {
       const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -109,14 +128,76 @@ export default function AuthForm() {
     } finally { setLoadingLogin(false); }
   };
 
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
+
+    const trimmed = {
+      username: reg.username.trim(),
+      name: reg.name.trim(),
+      firstName: reg.firstName.trim(),
+      secondName: reg.secondName.trim(),
+      email: reg.email.trim(),
+      password: reg.password,
+      confirmPassword: reg.confirmPassword,
+      ci: reg.ci.trim(),
+      phoneNumber: reg.phoneNumber.trim(),
+    };
+
+    const digitsOnly = /^[0-9]+$/;
+    const hasDigits = /\d/;
+    if (
+      hasDigits.test(trimmed.name) ||
+      hasDigits.test(trimmed.firstName) ||
+      (trimmed.secondName && hasDigits.test(trimmed.secondName))
+    ) {
+      setError("Los nombres no pueden contener numeros.");
+      return;
+    }
+    if (
+      trimmed.name.length > 20 ||
+      trimmed.firstName.length > 20 ||
+      trimmed.secondName.length > 20
+    ) {
+      setError("Los nombres deben tener maximo 20 caracteres.");
+      return;
+    }
+    const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*(),.?":{}|<>])(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
+    if (!passwordRegex.test(trimmed.password)) {
+      setError("La contraseña debe iniciar con mayuscula, incluir letras, numeros y un caracter especial.");
+      return;
+    }
+    if (trimmed.password !== trimmed.confirmPassword) {
+      setError("Las contraseñas no coinciden.");
+      return;
+    }
+    if (!trimmed.name || !trimmed.firstName) {
+      setError("Completa los campos obligatorios de nombre.");
+      return;
+    }
+    if (!digitsOnly.test(trimmed.ci) || !digitsOnly.test(trimmed.phoneNumber)) {
+      setError("CI y telefono deben contener solo numeros.");
+      return;
+    }
+    if (trimmed.ci.length !== 8 || trimmed.phoneNumber.length !== 8) {
+      setError("CI y telefono deben tener 8 caracteres.");
+      return;
+    }
+
+    const ciValue = Number(trimmed.ci);
+    const phoneValue = Number(trimmed.phoneNumber);
+    if (!Number.isSafeInteger(ciValue) || !Number.isSafeInteger(phoneValue)) {
+      setError("CI y telefono deben ser numeros validos.");
+      return;
+    }
+
     setLoadingReg(true);
     try {
       const { data, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
-        email: reg.email.trim(),
-        password: reg.password,
+        email: trimmed.email,
+        password: trimmed.password,
         email_confirm: false,
       });
       if (signUpError) { setError(signUpError.message); return; }
@@ -126,22 +207,54 @@ export default function AuthForm() {
         const roleId = 7;
         const { error: insertError } = await supabaseAdmin.from("erp_user").insert([{
           uid: user.id,
-          username: reg.username,
-          email: reg.email.trim(),
+          username: trimmed.username,
+          email: trimmed.email,
           isapproved: false,
           fk_idUserRole: roleId,
           approved_at: null,
         }]);
         if (insertError) throw new Error(insertError.message);
 
-        setError("Tu cuenta fue creada y está pendiente de aprobación por un administrador.");
-        setReg({ username: "", email: "", password: "" });
+        const { error: ownerError } = await supabaseAdmin.from("owner").insert([{
+          name: trimmed.name,
+          FirstName: trimmed.firstName,
+          SecondName: trimmed.secondName || null,
+          ci: ciValue,
+          phoneNumber: phoneValue,
+          uid: user.id,
+        }]);
+        if (ownerError) {
+          const { error: cleanupError } = await supabaseAdmin
+            .from("erp_user")
+            .delete()
+            .eq("uid", user.id);
+          if (cleanupError) {
+            console.error("No se pudo revertir el registro en erp_user:", cleanupError.message);
+          }
+          throw new Error(ownerError.message);
+        }
+
+        setSuccess("Tu cuenta fue creada y queda pendiente de aprobacion por un administrador.");
+        setError("");
+        setReg({
+          username: "",
+          email: "",
+          password: "",
+          name: "",
+          firstName: "",
+          secondName: "",
+          ci: "",
+          phoneNumber: "",
+          confirmPassword: "",
+        });
         startModeTransition("login");
       }
     } catch (err: any) {
-      setError(err?.message ?? "Ocurrió un error inesperado.");
+      setSuccess("");
+      setError(err?.message ?? "Ocurrio un error inesperado.");
     } finally { setLoadingReg(false); }
   };
+
 
   return (
     <div
@@ -277,10 +390,10 @@ export default function AuthForm() {
 
 
             {/* IZQUIERDA: LOGIN */}
-            <div className="absolute inset-y-0 left-0 w-full md:w-1/2 z-[60] flex items-center justify-center px-6 md:px-14">
+            <div className="absolute inset-y-0 left-0 w-full md:w-1/2 z-[60] flex items-center justify-center px-6 md:px-10">
               <form
                 onSubmit={handleLogin}
-                className={`w-full max-w-md transition-opacity ease-in-out ${isLogin ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+                className={`w-full max-w-[40rem] transition-opacity ease-in-out ${isLogin ? "opacity-100" : "opacity-0 pointer-events-none"}`}
                 style={{ transitionProperty: "opacity", transitionDuration: isLogin ? "8500ms" : "50ms" }}
               >
                 <div className="flex items-center gap-3 mb-4">
@@ -301,7 +414,7 @@ export default function AuthForm() {
                     value={login.email}
                     onChange={(e) => setLogin((s) => ({ ...s, email: e.target.value }))}
                     required
-                    className="w-full pl-10 pr-4 py-3 bg-[#111c24] border border-[#1f3747] rounded-full text-white focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                    className="w-full pl-10 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
                     placeholder="tu@correo.com"
                   />
                 </div>
@@ -314,20 +427,20 @@ export default function AuthForm() {
                     value={login.password}
                     onChange={(e) => setLogin((s) => ({ ...s, password: e.target.value }))}
                     required
-                    className="w-full pl-10 pr-12 py-3 bg-[#111c24] border border-[#1f3747] rounded-full text-white focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                    className="w-full pl-10 pr-12 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
                     placeholder="••••••••"
                   />
                   <button type="button" onClick={() => setShowPwLogin((x) => !x)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#6c8fdf]" aria-label="Mostrar/Ocultar contraseña">
                     {showPwLogin ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                   </button>
-                </div>
+                                </div>
 
-                <div className="flex items-center justify-between text-sm mb-5">
+                <div className="flex items-center justify-between text-sm mb-4">
                   <a href="/reset-password" className="text-[#6c8fdf] hover:text-[#85a2ff] font-medium">¿Olvidaste la contraseña?</a>
                   <button type="button" onClick={() => startModeTransition("register")} className="text-gray-300 hover:text-white">Crear cuenta</button>
                 </div>
 
-                <button type="submit" disabled={loadingLogin} className="w-full bg-[#21386e] hover:bg-[#1a2c59] font-semibold py-3 rounded-full shadow-md shadow-[0_18px_45px_rgba(33,56,110,0.28)] disabled:opacity-60">
+                <button type="submit" disabled={loadingLogin} className="w-full bg-[#21386e] hover:bg-[#1a2c59] font-semibold py-2.5 rounded-full shadow-md shadow-[0_18px_45px_rgba(33,56,110,0.28)] disabled:opacity-60">
                   {loadingLogin ? "Entrando..." : "Entrar"}
                 </button>
 
@@ -336,19 +449,12 @@ export default function AuthForm() {
             </div>
 
             {/* DERECHA: REGISTRO */}
-            <div className="absolute inset-y-0 right-0 w-full md:w-1/2 z-[60] flex items-center justify-center px-6 md:px-14">
+            <div className="absolute inset-y-0 right-0 w-full md:w-1/2 z-[60] flex items-center justify-end px-6 md:px-8">
               <form
                 onSubmit={handleRegister}
-                className={`w-full max-w-md transition-opacity ease-in-out ${!isLogin ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+                className={`w-full max-w-[40rem] transition-opacity ease-in-out ${!isLogin ? "opacity-100" : "opacity-0 pointer-events-none"}`}
                 style={{ transitionProperty: "opacity", transitionDuration: !isLogin ? "8500ms" : "50ms" }}
               >
-                <div className="flex items-center gap-3 mb-4">
-                  <LogoIcon />
-                  <div>
-                    <h2 className="text-2xl font-bold">Country Club</h2>
-                    <p className="text-sm text-gray-300">Crea tu cuenta</p>
-                  </div>
-                </div>
 
                 <h3 className="text-2xl font-semibold mb-4">Registro</h3>
 
@@ -360,9 +466,101 @@ export default function AuthForm() {
                     value={reg.username}
                     onChange={(e) => setReg((s) => ({ ...s, username: e.target.value }))}
                     required
-                    className="w-full pl-10 pr-4 py-3 bg-[#111c24] border border-[#1f3747] rounded-full text-white focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                    className="w-full pl-10 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
                     placeholder="usuario123"
                   />
+                </div>
+
+                <label className="block text-sm text-gray-300 mb-1">Nombre</label>
+                <div className="relative mb-4">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  <input
+                    type="text"
+                    value={reg.name}
+                    onChange={(e) => {
+                      const value = sanitizeNameInput(e.target.value);
+                      setReg((s) => ({ ...s, name: value }));
+                    }}
+                    required
+                    maxLength={20}
+                    className="w-full pl-10 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                    placeholder="Nombre"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm text-gray-300 mb-1">Primer nombre</label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                      <input
+                        type="text"
+                        value={reg.firstName}
+                        onChange={(e) => {
+                          const value = sanitizeNameInput(e.target.value);
+                          setReg((s) => ({ ...s, firstName: value }));
+                        }}
+                        required
+                        maxLength={20}
+                        className="w-full pl-10 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                        placeholder="Primer nombre"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-300 mb-1">Segundo nombre (opcional)</label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                      <input
+                        type="text"
+                        value={reg.secondName}
+                        onChange={(e) => {
+                          const value = sanitizeNameInput(e.target.value);
+                          setReg((s) => ({ ...s, secondName: value }));
+                        }}
+                        maxLength={20}
+                        className="w-full pl-10 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                        placeholder="Segundo nombre"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-4 md:mb-5 flex flex-col md:flex-row md:items-start md:space-x-4">
+                  <div className="md:w-1/2">
+                    <label className="block text-sm text-gray-300 mb-1">CI</label>
+                    <div className="relative mb-4 md:mb-0">
+                      <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={reg.ci}
+                        onChange={(e) => setReg((s) => ({ ...s, ci: e.target.value }))}
+                        required
+                        minLength={8}
+                        maxLength={8}
+                        className="w-full pl-10 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                        placeholder="Numero de documento"
+                      />
+                    </div>
+                  </div>
+                  <div className="md:w-1/2">
+                    <label className="block text-sm text-gray-300 mb-1">Telefono</label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                      <input
+                        type="text"
+                        inputMode="tel"
+                        value={reg.phoneNumber}
+                        onChange={(e) => setReg((s) => ({ ...s, phoneNumber: e.target.value }))}
+                        required
+                        minLength={8}
+                        maxLength={8}
+                        className="w-full pl-10 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                        placeholder="Ej. 70123456"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <label className="block text-sm text-gray-300 mb-1">Correo electrónico</label>
@@ -373,34 +571,70 @@ export default function AuthForm() {
                     value={reg.email}
                     onChange={(e) => setReg((s) => ({ ...s, email: e.target.value }))}
                     required
-                    className="w-full pl-10 pr-4 py-3 bg-[#111c24] border border-[#1f3747] rounded-full text-white focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                    className="w-full pl-10 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
                     placeholder="tu@correo.com"
                   />
                 </div>
 
-                <label className="block text-sm text-gray-300 mb-1">Contraseña</label>
-                <div className="relative mb-5">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                  <input
-                    type={showPwReg ? "text" : "password"}
-                    value={reg.password}
-                    onChange={(e) => setReg((s) => ({ ...s, password: e.target.value }))}
-                    required
-                    className="w-full pl-10 pr-12 py-3 bg-[#111c24] border border-[#1f3747] rounded-full text-white focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
-                    placeholder="••••••••"
-                  />
-                  <button type="button" onClick={() => setShowPwReg((x) => !x)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#6c8fdf]" aria-label="Mostrar/Ocultar contraseña">
-                    {showPwReg ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-                  </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                  <div>
+                    <label className="block text-sm text-gray-300 mb-1">Contraseña</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                      <input
+                        type={showPwReg ? "text" : "password"}
+                        value={reg.password}
+                        onChange={(e) => setReg((s) => ({ ...s, password: e.target.value }))}
+                        required
+                        className="w-full pl-10 pr-12 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                        placeholder="********"
+                      />
+                      <button type="button" onClick={() => setShowPwReg((x) => !x)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#6c8fdf]" aria-label="Mostrar/Ocultar contraseña">
+                        {showPwReg ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-300 mb-1">Confirmar contraseña</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                      <input
+                        type={showPwConfirm ? "text" : "password"}
+                        value={reg.confirmPassword}
+                        onChange={(e) => setReg((s) => ({ ...s, confirmPassword: e.target.value }))}
+                        required
+                        className="w-full pl-10 pr-12 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                        placeholder="Repite tu contraseña"
+                      />
+                      <button type="button" onClick={() => setShowPwConfirm((x) => !x)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#6c8fdf]" aria-label="Mostrar/Ocultar confirmación de contraseña">
+                        {showPwConfirm ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
                 </div>
+
+                {passwordsMatch && (
+                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/70 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-300">
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-slate-900">
+                      <CheckCircle className="h-4 w-4" />
+                    </span>
+                    Las contraseñas coinciden
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between text-sm mb-5">
                   <button type="button" onClick={() => startModeTransition("login")} className="text-gray-300 hover:text-white">¿Ya tienes cuenta? Inicia sesión</button>
-                  <button type="submit" disabled={loadingReg} className="bg-[#21386e] hover:bg-[#1a2c59] font-semibold px-5 py-3 rounded-full shadow-md shadow-[0_18px_45px_rgba(33,56,110,0.28)] disabled:opacity-60">
+                  <button type="submit" disabled={loadingReg} className="bg-[#21386e] hover:bg-[#1a2c59] font-semibold px-5 py-2.5 rounded-full shadow-md shadow-[0_18px_45px_rgba(33,56,110,0.28)] disabled:opacity-60">
                     {loadingReg ? "Creando..." : "Crear cuenta"}
                   </button>
                 </div>
 
+                {!isLogin && success && (
+                  <div className="mb-2 flex items-center justify-center gap-2 rounded-lg border border-emerald-500/60 bg-emerald-600/20 px-4 py-3 text-sm font-medium text-emerald-200">
+                    <CheckCircle className="h-4 w-4" />
+                    {success}
+                  </div>
+                )}
                 {!isLogin && error && <p className="mt-2 p-3 rounded-lg text-sm text-center font-medium bg-red-700 text-white">{error}</p>}
               </form>
             </div>
