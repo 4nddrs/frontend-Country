@@ -6,6 +6,7 @@ import MainLayout from './components/MainLayout';
 import AuthForm from './components/AuthForm';
 import AppUser from './pages/user/AppUser';
 import ResetPassword from './pages/ResetPassword';
+import { handleSignOut } from './utils/auth';
 
 // Función auxiliar para obtener el rol (reutilizable)
 const fetchUserRole = async (userId: string) => {
@@ -218,7 +219,7 @@ export default function App() {
                   )}
                   <div className="flex justify-center gap-3">
                     <button
-                      onClick={() => supabase.auth.signOut()}
+                      onClick={() => handleSignOut()}
                       className="px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-600"
                     >
                       Cerrar sesión

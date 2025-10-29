@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
+import { handleSignOut } from '../utils/auth';
 import {
   Home,
   Menu,
@@ -182,7 +182,7 @@ const Sidebar = () => {
           <div className="relative mt-auto px-6 pb-3 pt-5">
             <button
               onClick={async () => {
-                await supabase.auth.signOut();
+                await handleSignOut();
                 window.location.reload();
               }}
               className="flex w-full items-center justify-center gap-3 rounded-2xl 

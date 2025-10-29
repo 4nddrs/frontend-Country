@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { supabase } from "../supabaseClient";
+import { handleSignOut } from "../utils/auth";
 import {
   Home,
   Menu,
@@ -118,7 +118,7 @@ export default function SidebarUser() {
 
           <Button
             onClick={async () => {
-              await supabase.auth.signOut();
+              await handleSignOut();
               window.location.reload();
             }}
             className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg shadow-emerald-500/20"
