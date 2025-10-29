@@ -144,38 +144,44 @@ export default function App() {
     // Listener para cambios de autenticación
     const { data: listener } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       console.log('🔔 Auth state change:', event);
-      setSession(currentSession);
-
+      
       if (event === 'SIGNED_IN' && currentSession?.user?.id) {
-        // Limpiar estados anteriores antes de validar el nuevo usuario
-        setRole(null);
-        setAuthStatus('ok');
-        
-        const result = await fetchUserRole(currentSession.user.id);
-        console.log('📊 Resultado de fetchUserRole en SIGNED_IN:', result);
-        if (result.error) {
-          // Surface status instead of immediate sign-out
-          if (result.error.includes('pendiente') || result.error.includes('aprob')) {
-            setAuthStatus('pending');
+        // Solo actualizar si realmente no tenemos un rol aún
+        // Esto evita limpiar el rol cuando solo cambias de ventana
+        if (role === null) {
+          setSession(currentSession);
+          
+          const result = await fetchUserRole(currentSession.user.id);
+          console.log('📊 Resultado de fetchUserRole en SIGNED_IN:', result);
+          if (result.error) {
+            // Surface status instead of immediate sign-out
+            if (result.error.includes('pendiente') || result.error.includes('aprob')) {
+              setAuthStatus('pending');
+            } else {
+              setAuthStatus('no-record');
+            }
+            setRole(null);
           } else {
-            setAuthStatus('no-record');
+            setRole(result.role);
+            setAuthStatus('ok');
           }
-          setRole(null);
-        } else {
-          setRole(result.role);
-          setAuthStatus('ok');
         }
       } else if (event === 'SIGNED_OUT') {
         // Limpiar TODOS los estados cuando se cierra sesión
+        setSession(null);
         setRole(null);
         setAuthStatus('ok');
+      } else if (event === 'TOKEN_REFRESHED') {
+        // Solo actualizar la sesión, mantener el rol
+        console.log('🔄 Token refrescado');
+        setSession(currentSession);
       }
     });
 
     return () => {
       listener?.subscription.unsubscribe();
     };
-  }, []);
+  }, [role]); // Agregar 'role' como dependencia
 
   // UI de Carga
   if (loading) {
@@ -219,7 +225,10 @@ export default function App() {
                   )}
                   <div className="flex justify-center gap-3">
                     <button
-                      onClick={() => handleSignOut()}
+                      onClick={async () => {
+                        await handleSignOut();
+                        window.location.href = '/';
+                      }}
                       className="px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-600"
                     >
                       Cerrar sesión
