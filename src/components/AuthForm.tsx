@@ -446,7 +446,7 @@ export default function AuthForm() {
 
 
             {/* IZQUIERDA: LOGIN */}
-            <div className="absolute inset-y-0 left-0 w-full md:w-1/2 z-[60] flex items-center justify-center px-6 md:px-10">
+            <div className={`absolute inset-y-0 left-0 w-full md:w-1/2 z-[60] flex items-center justify-center px-6 md:px-10 ${isLogin ? "" : "pointer-events-none"}`}>
               <form
                 onSubmit={handleLogin}
                 className={`w-full max-w-[40rem] transition-opacity ease-in-out ${isLogin ? "opacity-100" : "opacity-0 pointer-events-none"}`}
@@ -505,7 +505,7 @@ export default function AuthForm() {
             </div>
 
             {/* DERECHA: REGISTRO */}
-            <div className="absolute inset-y-0 right-0 w-full md:w-1/2 z-[60] flex items-center justify-end px-6 md:px-8">
+            <div className={`absolute inset-y-0 right-0 w-full md:w-1/2 z-[60] flex items-center justify-end px-6 md:px-8 ${!isLogin ? "" : "pointer-events-none"}`}>
               <form
                 onSubmit={handleRegister}
                 className={`w-full max-w-[40rem] transition-opacity ease-in-out ${!isLogin ? "opacity-100" : "opacity-0 pointer-events-none"}`}
@@ -697,7 +697,7 @@ export default function AuthForm() {
 
             {/* CTA derecho (LOGIN visible) */}
             <div
-              className={`absolute inset-y-0 right-0 w-full md:w-1/2 z-[20] flex`}
+              className={`absolute inset-y-0 right-0 w-full md:w-1/2 z-[20] flex ${isLogin ? "" : "pointer-events-none"}`}
             >
               <div
                 className={`h-full w-full flex items-end justify-center px-6 md:px-10 pb-16 md:pb-5 transition-opacity ease-in-out ${
@@ -710,7 +710,7 @@ export default function AuthForm() {
 
             {/* CTA izquierdo (REGISTRO visible) */}
             <div
-              className={`absolute inset-y-0 left-0 w-full md:w-1/2 z-[20] flex`}
+              className={`absolute inset-y-0 left-0 w-full md:w-1/2 z-[20] flex ${!isLogin ? "" : "pointer-events-none"}`}
             >
               <div
                 className={`h-full w-full flex items-end justify-center px-6 md:px-10 pb-16 md:pb-5 transition-opacity ease-in-out ${
