@@ -132,11 +132,17 @@ export default function AuthForm() {
         email: login.email.trim(),
         password: login.password,
       });
-      if (signInError) { setError(signInError.message); return; }
-      window.location.reload();
+      if (signInError) { 
+        setError(signInError.message); 
+        return; 
+      }
+      // ✅ No necesitamos reload - el listener onAuthStateChange en App.tsx maneja el login automáticamente
+      console.log('✅ Login exitoso - esperando redirección automática...');
     } catch (err: any) {
       setError(err?.message ?? "Ocurrió un error inesperado.");
-    } finally { setLoadingLogin(false); }
+    } finally { 
+      setLoadingLogin(false); 
+    }
   };
 
   const handlePasswordReset = async () => {

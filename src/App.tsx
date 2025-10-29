@@ -1,6 +1,6 @@
 // src/App.tsx
 import { useEffect, useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import MainLayout from './components/MainLayout';
 import AuthForm from './components/AuthForm';
@@ -9,28 +9,82 @@ import ResetPassword from './pages/ResetPassword';
 
 // Función auxiliar para obtener el rol (reutilizable)
 const fetchUserRole = async (userId: string) => {
+  console.log('🔍 fetchUserRole - userId:', userId);
   const { data: erpUser, error } = await supabase
     .from('erp_user')
-    .select('fk_idUserRole, isapproved')
+    .select('fk_idUserRole, isapproved, uid, username, email')
     .eq('uid', userId) 
     .maybeSingle(); 
   
+  console.log('🔍 fetchUserRole - FULL response:', { 
+    erpUser, 
+    error,
+    hasData: !!erpUser,
+    errorCode: error?.code,
+    errorMessage: error?.message,
+    errorDetails: error?.details
+  });
+  
   if (error) {
     console.error('❌ Error consultando erp_user:', error);
-    return { role: null, approved: false, error: error.message };
+    return { 
+      role: null, 
+      approved: false, 
+      error: `Error BD: ${error.message}`,
+      debugInfo: { errorCode: error.code, errorDetails: error.details }
+    };
   }
 
   if (!erpUser) {
-    console.warn('⚠️ Usuario sin registro en erp_user.');
-    return { role: null, approved: false, error: 'Usuario no registrado.' };
+    console.warn('⚠️ Usuario sin registro en erp_user - userId:', userId);
+    return { 
+      role: null, 
+      approved: false, 
+      error: 'Usuario no registrado en erp_user.',
+      debugInfo: { userId, message: 'No hay registro en erp_user para este uid' }
+    };
   }
   
-  if (erpUser.isapproved === false) {
-    console.warn('⏳ Usuario encontrado pero NO aprobado.');
-    return { role: null, approved: false, error: 'Cuenta pendiente de aprobación.' };
+  console.log('📋 Usuario encontrado:', {
+    uid: erpUser.uid,
+    username: erpUser.username,
+    email: erpUser.email,
+    isapproved: erpUser.isapproved,
+    fk_idUserRole: erpUser.fk_idUserRole,
+    roleType: typeof erpUser.fk_idUserRole
+  });
+  
+  if (erpUser.isapproved === false || erpUser.isapproved === null) {
+    console.warn('⏳ Usuario encontrado pero NO aprobado. isapproved:', erpUser.isapproved);
+    return { 
+      role: null, 
+      approved: false, 
+      error: 'Cuenta pendiente de aprobación.',
+      debugInfo: { 
+        isapproved: erpUser.isapproved,
+        username: erpUser.username,
+        email: erpUser.email 
+      }
+    };
   }
   
-  return { role: Number(erpUser.fk_idUserRole), approved: true, error: null };
+  if (!erpUser.fk_idUserRole) {
+    console.error('❌ Usuario aprobado pero SIN rol asignado!');
+    return {
+      role: null,
+      approved: true,
+      error: 'Usuario sin rol asignado.',
+      debugInfo: { fk_idUserRole: erpUser.fk_idUserRole }
+    };
+  }
+  
+  console.log('✅ fetchUserRole - usuario aprobado con rol:', erpUser.fk_idUserRole);
+  return { 
+    role: Number(erpUser.fk_idUserRole), 
+    approved: true, 
+    error: null,
+    debugInfo: { username: erpUser.username, email: erpUser.email }
+  };
 };
 
 
@@ -38,6 +92,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<any | null>(null);
   const [role, setRole] = useState<number | null>(null);
+  const [authStatus, setAuthStatus] = useState<'ok' | 'pending' | 'no-record' | 'error'>('ok');
 
  useEffect(() => {
     
@@ -53,15 +108,26 @@ export default function App() {
         if (currentSession?.user?.id) {
           // 2. Si hay sesión, buscamos el rol
           const userId = currentSession.user.id;
-          const result = await fetchUserRole(userId); 
-          
+          const result = await fetchUserRole(userId);
+          console.log('📊 Resultado de fetchUserRole en checkInitialSession:', result);
           if (result.error) {
             console.error("❌ Error al validar rol en checkInitialSession:", result.error);
-            // Esto dispara el SIGNED_OUT, el listener lo manejará
-            await supabase.auth.signOut(); 
+            // Don't forcibly sign out — instead keep the session and surface a friendly message.
+            if (result.error.includes('pendiente') || result.error.includes('aprob')) {
+              setAuthStatus('pending');
+            } else {
+              setAuthStatus('no-record');
+            }
+            setRole(null);
           } else {
             setRole(result.role);
+            setAuthStatus('ok');
           }
+        } else {
+          // No hay sesión - limpiar todos los estados
+          console.log('❌ No hay sesión activa');
+          setRole(null);
+          setAuthStatus('ok');
         }
       } catch (e) {
         console.error("❌ Error inesperado en checkInitialSession:", e);
@@ -80,14 +146,28 @@ export default function App() {
       setSession(currentSession);
 
       if (event === 'SIGNED_IN' && currentSession?.user?.id) {
+        // Limpiar estados anteriores antes de validar el nuevo usuario
+        setRole(null);
+        setAuthStatus('ok');
+        
         const result = await fetchUserRole(currentSession.user.id);
+        console.log('📊 Resultado de fetchUserRole en SIGNED_IN:', result);
         if (result.error) {
-          await supabase.auth.signOut();
+          // Surface status instead of immediate sign-out
+          if (result.error.includes('pendiente') || result.error.includes('aprob')) {
+            setAuthStatus('pending');
+          } else {
+            setAuthStatus('no-record');
+          }
+          setRole(null);
         } else {
           setRole(result.role);
+          setAuthStatus('ok');
         }
       } else if (event === 'SIGNED_OUT') {
+        // Limpiar TODOS los estados cuando se cierra sesión
         setRole(null);
+        setAuthStatus('ok');
       }
     });
 
@@ -114,25 +194,53 @@ export default function App() {
       <Route path="/reset-password" element={<ResetPassword />} />
       
       {/* Rutas protegidas */}
-      <Route 
-        path="/*" 
+      <Route
+        path="/*"
         element={
-          // 1. Si no hay sesión -> Login
+          // No hay sesión -> Login
           !session ? (
             <AuthForm />
           ) : (
-            // 2. Si hay sesión y rol -> renderizar según rol
-            role === 6 || role === 8 ? (
-              <MainLayout />
-            ) : role === 7 ? (
-              <AppUser />
+            // Si existe sesión pero no está OK (pendiente o sin registro), mostramos mensaje amable
+            authStatus !== 'ok' ? (
+              <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white p-6">
+                <div className="max-w-xl text-center">
+                  {authStatus === 'pending' ? (
+                    <>
+                      <h2 className="text-2xl mb-4">Cuenta pendiente de aprobación</h2>
+                      <p className="text-slate-300 mb-6">Tu cuenta está registrada pero aún debe ser aprobada por un administrador. Por favor, espera la confirmación por correo.</p>
+                    </>
+                  ) : (
+                    <>
+                      <h2 className="text-2xl mb-4">Cuenta no encontrada</h2>
+                      <p className="text-slate-300 mb-6">No pudimos validar tu cuenta en el sistema. Contacta al soporte si crees que esto es un error.</p>
+                    </>
+                  )}
+                  <div className="flex justify-center gap-3">
+                    <button
+                      onClick={() => supabase.auth.signOut()}
+                      className="px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-600"
+                    >
+                      Cerrar sesión
+                    </button>
+                  </div>
+                </div>
+              </div>
             ) : (
-              // Rol desconocido o nulo -> cerrar sesión y redirigir
-              (() => {
-                console.warn('⚠️ Rol desconocido/nulo:', role);
-                supabase.auth.signOut().catch(() => {});
-                return <Navigate to="/" />;
-              })()
+              // 2. Si hay sesión y rol -> renderizar según rol
+              role === 6 || role === 8 ? (
+                <MainLayout />
+              ) : role === 7 ? (
+                <AppUser />
+              ) : (
+                // Rol null -> Mostrar loading (evita parpadeo durante validación inicial)
+                <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
+                  <div>
+                    <div className="animate-spin mb-4 border-4 border-t-transparent border-emerald-400 rounded-full w-10 h-10 mx-auto" />
+                    <p className="text-center">Validando acceso...</p>
+                  </div>
+                </div>
+              )
             )
           )
         }
