@@ -145,9 +145,9 @@
         <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
           <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Propietario</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <input type="text" placeholder="Apellido" value={newOwner.name} onChange={e => setNewOwner({ ...newOwner, name: e.target.value })} className="p-2 rounded-md bg-gray-700" />
-            <input type="text" placeholder="Primer Nombre" value={newOwner.FirstName} onChange={e => setNewOwner({ ...newOwner, FirstName: e.target.value })} className="p-2 rounded-md bg-gray-700" />
-            <input type="text" placeholder="Segundo Nombre (Opcional)" value={newOwner.SecondName || ''} onChange={e => setNewOwner({ ...newOwner, SecondName: e.target.value })} className="p-2 rounded-md bg-gray-700" />
+            <input type="text" placeholder="Nombre" value={newOwner.name} onChange={e => setNewOwner({ ...newOwner, name: e.target.value })} className="p-2 rounded-md bg-gray-700" />
+            <input type="text" placeholder="Primer Apellido" value={newOwner.FirstName} onChange={e => setNewOwner({ ...newOwner, FirstName: e.target.value })} className="p-2 rounded-md bg-gray-700" />
+            <input type="text" placeholder="Segundo Apellido (Opcional)" value={newOwner.SecondName || ''} onChange={e => setNewOwner({ ...newOwner, SecondName: e.target.value })} className="p-2 rounded-md bg-gray-700" />
             <input type="number" placeholder="Cédula de Identidad" value={newOwner.ci || ''} onChange={e => setNewOwner({ ...newOwner, ci: Number(e.target.value) })} className="p-2 rounded-md bg-gray-700" />
             <input type="number" placeholder="Teléfono" value={newOwner.phoneNumber || ''} onChange={e => setNewOwner({ ...newOwner, phoneNumber: Number(e.target.value) })} className="p-2 rounded-md bg-gray-700" />
             <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'new')} className="p-1.5 rounded-md bg-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" />
@@ -169,8 +169,8 @@
 
                     <>
                       <div className="flex-grow space-y-2 mb-4">
-                          <input type="text" placeholder="Apellido" value={editingOwnerData.name} onChange={e => setEditingOwnerData({...editingOwnerData, name: e.target.value})} className="w-full p-2 rounded-md bg-gray-600"/>
-                          <input type="text" placeholder="Primer Nombre" value={editingOwnerData.FirstName} onChange={e => setEditingOwnerData({...editingOwnerData, FirstName: e.target.value})} className="w-full p-2 rounded-md bg-gray-600"/>
+                          <input type="text" placeholder="Nombre" value={editingOwnerData.name} onChange={e => setEditingOwnerData({...editingOwnerData, name: e.target.value})} className="w-full p-2 rounded-md bg-gray-600"/>
+                          <input type="text" placeholder="Primer Apellido" value={editingOwnerData.FirstName} onChange={e => setEditingOwnerData({...editingOwnerData, FirstName: e.target.value})} className="w-full p-2 rounded-md bg-gray-600"/>
                           <input type="number" placeholder="C.I." value={editingOwnerData.ci} onChange={e => setEditingOwnerData({...editingOwnerData, ci: Number(e.target.value)})} className="w-full p-2 rounded-md bg-gray-600"/>
                           <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'edit')} className="w-full p-1.5 rounded-md bg-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" />
                       </div>
