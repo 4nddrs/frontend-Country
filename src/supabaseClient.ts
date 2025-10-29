@@ -9,10 +9,18 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 	auth: {
 		persistSession: true,
 		detectSessionInUrl: true,
+		autoRefreshToken: true,
+		storage: window.localStorage,
 	},
 });
 
 // NOTE: supabaseAdmin uses the service role key and should NOT be exposed in a public client for production.
 // This project currently uses supabaseAdmin in the frontend for convenience; move admin operations to a server
 // or serverless function that uses the SERVICE_ROLE_KEY and call it from the client instead.
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+	auth: {
+		persistSession: false,
+		autoRefreshToken: false,
+		detectSessionInUrl: false,
+	},
+});

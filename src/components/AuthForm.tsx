@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { supabase, supabaseAdmin } from "../supabaseClient";
-import { Eye, EyeOff, Mail, Lock, User, Phone, Hash, CheckCircle } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Phone, Hash, CheckCircle, X } from "lucide-react";
+import toast from 'react-hot-toast';
 
 const IMG_LOGIN = "/image/HourseLogin_wide.jpg";
 const IMG_REGISTER = "/image/HourseCreate_wide.jpg";
@@ -46,6 +47,16 @@ export default function AuthForm() {
   const [showPwConfirm, setShowPwConfirm] = useState(false);
   const [loadingLogin, setLoadingLogin] = useState(false);
   const [loadingReg, setLoadingReg] = useState(false);
+
+  // Estados para recuperación de contraseña
+ 
+  const [showResetModal, setShowResetModal] = useState(false);
+ 
+  const [resetEmail, setResetEmail] = useState("");
+ 
+  const [loadingReset, setLoadingReset] = useState(false);
+ 
+  const [resetSuccess, setResetSuccess] = useState(false);
 
   const [login, setLogin] = useState({ email: "", password: "" });
   const [reg, setReg] = useState({
@@ -128,6 +139,45 @@ export default function AuthForm() {
     } finally { setLoadingLogin(false); }
   };
 
+  const handlePasswordReset = async () => {
+    if (!resetEmail.trim()) {
+      toast.error("Por favor ingresa tu correo electrónico");
+      return;
+    }
+
+    setLoadingReset(true);
+
+    try {
+      const redirectUrl = import.meta.env.DEV
+        ? 'http://localhost:5173/reset-password'
+        : `${window.location.origin}/reset-password`;
+
+      console.log('Enviando reset a:', redirectUrl);
+ 
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: redirectUrl,
+      });
+ 
+      if (error) {
+        console.error('Error al enviar reset:', error);
+        toast.error(error.message);
+      } else {
+ 
+        setResetSuccess(true);
+        toast.success("¡Correo enviado! Revisa tu bandeja de entrada y haz clic INMEDIATAMENTE");
+        setTimeout(() => {
+          setShowResetModal(false);
+          setResetEmail("");
+          setResetSuccess(false);
+        }, 5000);
+      }
+    } catch (err: any) {
+      console.error('Error catch:', err);
+      toast.error(err?.message ?? "Error al enviar el correo");
+    } finally {
+      setLoadingReset(false);
+    }
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -436,7 +486,7 @@ export default function AuthForm() {
                                 </div>
 
                 <div className="flex items-center justify-between text-sm mb-4">
-                  <a href="/reset-password" className="text-[#6c8fdf] hover:text-[#85a2ff] font-medium">¿Olvidaste la contraseña?</a>
+                  <button type="button" onClick={() => setShowResetModal(true)} className="text-[#6c8fdf] hover:text-[#85a2ff] font-medium">¿Olvidaste la contraseña?</button>
                   <button type="button" onClick={() => startModeTransition("register")} className="text-gray-300 hover:text-white">Crear cuenta</button>
                 </div>
 
@@ -677,6 +727,135 @@ export default function AuthForm() {
           }}
         />
       </div>
+
+      {/* Modal de Recuperación de Contraseña */}
+ 
+      {showResetModal && (
+ 
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+ 
+          <div className="relative bg-[#0a1628] border border-[#1f3747] rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+ 
+            <button
+ 
+              onClick={() => {
+ 
+                setShowResetModal(false);
+ 
+                setResetEmail("");
+ 
+                setResetSuccess(false);
+ 
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+ 
+            </button>
+ 
+            <h2 className="text-2xl font-bold text-white mb-2">Recuperar Contraseña</h2>
+            <p className="text-gray-400 text-sm mb-6">
+ 
+              Ingresa tu correo electrónico y te enviaremos un link para restablecer tu contraseña.
+ 
+            </p>
+ 
+ 
+ 
+            {!resetSuccess ? (
+ 
+              <>
+ 
+                <div className="relative mb-6">
+ 
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+ 
+                  <input
+ 
+                    type="email"
+ 
+                    value={resetEmail}
+ 
+                    onChange={(e) => setResetEmail(e.target.value)}
+ 
+                    placeholder="tu@correo.com"
+ 
+                    className="w-full pl-10 pr-4 py-3 bg-[#111c24] border border-[#1f3747] rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6c8fdf] placeholder-gray-500"
+ 
+                    onKeyPress={(e) => e.key === 'Enter' && handlePasswordReset()}
+ 
+                  />
+ 
+                </div>
+ 
+ 
+ 
+                <div className="flex gap-3">
+ 
+                  <button
+ 
+                    onClick={() => {
+ 
+                      setShowResetModal(false);
+ 
+                      setResetEmail("");
+ 
+                    }}
+ 
+                    className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
+ 
+                  >
+ 
+                    Cancelar
+ 
+                  </button>
+ 
+                  <button
+ 
+                    onClick={handlePasswordReset}
+ 
+                    disabled={loadingReset}
+ 
+                    className="flex-1 px-4 py-3 bg-[#21386e] hover:bg-[#1a2c59] text-white rounded-lg font-medium transition-colors disabled:opacity-60"
+ 
+                  >
+ 
+                    {loadingReset ? "Enviando..." : "Enviar"}
+ 
+                  </button>
+ 
+                </div>
+ 
+              </>
+ 
+            ) : (
+ 
+              <div className="text-center">
+ 
+                <div className="mb-4 mx-auto w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center">
+ 
+                  <CheckCircle className="w-8 h-8 text-emerald-400" />
+ 
+                </div>
+ 
+                <p className="text-emerald-400 font-medium mb-2">¡Correo enviado!</p>
+ 
+                <p className="text-gray-400 text-sm">
+ 
+                  Revisa tu bandeja de entrada y sigue las instrucciones para restablecer tu contraseña.
+ 
+                </p>
+ 
+              </div>
+ 
+            )}
+ 
+          </div>
+ 
+        </div>
+ 
+      )}
+ 
     </div>
   );
 }

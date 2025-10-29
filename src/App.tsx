@@ -1,9 +1,11 @@
 // src/App.tsx
 import { useEffect, useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import MainLayout from './components/MainLayout';
 import AuthForm from './components/AuthForm';
 import AppUser from './pages/user/AppUser';
+import ResetPassword from './pages/ResetPassword';
 
 // Función auxiliar para obtener el rol (reutilizable)
 const fetchUserRole = async (userId: string) => {
@@ -72,13 +74,26 @@ export default function App() {
 
     checkInitialSession();
     
-    // ... (El Listener onAuthStateChange sigue aquí)
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      // ... (El listener es idéntico a tu versión actual)
-      // ... (El listener maneja SIGNED_IN, SIGNED_OUT, etc.)
+    // Listener para cambios de autenticación
+    const { data: listener } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      console.log('🔔 Auth state change:', event);
+      setSession(currentSession);
+
+      if (event === 'SIGNED_IN' && currentSession?.user?.id) {
+        const result = await fetchUserRole(currentSession.user.id);
+        if (result.error) {
+          await supabase.auth.signOut();
+        } else {
+          setRole(result.role);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setRole(null);
+      }
     });
 
-    // ... (Retorno del useEffect)
+    return () => {
+      listener?.subscription.unsubscribe();
+    };
   }, []);
 
   // UI de Carga
@@ -93,18 +108,35 @@ export default function App() {
     );
   }
 
-  // 1. Si no hay sesión -> Login
-  if (!session) return <AuthForm />;
-
-  // 2. Si hay sesión y rol -> renderizar según rol
-  if (role === 6 || role === 8) {
-    return <MainLayout />;
-  } else if (role === 7) {
-    return <AppUser />;
-  } else {
-    // Rol desconocido o nulo -> cerrar sesión
-    console.warn('⚠️ Rol desconocido/nulo:', role);
-    supabase.auth.signOut().catch(() => {});
-    return <AuthForm />;
-  }
+  return (
+    <Routes>
+      {/* Ruta pública para reset password */}
+      <Route path="/reset-password" element={<ResetPassword />} />
+      
+      {/* Rutas protegidas */}
+      <Route 
+        path="/*" 
+        element={
+          // 1. Si no hay sesión -> Login
+          !session ? (
+            <AuthForm />
+          ) : (
+            // 2. Si hay sesión y rol -> renderizar según rol
+            role === 6 || role === 8 ? (
+              <MainLayout />
+            ) : role === 7 ? (
+              <AppUser />
+            ) : (
+              // Rol desconocido o nulo -> cerrar sesión y redirigir
+              (() => {
+                console.warn('⚠️ Rol desconocido/nulo:', role);
+                supabase.auth.signOut().catch(() => {});
+                return <Navigate to="/" />;
+              })()
+            )
+          )
+        }
+      />
+    </Routes>
+  );
 }
