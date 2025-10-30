@@ -119,7 +119,8 @@ export default function SidebarUser() {
           <Button
             onClick={async () => {
               await handleSignOut();
-              window.location.reload();
+              // No necesitamos window.location.reload()
+              // El onAuthStateChange en App.tsx maneja la redirección automáticamente
             }}
             className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg shadow-emerald-500/20"
           >

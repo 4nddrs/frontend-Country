@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { supabase } from "../supabaseClient";
+import { handleSignOut } from "../utils/auth";
 import {
   ClipboardList,
   LogOut,
@@ -121,8 +121,9 @@ export default function SidebarCaballerizo() {
 
           <Button
             onClick={async () => {
-              await supabase.auth.signOut();
-              window.location.reload();
+              await handleSignOut();
+              // No necesitamos window.location.reload()
+              // El onAuthStateChange en App.tsx maneja la redirección automáticamente
             }}
             className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg shadow-emerald-500/20"
           >

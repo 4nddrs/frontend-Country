@@ -183,7 +183,8 @@ const Sidebar = () => {
             <button
               onClick={async () => {
                 await handleSignOut();
-                window.location.reload();
+                // No necesitamos window.location.reload()
+                // El onAuthStateChange en App.tsx maneja la redirección automáticamente
               }}
               className="flex w-full items-center justify-center gap-3 rounded-2xl 
                         border border-[#167C79] bg-transparent px-4 py-3 text-sm font-semibold 
