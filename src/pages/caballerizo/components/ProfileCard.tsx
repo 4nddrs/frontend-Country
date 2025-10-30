@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Calendar, IdCard, Loader2, Phone, User } from "lucide-react";
+import { Calendar, IdCard, Loader2, Phone } from "lucide-react";
 import type { CaballerizoEmployee } from "../types";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
@@ -63,9 +63,6 @@ export function ProfileCard({
                 alt={employee.fullName}
                 className="w-24 h-24 md:w-28 md:h-28 rounded-2xl object-cover border border-emerald-500/30 shadow-lg shadow-emerald-500/20"
               />
-              <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                <User className="w-5 h-5" />
-              </div>
               {isUpdatingPhoto ? (
                 <div className="absolute inset-0 rounded-2xl bg-slate-900/70 backdrop-blur-sm flex items-center justify-center">
                   <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />

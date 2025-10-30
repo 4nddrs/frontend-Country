@@ -5,8 +5,8 @@ import {
   useState,
 } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
-import { toast } from "react-hot-toast";
-import SidebarCaballerizo from "../../components/SidebarCaballerizo";
+import { toast, Toaster } from "react-hot-toast";
+import Sidebar from "../../components/Sidebar";
 import { supabase } from "../../supabaseClient";
 import { PerfilCaballerizo } from "./PerfilCaballerizo";
 import { TareasCaballerizo } from "./TareasCaballerizo";
@@ -307,9 +307,9 @@ const CaballerizoDashboard = () => {
   );
 
   return (
-    <div className="flex">
-      <SidebarCaballerizo />
-      <div className="flex-1 ml-0 lg:ml-80 bg-slate-900 min-h-screen">
+    <div className="bg-black text-white font-sans flex h-screen overflow-hidden text-base leading-normal">
+      <Sidebar userRole={9} />
+      <div className="flex-1 min-h-screen p-4 lg:p-8 overflow-y-auto lg:ml-80">
         <Routes>
           <Route
             path="/caballerizo"
@@ -363,6 +363,7 @@ const CaballerizoDashboard = () => {
           />
         </Routes>
       </div>
+      <Toaster position="bottom-right" />
     </div>
   );
 };

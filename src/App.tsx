@@ -303,7 +303,7 @@ export default function App() {
             ) : (
               // 2. Si hay sesión y rol -> renderizar según rol
               role === 6 || role === 8 ? (
-                <MainLayout />
+                <MainLayout userRole={role} />
               ) : role === 7 ? (
                 <AppUser />
               ) : role === 9 ? (

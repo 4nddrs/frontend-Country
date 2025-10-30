@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { handleSignOut } from '../utils/auth';
 import {
@@ -16,9 +16,20 @@ import {
   Calendar,
   Search,
   LogOut,
+  Trophy,
 } from 'lucide-react';
 
-const menuItems = [
+type MenuItem = {
+  label: string;
+  icon: ReactNode;
+  path: string;
+  roles: number[];
+};
+
+const ADMIN_ROLES = [6, 8];
+const CABALLERIZO_ROLES = [9];
+
+const adminMenuItemsBase: Array<Omit<MenuItem, 'roles'> & { roles?: number[] }> = [
   { label: 'Home', icon: <Home size={18} />, path: '/' },
   { label: 'Empleados', icon: <User size={18} />, path: '/employee' },
   { label: 'Posiciones', icon: <Briefcase size={18} />, path: '/positions' },
@@ -47,18 +58,36 @@ const menuItems = [
   { label: 'Pago de Propinas', icon: <Calendar size={18} />, path: '/TipPayment' },
   { label: 'Asignacion de Caballos', icon: <ClipboardList size={18} />, path: '/HorseAssignmentsManagement' },
   { label: 'Usuarios Pendientes', icon: <User size={18} />, path: '/PendingUsers' },
-
   { label: 'Atencion a Caballos', icon: <Calendar size={18} />, path: '/attentionHorses' },
   { label: 'Medicamentos', icon: <Calendar size={18} />, path: '/medicines' },
-
   { label: 'Gestión del Plan Sanitario (Vacunas)', icon: <Calendar size={18} />, path: '/VaccinationPlan' },
   { label: 'Ejecución del Plan Sanitario (Vacunas)', icon: <Calendar size={18} />, path: '/VaccinationPlanApplication' },
-
   { label: 'Procedimientos Sanitarios Programados', icon: <Calendar size={18} />, path: '/scheduled-procedures' },
   { label: 'Ejecución de Procedimientos Sanitarios', icon: <Calendar size={18} />, path: '/application-procedures' },
 ];
 
-const Sidebar = () => {
+const caballerizoMenuItemsBase: Array<Omit<MenuItem, 'roles'>> = [
+  { label: 'Perfil', icon: <User size={18} />, path: '/caballerizo/perfil' },
+  { label: 'Tareas asignadas', icon: <ClipboardList size={18} />, path: '/caballerizo/tareas' },
+  { label: 'Caballos asignados', icon: <Trophy size={18} />, path: '/caballerizo/caballos' },
+];
+
+const menuItems: MenuItem[] = [
+  ...adminMenuItemsBase.map((item) => ({
+    ...item,
+    roles: item.roles ?? ADMIN_ROLES,
+  })),
+  ...caballerizoMenuItemsBase.map((item) => ({
+    ...item,
+    roles: CABALLERIZO_ROLES,
+  })),
+];
+
+type SidebarProps = {
+  userRole?: number | null;
+};
+
+const Sidebar = ({ userRole }: SidebarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const location = useLocation();
@@ -66,13 +95,24 @@ const Sidebar = () => {
   const closeSidebar = () => setIsOpen(false);
   const logoUrl = `${import.meta.env.BASE_URL}image/Logo9.png`;
 
-  const filteredMenuItems = useMemo(() => {
-    if (!searchTerm) {
+  const availableMenuItems = useMemo(() => {
+    if (!userRole) {
       return menuItems;
     }
+    return menuItems.filter((item) => item.roles.includes(userRole));
+  }, [userRole]);
+
+  const filteredMenuItems = useMemo(() => {
+    if (!searchTerm) {
+      return availableMenuItems;
+    }
     const lowerCaseSearch = searchTerm.toLowerCase();
-    return menuItems.filter((item) => item.label.toLowerCase().includes(lowerCaseSearch));
-  }, [searchTerm]);
+    return availableMenuItems.filter((item) => item.label.toLowerCase().includes(lowerCaseSearch));
+  }, [availableMenuItems, searchTerm]);
+
+  const searchWrapperClassName =
+    userRole === 9 ? 'relative px-6 pb-4 -mt-24' : 'relative px-6 pb-2 mt-[-6.2rem]';
+  const navSectionsClassName = userRole === 9 ? 'space-y-4' : 'space-y-6';
 
   return (
     <>
@@ -118,14 +158,14 @@ const Sidebar = () => {
           </div>
 
           {/* SEARCH INPUT */}
-          <div className="relative px-6 pb-2 mt-[-6.2rem]">
-            <div className="relative group">
+          <div className={searchWrapperClassName}>
+            <div className="group relative">
               <input
                 type="text"
-                placeholder="Buscar módulo..."
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-12 py-3 text-sm text-white placeholder:text-sidebar-muted focus:border-sidebar-active focus:outline-none focus:ring-2 focus:ring-sidebar-active/40"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Buscar opción..."
+                className="w-full rounded-[18px] border border-white/15 bg-white/5 py-3 pl-12 pr-5 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] outline-none transition placeholder:text-white/50 focus:border-[#3CC9F6] focus:bg-white/10 focus:shadow-[0_0_20px_rgba(60,201,246,0.45)]"
               />
               <Search
                 size={18}
@@ -135,7 +175,7 @@ const Sidebar = () => {
           </div>
 
           <nav className="relative flex-1 overflow-y-auto px-0 pb-8 soft-scrollbar">
-            <div className="space-y-6">
+            <div className={navSectionsClassName}>
               <div className="rounded-[32px] border border-white/10 bg-white/5 px-4 py-5 backdrop-blur-2xl shadow-inner shadow-black/20">
                 <ul className="space-y-3">
                   {filteredMenuItems.map((item) => {
@@ -146,7 +186,6 @@ const Sidebar = () => {
                           className={`relative z-10 flex h-11 w-11 shrink-0 -translate-x-1 items-center justify-center rounded-full border transition-all duration-300 ${
                             isActive
                               ? 'border-[#3CC9F6] bg-[#3CC9F6]/15 text-[#3CC9F6] shadow-[0_0_20px_#3CC9F6]'
-
                               : 'border-white/12 bg-sidebar-pill/60 text-sidebar-icon group-hover:-translate-x-0.5 group-hover:border-sidebar-active-green/80 group-hover:bg-sidebar-active-green/10 group-hover:text-sidebar-active-green group-hover:shadow-sidebar-pill'
                           }`}
                         >
@@ -184,7 +223,7 @@ const Sidebar = () => {
               onClick={async () => {
                 await handleSignOut();
                 // No necesitamos window.location.reload()
-                // El onAuthStateChange en App.tsx maneja la redirección automáticamente
+                // El onAuthStateChange en App.tsx maneja la redirección automóticamente
               }}
               className="flex w-full items-center justify-center gap-3 rounded-2xl 
                         border border-[#167C79] bg-transparent px-4 py-3 text-sm font-semibold 

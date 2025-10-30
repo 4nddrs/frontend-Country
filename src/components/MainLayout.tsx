@@ -36,10 +36,14 @@ import TipPayment from '../pages/admin/TipPayment';
 import HorseAssignmentsManagement from '../pages/admin/HorseAssignmentsManagement';
 import PendingUsers from '../pages/admin/PendingUsers';
 
-const MainLayout = () => {
+type MainLayoutProps = {
+  userRole?: number | null;
+};
+
+const MainLayout = ({ userRole }: MainLayoutProps) => {
   return (
      <div className="bg-black text-white font-sans flex h-screen overflow-hidden text-base leading-normal">
-      <Sidebar />
+      <Sidebar userRole={userRole} />
       <main className="flex-1 p-4 lg:p-8 overflow-y-auto lg:ml-80">
         <Routes>
           <Route path="/" element={<Dashboard />} />
