@@ -11,6 +11,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 		detectSessionInUrl: true,
 		autoRefreshToken: true,
 		storage: window.localStorage,
+		storageKey: 'sb-auth-token', // Clave única para evitar conflictos
+		flowType: 'pkce', // Más seguro para SPAs
 	},
 });
 

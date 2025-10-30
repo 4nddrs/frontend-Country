@@ -99,7 +99,37 @@ export default function App() {
 
  useEffect(() => {
     let isSubscribed = true;
-    let isInitialCheckDone = false; // Flag para saber si ya terminó la carga inicial
+    let isInitialCheckDone = false;
+    
+    // BroadcastChannel para sincronizar entre pestañas
+    const tabSyncChannel = new BroadcastChannel('auth-sync');
+    
+    // Listener para mensajes de otras pestañas
+    tabSyncChannel.onmessage = (event) => {
+      if (!isSubscribed) return;
+      
+      console.log('📡 Mensaje de otra pestaña:', event.data);
+      
+      if (event.data.type === 'SIGN_OUT') {
+        // Otra pestaña cerró sesión, sincronizar
+        console.log('🔄 Sincronizando cierre de sesión desde otra pestaña');
+        setSession(null);
+        setRole(null);
+        setAuthStatus('ok');
+        setLoading(false);
+      } else if (event.data.type === 'SIGN_IN' && event.data.role) {
+        // Otra pestaña inició sesión, sincronizar
+        console.log('🔄 Sincronizando inicio de sesión desde otra pestaña');
+        setRole(event.data.role);
+        setAuthStatus('ok');
+        setLoading(false);
+      } else if (event.data.type === 'ROLE_UPDATE' && event.data.role) {
+        // Otra pestaña actualizó el rol
+        console.log('🔄 Sincronizando actualización de rol desde otra pestaña');
+        setRole(event.data.role);
+        setAuthStatus('ok');
+      }
+    };
     
     const checkInitialSession = async () => {
       console.log('🔄 Ejecutando checkInitialSession...');
@@ -130,6 +160,11 @@ export default function App() {
           } else {
             setRole(result.role);
             setAuthStatus('ok');
+            // Notificar a otras pestañas
+            tabSyncChannel.postMessage({ 
+              type: 'SIGN_IN', 
+              role: result.role 
+            });
           }
         } else {
           console.log('❌ No hay sesión activa');
@@ -159,7 +194,6 @@ export default function App() {
       if (!isSubscribed) return;
       
       // Si es SIGNED_IN pero aún no termina checkInitialSession, ignorar
-      // Esto evita que se ejecute fetchUserRole dos veces al hacer refresh
       if (event === 'SIGNED_IN' && !isInitialCheckDone) {
         console.log('⏭️ Ignorando SIGNED_IN - checkInitialSession aún en progreso');
         return;
@@ -183,19 +217,25 @@ export default function App() {
         } else {
           setRole(result.role);
           setAuthStatus('ok');
+          // Notificar a otras pestañas
+          tabSyncChannel.postMessage({ 
+            type: 'SIGN_IN', 
+            role: result.role 
+          });
         }
       } else if (event === 'SIGNED_OUT') {
         setSession(null);
         setRole(null);
         setAuthStatus('ok');
         setLoading(false);
+        // Notificar a otras pestañas que se cerró sesión
+        tabSyncChannel.postMessage({ type: 'SIGN_OUT' });
       } else if (event === 'TOKEN_REFRESHED') {
         console.log('🔄 Token refrescado');
         if (isSubscribed && currentSession) {
           setSession(currentSession);
         }
       } else if (event === 'INITIAL_SESSION') {
-        // Este evento se dispara al inicio, ya lo manejamos en checkInitialSession
         console.log('⏭️ Ignorando INITIAL_SESSION - ya manejado en checkInitialSession');
       }
     });
@@ -203,6 +243,7 @@ export default function App() {
     return () => {
       isSubscribed = false;
       listener?.subscription.unsubscribe();
+      tabSyncChannel.close(); // Cerrar el canal de sincronización
     };
   }, []);
 
