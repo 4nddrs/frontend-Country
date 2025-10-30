@@ -100,65 +100,122 @@ export function TareasCaballerizo({
                 </div>
               </div>
 
-              <Table className="text-slate-300">
-                <TableHeader>
-                  <TableRow className="border-slate-800/60">
-                    <TableHead className="text-slate-400">Tarea</TableHead>
-                    <TableHead className="text-slate-400">Categoria</TableHead>
-                    <TableHead className="text-slate-400">Asignada</TableHead>
-                    <TableHead className="text-slate-400">Entrega</TableHead>
-                    <TableHead className="text-slate-400 text-center">
-                      Estado
-                    </TableHead>
-                    <TableHead className="text-slate-400 text-right">
-                      Actualizar
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-
-                <TableBody>
-                  {tasks.map((task) => {
-                    const categoryLabel =
-                      categories[task.fk_idTaskCategory ?? 0] ?? "Sin categoria";
-                    return (
-                      <TableRow
-                        key={task.idTask}
-                        className="border-slate-800/60 hover:bg-slate-800/40"
-                      >
-                        <TableCell className="text-sm text-white">
+              {/* Vista móvil */}
+              <div className="space-y-3 md:hidden">
+                {tasks.map((task) => {
+                  const categoryLabel =
+                    categories[task.fk_idTaskCategory ?? 0] ?? "Sin categoria";
+                  const isUpdating = updatingTaskId === task.idTask;
+                  return (
+                    <div
+                      key={task.idTask}
+                      className="rounded-xl border border-slate-800/60 bg-slate-800/40 p-4 space-y-3"
+                    >
+                      <div className="flex flex-col gap-1">
+                        <p className="text-sm text-white font-semibold">
                           {task.taskName}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className="bg-slate-900/60 text-slate-200 border border-slate-700/60">
-                            {categoryLabel}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-slate-300">
-                          {formatDate(task.assignmentDate)}
-                        </TableCell>
-                        <TableCell className="text-sm text-slate-300">
-                          {formatDate(task.completionDate)}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge className={resolveStatusBadge(task.taskStatus)}>
-                            {getStatusLabel(task.taskStatus)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <TaskStatusSelect
-                            value={task.taskStatus}
-                            options={statusOptions}
-                            onChange={(status) =>
-                              onUpdateStatus(task.idTask, status)
-                            }
-                            disabled={updatingTaskId === task.idTask}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                        </p>
+                        <Badge className="w-fit bg-slate-900/60 text-slate-200 border border-slate-700/60">
+                          {categoryLabel}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-400">
+                        <div>
+                          <p className="uppercase tracking-wide">Asignada</p>
+                          <p className="text-slate-200">
+                            {formatDate(task.assignmentDate)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="uppercase tracking-wide">Entrega</p>
+                          <p className="text-slate-200">
+                            {formatDate(task.completionDate)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <Badge className={resolveStatusBadge(task.taskStatus)}>
+                          {getStatusLabel(task.taskStatus)}
+                        </Badge>
+                        <TaskStatusSelect
+                          value={task.taskStatus}
+                          options={statusOptions}
+                          onChange={(status) =>
+                            onUpdateStatus(task.idTask, status)
+                          }
+                          disabled={isUpdating}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Vista de tabla para escritorio */}
+              <div className="hidden md:block">
+                <Table className="text-slate-300">
+                  <TableHeader>
+                    <TableRow className="border-slate-800/60">
+                      <TableHead className="text-slate-400">Tarea</TableHead>
+                      <TableHead className="text-slate-400">Categoria</TableHead>
+                      <TableHead className="text-slate-400">Asignada</TableHead>
+                      <TableHead className="text-slate-400">Entrega</TableHead>
+                      <TableHead className="text-slate-400 text-center">
+                        Estado
+                      </TableHead>
+                      <TableHead className="text-slate-400 text-right">
+                        Actualizar
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+
+                  <TableBody>
+                    {tasks.map((task) => {
+                      const categoryLabel =
+                        categories[task.fk_idTaskCategory ?? 0] ??
+                        "Sin categoria";
+                      return (
+                        <TableRow
+                          key={task.idTask}
+                          className="border-slate-800/60 hover:bg-slate-800/40"
+                        >
+                          <TableCell className="text-sm text-white">
+                            {task.taskName}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className="bg-slate-900/60 text-slate-200 border border-slate-700/60">
+                              {categoryLabel}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-slate-300">
+                            {formatDate(task.assignmentDate)}
+                          </TableCell>
+                          <TableCell className="text-sm text-slate-300">
+                            {formatDate(task.completionDate)}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge
+                              className={resolveStatusBadge(task.taskStatus)}
+                            >
+                              {getStatusLabel(task.taskStatus)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <TaskStatusSelect
+                              value={task.taskStatus}
+                              options={statusOptions}
+                              onChange={(status) =>
+                                onUpdateStatus(task.idTask, status)
+                              }
+                              disabled={updatingTaskId === task.idTask}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </Card>
         </div>

@@ -18,6 +18,7 @@ import type {
   CaballerizoTask,
   CaballerizoTaskCategory,
 } from "./types";
+import { encodeImageForBackend } from "../../utils/imageHelpers";
 
 const API_URL = "https://backend-country-nnxe.onrender.com";
 const TASKS_URL = `${API_URL}/tasks/`;
@@ -71,6 +72,15 @@ const buildHorseMap = (
   }, {});
 };
 
+const fileToDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () =>
+      reject(reader.error ?? new Error("No se pudo leer el archivo."));
+    reader.readAsDataURL(file);
+  });
+
 const CaballerizoDashboard = () => {
   const navigate = useNavigate();
 
@@ -86,6 +96,7 @@ const CaballerizoDashboard = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingTaskId, setUpdatingTaskId] = useState<number | null>(null);
+  const [updatingPhoto, setUpdatingPhoto] = useState<boolean>(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -249,6 +260,52 @@ const CaballerizoDashboard = () => {
   const handleNavigateToTasks = () => navigate("/caballerizo/tareas");
   const handleNavigateToHorses = () => navigate("/caballerizo/caballos");
 
+  const handleProfilePhotoUpdate = useCallback(
+    async (file: File) => {
+      if (!employee?.idEmployee) {
+        toast.error("No se encontro el perfil del caballerizo.");
+        return;
+      }
+
+      setUpdatingPhoto(true);
+
+      try {
+        const dataUrl = await fileToDataUrl(file);
+        const encodedPhoto = encodeImageForBackend(dataUrl);
+
+        const payload = {
+          ...employee,
+          employeePhoto: encodedPhoto,
+        };
+
+        const response = await fetch(`${EMPLOYEES_URL}${employee.idEmployee}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          throw new Error("No se pudo actualizar la foto de perfil.");
+        }
+
+        setEmployee((prev) =>
+          prev ? { ...prev, employeePhoto: dataUrl } : prev,
+        );
+        toast.success("Foto de perfil actualizada.");
+      } catch (err) {
+        console.error("Error actualizando foto de perfil:", err);
+        toast.error(
+          "No se pudo actualizar la foto. Intenta con otra imagen o más tarde.",
+        );
+      } finally {
+        setUpdatingPhoto(false);
+      }
+    },
+    [employee],
+  );
+
   return (
     <div className="flex">
       <SidebarCaballerizo />
@@ -268,6 +325,8 @@ const CaballerizoDashboard = () => {
                 onRetry={loadData}
                 onNavigateToTasks={handleNavigateToTasks}
                 onNavigateToHorses={handleNavigateToHorses}
+                onUpdatePhoto={handleProfilePhotoUpdate}
+                updatingPhoto={updatingPhoto}
               />
             }
           />
