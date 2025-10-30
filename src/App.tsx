@@ -98,24 +98,29 @@ export default function App() {
   const [authStatus, setAuthStatus] = useState<'ok' | 'pending' | 'no-record' | 'error'>('ok');
 
  useEffect(() => {
+    let isSubscribed = true;
+    let isInitialCheckDone = false; // Flag para saber si ya terminó la carga inicial
     
     const checkInitialSession = async () => {
-      console.log('🔄 Ejecutando checkInitialSession (Robusto)...');
+      console.log('🔄 Ejecutando checkInitialSession...');
       
       try {
-        // 1. Obtener la sesión
         const { data } = await supabase.auth.getSession();
         const currentSession = data.session ?? null;
+        
+        if (!isSubscribed) return;
+        
         setSession(currentSession);
 
         if (currentSession?.user?.id) {
-          // 2. Si hay sesión, buscamos el rol
           const userId = currentSession.user.id;
           const result = await fetchUserRole(userId);
           console.log('📊 Resultado de fetchUserRole en checkInitialSession:', result);
+          
+          if (!isSubscribed) return;
+          
           if (result.error) {
             console.error("❌ Error al validar rol en checkInitialSession:", result.error);
-            // Don't forcibly sign out — instead keep the session and surface a friendly message.
             if (result.error.includes('pendiente') || result.error.includes('aprob')) {
               setAuthStatus('pending');
             } else {
@@ -127,17 +132,21 @@ export default function App() {
             setAuthStatus('ok');
           }
         } else {
-          // No hay sesión - limpiar todos los estados
           console.log('❌ No hay sesión activa');
           setRole(null);
           setAuthStatus('ok');
         }
       } catch (e) {
         console.error("❌ Error inesperado en checkInitialSession:", e);
-        // Manejo de errores fatales, por si acaso
+        if (!isSubscribed) return;
+        setRole(null);
+        setAuthStatus('ok');
       } finally {
-        // ⭐ ESTO ES LA CLAVE: Garantiza que la carga termine.
-        setLoading(false);
+        if (isSubscribed) {
+          console.log('✅ Finalizando carga inicial');
+          isInitialCheckDone = true;
+          setLoading(false);
+        }
       }
     };
 
@@ -145,45 +154,57 @@ export default function App() {
     
     // Listener para cambios de autenticación
     const { data: listener } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      console.log('🔔 Auth state change:', event);
+      console.log('🔔 Auth state change:', event, 'Session exists:', !!currentSession);
+      
+      if (!isSubscribed) return;
+      
+      // Si es SIGNED_IN pero aún no termina checkInitialSession, ignorar
+      // Esto evita que se ejecute fetchUserRole dos veces al hacer refresh
+      if (event === 'SIGNED_IN' && !isInitialCheckDone) {
+        console.log('⏭️ Ignorando SIGNED_IN - checkInitialSession aún en progreso');
+        return;
+      }
       
       if (event === 'SIGNED_IN' && currentSession?.user?.id) {
-        // Solo actualizar si realmente no tenemos un rol aún
-        // Esto evita limpiar el rol cuando solo cambias de ventana
-        if (role === null) {
-          setSession(currentSession);
-          
-          const result = await fetchUserRole(currentSession.user.id);
-          console.log('📊 Resultado de fetchUserRole en SIGNED_IN:', result);
-          if (result.error) {
-            // Surface status instead of immediate sign-out
-            if (result.error.includes('pendiente') || result.error.includes('aprob')) {
-              setAuthStatus('pending');
-            } else {
-              setAuthStatus('no-record');
-            }
-            setRole(null);
+        setSession(currentSession);
+        
+        const result = await fetchUserRole(currentSession.user.id);
+        console.log('📊 Resultado de fetchUserRole en SIGNED_IN:', result);
+        
+        if (!isSubscribed) return;
+        
+        if (result.error) {
+          if (result.error.includes('pendiente') || result.error.includes('aprob')) {
+            setAuthStatus('pending');
           } else {
-            setRole(result.role);
-            setAuthStatus('ok');
+            setAuthStatus('no-record');
           }
+          setRole(null);
+        } else {
+          setRole(result.role);
+          setAuthStatus('ok');
         }
       } else if (event === 'SIGNED_OUT') {
-        // Limpiar TODOS los estados cuando se cierra sesión
         setSession(null);
         setRole(null);
         setAuthStatus('ok');
+        setLoading(false);
       } else if (event === 'TOKEN_REFRESHED') {
-        // Solo actualizar la sesión, mantener el rol
         console.log('🔄 Token refrescado');
-        setSession(currentSession);
+        if (isSubscribed && currentSession) {
+          setSession(currentSession);
+        }
+      } else if (event === 'INITIAL_SESSION') {
+        // Este evento se dispara al inicio, ya lo manejamos en checkInitialSession
+        console.log('⏭️ Ignorando INITIAL_SESSION - ya manejado en checkInitialSession');
       }
     });
 
     return () => {
+      isSubscribed = false;
       listener?.subscription.unsubscribe();
     };
-  }, [role]); // Agregar 'role' como dependencia
+  }, []);
 
   // UI de Carga
   if (loading) {
