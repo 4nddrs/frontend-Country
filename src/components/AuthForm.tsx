@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { supabase, supabaseAdmin } from "../supabaseClient";
 import { Eye, EyeOff, Mail, Lock, User, Phone, Hash, CheckCircle, X } from "lucide-react";
 import toast from 'react-hot-toast';
+import { AUTH_REDIRECT_URLS } from "../config/app";
 
 const IMG_LOGIN = "/image/HourseLogin_wide.jpg";
 const IMG_REGISTER = "/image/HourseCreate_wide.jpg";
@@ -154,14 +155,10 @@ export default function AuthForm() {
     setLoadingReset(true);
 
     try {
-      const redirectUrl = import.meta.env.DEV
-        ? 'http://localhost:5173/reset-password'
-        : `${window.location.origin}/reset-password`;
-
-      console.log('Enviando reset a:', redirectUrl);
+      console.log('Enviando reset a:', AUTH_REDIRECT_URLS.resetPassword);
  
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: redirectUrl,
+        redirectTo: AUTH_REDIRECT_URLS.resetPassword,
       });
  
       if (error) {

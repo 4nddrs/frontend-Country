@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Lock, Eye, EyeOff, CheckCircle, AlertCircle, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { AUTH_REDIRECT_URLS } from '../config/app';
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -213,7 +214,7 @@ const ResetPassword = () => {
     setResending(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(resendEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: AUTH_REDIRECT_URLS.resetPassword,
       });
 
       if (error) {
