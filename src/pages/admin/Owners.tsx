@@ -189,7 +189,7 @@
                         className="w-full h-40 rounded-md object-cover mb-4 bg-gray-600"
                         onError={(e) => { e.currentTarget.src = 'https://placehold.co/200x150/4a5568/ffffff?text=Error'; }}
                       />
-                        <h3 className="text-lg font-semibold">{owner.FirstName} {owner.SecondName} {owner.name}</h3>
+                        <h3 className="text-lg font-semibold">{owner.name} {owner.FirstName} {owner.SecondName}</h3>
                         <p>CI: {owner.ci}</p>   
                         <p>Teléfono: {owner.phoneNumber}</p>
                       </div>

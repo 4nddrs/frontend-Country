@@ -165,6 +165,27 @@ const formatNumberForPdf = (value: unknown) => {
 const formatCurrencyForPdf = (value: unknown) =>
   `${formatNumberForPdf(value)} Bs`;
 
+const buildOwnerDisplayName = (owner: any) => {
+  if (!owner) return "";
+
+  const pickString = (input: unknown) =>
+    typeof input === "string"
+      ? input.trim()
+      : typeof input === "number"
+      ? String(input)
+      : "";
+
+  const primary = pickString(owner.name ?? owner.Name);
+  const firstName = pickString(owner.firstName ?? owner.FirstName);
+  const parts = [primary, firstName].filter((part) => part.length > 0);
+
+  if (parts.length > 0) {
+    return parts.join(" ");
+  }
+
+  return pickString(owner.lastName ?? owner.LastName ?? owner.lastname);
+};
+
 const RequiredMark = () => <span className="text-red-400 ml-1">*</span>;
 
 interface TotalControl {
@@ -727,9 +748,12 @@ const TotalControlManagement = () => {
       );
 
       const body = filtered.map((control, index) => {
+        const ownerRecord = owners.find(
+          (o) => o.idOwner === control.fk_idOwner
+        );
         const ownerName =
-          owners.find((o) => o.idOwner === control.fk_idOwner)?.name ||
-          (control.fk_idOwner ? String(control.fk_idOwner) : "—");
+          buildOwnerDisplayName(ownerRecord) ||
+          (control.fk_idOwner ? String(control.fk_idOwner) : "-");
 
         const horseName =
           horseLookup[control.fk_idHorse] ??
@@ -911,21 +935,21 @@ const TotalControlManagement = () => {
                   { zeroAsEmpty: true }
                 );
                 if (ownerId) {
-                  fetchHorsesByOwner(ownerId);
-                } else {
-                  setHorses([]);
-                }
-              }}
-              className="p-2 rounded-md bg-gray-700 text-white w-full"
-            >
-              <option value="">-- Selecciona propietario --</option>
-              {owners.map((o) => (
-                <option key={o.idOwner} value={o.idOwner}>
-                  {o.name}
-                </option>
-              ))}
-            </select>
-          </div>
+              fetchHorsesByOwner(ownerId);
+            } else {
+              setHorses([]);
+            }
+          }}
+          className="p-2 rounded-md bg-gray-700 text-white text-sm w-full"
+        >
+          <option value="">-- Selecciona propietario --</option>
+          {owners.map((o) => (
+            <option key={o.idOwner} value={o.idOwner}>
+              {buildOwnerDisplayName(o) || `ID ${o.idOwner}`}
+            </option>
+          ))}
+        </select>
+      </div>
 
           <div>
             <label htmlFor="period" className="block mb-1">
@@ -1325,16 +1349,21 @@ const TotalControlManagement = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {controls.map((control) => (
-              <div
-                key={control.idTotalControl}
-                className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between"
-              >
-                <h3 className="text-lg font-semibold">
-                  Propietario:{" "}
-                  {owners.find((o) => o.idOwner === control.fk_idOwner)?.name ||
-                    control.fk_idOwner}
-                </h3>
+            {controls.map((control) => {
+              const ownerRecord = owners.find(
+                (o) => o.idOwner === control.fk_idOwner
+              );
+              const ownerDisplayName =
+                buildOwnerDisplayName(ownerRecord) || control.fk_idOwner;
+
+              return (
+                <div
+                  key={control.idTotalControl}
+                  className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between"
+                >
+                  <h3 className="text-lg font-semibold">
+                    Propietario: {ownerDisplayName}
+                  </h3>
                 <p>
                   Caballo:{" "}
                   {horseLookup[control.fk_idHorse] ??
@@ -1402,7 +1431,8 @@ const TotalControlManagement = () => {
                   </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

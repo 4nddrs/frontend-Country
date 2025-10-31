@@ -320,12 +320,12 @@ const ExpensesManagement = () => {
               <input
                 type="text"
                 name="description"
-                placeholder="Descripción"
+                placeholder="Descripcion"
                 value={newExpense.description}
                 onChange={(e) =>
                   setNewExpense({ ...newExpense, description: e.target.value })
                 }
-                className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+                className="flex-1 min-w-[20rem] lg:min-w-[24rem] p-2 rounded-md bg-gray-700 text-white"
               />
             </div>
 

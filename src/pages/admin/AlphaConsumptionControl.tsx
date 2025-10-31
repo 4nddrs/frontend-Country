@@ -161,6 +161,11 @@ const AlphaConsumptionControl: React.FC = () => {
 
   const totals = useMemo(() => report?.summary, [report]);
 
+  const sortedRows = useMemo(() => {
+    if (!report?.rows) return [];
+    return [...report.rows].sort((a, b) => a.horse_id - b.horse_id);
+  }, [report]);
+
   // --------- Exportar a PDF Diseño----------
   const nf = new Intl.NumberFormat("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -204,7 +209,7 @@ const AlphaConsumptionControl: React.FC = () => {
         startY: 120,
         theme: "striped",
         head: [["Caballo", "Propietario", "Cons. (Klg)", "Días", "Klg Mes", "Escuela"]],
-        body: report.rows?.map(r => [
+        body: sortedRows.map(r => [
           r.horse_name,
           r.owner_name,
           nf.format(r.consumptionKlg ?? 0),
@@ -401,8 +406,8 @@ const AlphaConsumptionControl: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {report.rows.length ? (
-                    report.rows.map((r) => (
+                  {sortedRows.length ? (
+                    sortedRows.map((r) => (
                       <tr key={r.horse_id} className="border-t border-gray-700">
                         <td className="p-2">{r.horse_name}</td>
                         <td className="p-2">{r.owner_name}</td>

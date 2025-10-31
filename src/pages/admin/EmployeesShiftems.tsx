@@ -23,6 +23,7 @@ const EmployeesShiftemManagement = () => {
   // For selects
   const [employees, setEmployees] = useState<any[]>([]);
   const [shiftEmployees, setShiftEmployees] = useState<any[]>([]);
+  const [shiftTypes, setShiftTypes] = useState<any[]>([]);
 
   const fetchEmployees = async () => {
     try {
@@ -46,6 +47,17 @@ const EmployeesShiftemManagement = () => {
     }
   };
 
+  const fetchShiftTypes = async () => {
+    try {
+      const res = await fetch("https://backend-country-nnxe.onrender.com/shift_types/");
+      if (!res.ok) throw new Error("Error al obtener tipos de turno");
+      const data = await res.json();
+      setShiftTypes(data);
+    } catch {
+      toast.error("No se pudieron cargar los tipos de turno");
+    }
+  };
+
   const fetchEmps = async () => {
     setLoading(true);
     try {
@@ -64,7 +76,23 @@ const EmployeesShiftemManagement = () => {
     fetchEmps();
     fetchEmployees();
     fetchShiftEmployees();
+    fetchShiftTypes();
   }, []);
+
+  const getShiftTypeName = (shiftTypeId?: number) => {
+    if (!shiftTypeId) return "";
+    return shiftTypes.find((type) => type.idShiftType === shiftTypeId)?.shiftName ?? `Turno #${shiftTypeId}`;
+  };
+
+  const formatShiftOption = (shiftEmployee: any) => {
+    const shiftName = getShiftTypeName(shiftEmployee.fk_idShiftType);
+    const start = shiftEmployee.startDateTime?.replace('T', ' ').slice(0, 16) ?? '';
+    const end = shiftEmployee.endDateTime?.replace('T', ' ').slice(0, 16) ?? '';
+    if (!start && !end) {
+      return `Tipo de turno: ${shiftName}`;
+    }
+    return `Tipo de turno: ${shiftName} (${start} - ${end})`;
+  };
 
   const createEmp = async () => {
     try {
@@ -141,7 +169,7 @@ const EmployeesShiftemManagement = () => {
             <option value="">-- Selecciona turno empleado --</option>
             {shiftEmployees.map(se => (
               <option key={se.idShiftEmployed} value={se.idShiftEmployed}>
-                {se.idShiftEmployed} ({se.startDateTime?.replace('T', ' ').slice(0, 16)} - {se.endDateTime?.replace('T', ' ').slice(0, 16)})
+                {formatShiftOption(se)}
               </option>
             ))}
           </select>
@@ -179,7 +207,7 @@ const EmployeesShiftemManagement = () => {
                     >
                       {shiftEmployees.map(se => (
                         <option key={se.idShiftEmployed} value={se.idShiftEmployed}>
-                          {se.idShiftEmployed} ({se.startDateTime?.replace('T', ' ').slice(0, 16)} - {se.endDateTime?.replace('T', ' ').slice(0, 16)})
+                          {formatShiftOption(se)}
                         </option>
                       ))}
                     </select>
@@ -204,9 +232,12 @@ const EmployeesShiftemManagement = () => {
                 ) : (
                   <>
                     <h3 className="text-lg font-semibold">Empleado: {employees.find(em => em.idEmployee === emp.fk_idEmployee)?.fullName || emp.fk_idEmployee}</h3>
-                    <p>Turno empleado: {shiftEmployees.find(se => se.idShiftEmployed === emp.fk_idShiftEmployees) ?
-                      `${shiftEmployees.find(se => se.idShiftEmployed === emp.fk_idShiftEmployees).idShiftEmployed} (${shiftEmployees.find(se => se.idShiftEmployed === emp.fk_idShiftEmployees).startDateTime?.replace('T', ' ').slice(0, 16)} - ${shiftEmployees.find(se => se.idShiftEmployed === emp.fk_idShiftEmployees).endDateTime?.replace('T', ' ').slice(0, 16)})`
-                      : emp.fk_idShiftEmployees}
+                    <p>
+                      Turno empleado:&nbsp;
+                      {(() => {
+                        const shiftAssigned = shiftEmployees.find(se => se.idShiftEmployed === emp.fk_idShiftEmployees);
+                        return shiftAssigned ? formatShiftOption(shiftAssigned) : `Turno #${emp.fk_idShiftEmployees}`;
+                      })()}
                     </p>
                     <div className="flex items-center justify-end gap-4 mt-4">
                       <button

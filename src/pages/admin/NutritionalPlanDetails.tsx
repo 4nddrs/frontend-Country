@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
 
@@ -28,6 +28,24 @@ const NutritionalPlanDetailsManagement = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [foods, setFoods] = useState<any[]>([]);
   const [nutritionalPlans, setNutritionalPlans] = useState<any[]>([]);
+
+  const foodNameMap = useMemo(() => {
+    return foods.reduce<Record<number, string>>((acc, food) => {
+      if (food?.idFood !== undefined) {
+        acc[food.idFood] = food.foodName ?? `Comida #${food.idFood}`;
+      }
+      return acc;
+    }, {});
+  }, [foods]);
+
+  const planNameMap = useMemo(() => {
+    return nutritionalPlans.reduce<Record<number, string>>((acc, plan) => {
+      if (plan?.idNutritionalPlan !== undefined) {
+        acc[plan.idNutritionalPlan] = plan.name ?? `Plan #${plan.idNutritionalPlan}`;
+      }
+      return acc;
+    }, {});
+  }, [nutritionalPlans]);
 
   const fetchDetails = async () => {
     setLoading(true);
@@ -300,7 +318,9 @@ const NutritionalPlanDetailsManagement = () => {
                   </>
                 ) : (
                   <>
-                    <h3 className="text-lg font-semibold">Comida #{detail.fk_idFood} - Plan #{detail.fk_idNutritionalPlan}</h3>
+                    <h3 className="text-lg font-semibold">
+                      {(foodNameMap[detail.fk_idFood] ?? `Comida #${detail.fk_idFood}`)} — {(planNameMap[detail.fk_idNutritionalPlan] ?? `Plan #${detail.fk_idNutritionalPlan}`)}
+                    </h3>
                     <p>Consumo (Kg): {detail.consumptionKlg}</p>
                     <p>Días/mes: {detail.daysConsumptionMonth}</p>
                     <p>Total consumo: {detail.totalConsumption}</p>

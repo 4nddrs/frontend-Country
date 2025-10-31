@@ -66,6 +66,29 @@ interface NormalizedHorseUsage {
   monthlyAlphaKg: number;
 }
 
+const hasIncompleteHorseValues = (horse: HorseReport): boolean => {
+  if (!horse || horse.fk_idHorse === 0) return false;
+
+  const daysText = (horse.daysDisplay ?? '').toString().trim();
+  const alfalfaText = (horse.alphaKgDisplay ?? '').toString().trim();
+
+  const hasDaysInput = daysText !== '';
+  const hasAlfalfaInput = alfalfaText !== '';
+
+  if (!hasDaysInput || !hasAlfalfaInput) {
+    return true;
+  }
+
+  const daysValue = Number(horse.days);
+  const alfalfaValue = Number(horse.alphaKg);
+
+  if (!Number.isFinite(daysValue) || !Number.isFinite(alfalfaValue)) {
+    return true;
+  }
+
+  return daysValue < 0 || alfalfaValue < 0;
+};
+
 const statusStyles: Record<
   string,
   { dot: string; bg: string }
@@ -798,15 +821,10 @@ const OwnerReportMonthManagement = () => {
       return;
     }
 
-    const invalidHorse = horsesReport.some(
-      (horse) =>
-        horse.fk_idHorse !== 0 &&
-        (horse.days > 0 || horse.alphaKg > 0) &&
-        (horse.days <= 0 || horse.alphaKg <= 0)
-    );
+    const hasInvalidHorse = horsesReport.some(hasIncompleteHorseValues);
 
-    if (invalidHorse) {
-      toast.error('Completa d as y alfalfa (Kg) para cada caballo registrado.');
+    if (hasInvalidHorse) {
+      toast.error('Completa dias y alfalfa (Kg) para cada caballo registrado.');
       return;
     }
 
@@ -839,15 +857,10 @@ const OwnerReportMonthManagement = () => {
   const updateReport = async () => {
     if (editingId === null) return;
 
-    const invalidHorse = horsesReport.some(
-      (horse) =>
-        horse.fk_idHorse !== 0 &&
-        (horse.days > 0 || horse.alphaKg > 0) &&
-        (horse.days <= 0 || horse.alphaKg <= 0)
-    );
+    const hasInvalidHorse = horsesReport.some(hasIncompleteHorseValues);
 
-    if (invalidHorse) {
-      toast.error('Completa d as y alfalfa (Kg) para cada caballo registrado.');
+    if (hasInvalidHorse) {
+      toast.error('Completa dias y alfalfa (Kg) para cada caballo registrado.');
       return;
     }
 
