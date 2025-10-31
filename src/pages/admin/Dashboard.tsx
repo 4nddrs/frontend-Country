@@ -28,6 +28,7 @@ const Dashboard = () => {
   const [monthlyFinancials, setMonthlyFinancials] = useState<any[]>([]);
   const [tasksSummary, setTasksSummary] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadDashboardData();
@@ -36,20 +37,38 @@ const Dashboard = () => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsData, attentionsData, financialsData, tasksData] = await Promise.all([
-        getDashboardStats(),
-        getRecentAttentions(8),
-        getMonthlyFinancials(),
-        getTasksSummary()
-      ]);
-
+      setError(null);
+      
+      console.log('🚀 Iniciando carga del dashboard...');
+      
+      // Cargar datos esenciales primero (más rápido)
+      console.log('⏳ Paso 1/4: Cargando estadísticas principales...');
+      const statsData = await getDashboardStats();
       setStats(statsData);
-      setRecentAttentions(attentionsData);
-      setMonthlyFinancials(financialsData);
+      console.log('✅ Estadísticas cargadas');
+
+      // Cargar datos secundarios secuencialmente
+      console.log('⏳ Paso 2/4: Cargando resumen de tareas...');
+      const tasksData = await getTasksSummary();
       setTasksSummary(tasksData);
-    } catch (error) {
-      console.error('Error loading dashboard:', error);
-      toast.error('Error al cargar datos del dashboard');
+      console.log('✅ Tareas cargadas');
+
+      console.log('⏳ Paso 3/4: Cargando datos financieros...');
+      const financialsData = await getMonthlyFinancials();
+      setMonthlyFinancials(financialsData);
+      console.log('✅ Finanzas cargadas');
+
+      console.log('⏳ Paso 4/4: Cargando atenciones recientes...');
+      const attentionsData = await getRecentAttentions(8);
+      setRecentAttentions(attentionsData);
+      console.log('✅ Atenciones cargadas');
+
+      console.log('✅ Todos los datos cargados exitosamente');
+    } catch (error: any) {
+      console.error('❌ Error loading dashboard:', error);
+      const errorMessage = error.message || 'Error desconocido al cargar el dashboard';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -78,6 +97,25 @@ const Dashboard = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#bdab62] mx-auto"></div>
           <p className="mt-4 text-[#F8F4E3]">Cargando dashboard...</p>
+          <p className="mt-2 text-sm text-gray-400">Esto puede tardar un momento con mucha información</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center max-w-md bg-white/5 backdrop-blur-lg p-8 rounded-2xl border border-red-500/30">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-red-400 mb-2">Error al cargar el Dashboard</h2>
+          <p className="text-gray-300 mb-4">{error}</p>
+          <button
+            onClick={loadDashboardData}
+            className="bg-[#bdab62] hover:bg-[#a89654] text-black px-6 py-2 rounded-lg font-semibold transition-colors"
+          >
+            Reintentar
+          </button>
         </div>
       </div>
     );

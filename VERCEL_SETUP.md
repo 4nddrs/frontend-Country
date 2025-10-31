@@ -3,11 +3,14 @@
 ## ✅ Cambios realizados en el código
 
 ### 1. **Archivo de configuración centralizado** (`src/config/app.ts`)
+
 Se creó un archivo que centraliza todas las URLs de la aplicación:
+
 - En **desarrollo**: usa `http://localhost:5173`
 - En **producción**: usa `https://hipicacc.vercel.app`
 
 ### 2. **URLs actualizadas**
+
 - ✅ `AuthForm.tsx` - Reset de contraseña
 - ✅ `ResetPassword.tsx` - Reenvío de email
 - ✅ Todas usan `AUTH_REDIRECT_URLS.resetPassword`
@@ -35,11 +38,13 @@ VITE_APP_SUPABASE_SERVICE_ROLE_KEY=tu-service-role-key-aqui
 2. Agrega estas URLs permitidas:
 
 **Site URL**:
+
 ```
 https://hipicacc.vercel.app
 ```
 
 **Redirect URLs** (una por línea):
+
 ```
 https://hipicacc.vercel.app
 https://hipicacc.vercel.app/reset-password
@@ -55,7 +60,8 @@ http://localhost:5173/reset-password
 En **Supabase Dashboard** → **Authentication** → **Email Templates**:
 
 1. **Reset Password** template:
-   - Verifica que use `{{ .ConfirmationURL }}` 
+
+   - Verifica que use `{{ .ConfirmationURL }}`
    - Este link ya incluirá automáticamente `https://hipicacc.vercel.app/reset-password`
 
 2. **Confirm Signup** template (si aplica):
@@ -66,12 +72,14 @@ En **Supabase Dashboard** → **Authentication** → **Email Templates**:
 ## 🧪 Cómo probar
 
 ### En desarrollo (local):
+
 ```bash
 npm run dev
 # Debería usar: http://localhost:5173
 ```
 
 ### En producción (Vercel):
+
 ```bash
 # Después de hacer push
 git add .
@@ -118,13 +126,16 @@ git push
 ## 🆘 Troubleshooting
 
 ### "Email not sent" en producción
+
 - Verifica que las variables de entorno estén en Vercel
 - Verifica que las Redirect URLs estén en Supabase
 
 ### "Invalid redirect URL"
+
 - Verifica que `https://hipicacc.vercel.app/reset-password` esté en la lista de Supabase
 
 ### "Link expired"
+
 - Los links de reset duran 1 hora por defecto
 - Usuario debe pedir un nuevo link
 
