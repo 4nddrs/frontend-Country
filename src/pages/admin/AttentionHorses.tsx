@@ -6,7 +6,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
 
-const BASE_URL = 'https://backend-country-nnxe.onrender.com';
+const BASE_URL = 'http://82.25.66.67:8000';
 const API_URL = `${BASE_URL}/attention_horses/`;
 
 interface AttentionHorse {

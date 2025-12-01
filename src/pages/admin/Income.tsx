@@ -4,7 +4,7 @@ import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-const API_URL = 'https://backend-country-nnxe.onrender.com/income/';
+const API_URL = 'http://82.25.66.67:8000/income/';
 
 interface Income {
   idIncome?: number;

@@ -20,7 +20,7 @@ import type {
 } from "./types";
 import { encodeImageForBackend } from "../../utils/imageHelpers";
 
-const API_URL = "https://backend-country-nnxe.onrender.com";
+const API_URL = "http://82.25.66.67:8000";
 const TASKS_URL = `${API_URL}/tasks/`;
 const CATEGORIES_URL = `${API_URL}/task-categories/`;
 const EMPLOYEES_URL = `${API_URL}/employees/`;

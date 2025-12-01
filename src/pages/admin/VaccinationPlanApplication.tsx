@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { toast, Toaster } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
 
-const API_URL = 'https://backend-country-nnxe.onrender.com/vaccination_plan_application/';
-const BASE_URL = 'https://backend-country-nnxe.onrender.com';
+const API_URL = 'http://82.25.66.67:8000/vaccination_plan_application/';
+const BASE_URL = 'http://82.25.66.67:8000';
 
 interface VaccinationPlanApplication {
   idVaccinationPlanApplication?: number;

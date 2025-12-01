@@ -9,7 +9,7 @@ export default defineConfig({
     // Configura el proxy
     proxy: {
       '/api': {
-        target: 'https://backend-country-nnxe.onrender.com',
+        target: 'http://82.25.66.67:8000',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ''),

@@ -4,7 +4,7 @@
   import { decodeBackendImage } from '../../utils/imageHelpers';
 
 
-  const API_URL = 'https://backend-country-nnxe.onrender.com/owner/';
+  const API_URL = 'http://82.25.66.67:8000/owner/';
 
   interface Owner {
     idOwner?: number;

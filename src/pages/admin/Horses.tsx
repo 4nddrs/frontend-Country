@@ -7,7 +7,7 @@ import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
 
 // URL de tu API backend
-const API_URL = 'https://backend-country-nnxe.onrender.com/horses/'; 
+const API_URL = 'http://82.25.66.67:8000/horses/'; 
 
 const LOGO_URL = `${import.meta.env.BASE_URL}image/LogoHipica.png`;
 const urlToDataUrl = (url: string) =>
@@ -93,7 +93,7 @@ const HorsesManagement = () => {
 
   const fetchOwners = async () => {
     try {
-      const res = await fetch('https://backend-country-nnxe.onrender.com/owner/');
+      const res = await fetch('http://82.25.66.67:8000/owner/');
       const data = await res.json();
       setOwners(data);
     } catch (err) {
@@ -103,7 +103,7 @@ const HorsesManagement = () => {
 
   const fetchRaces = async () => {
     try {
-      const res = await fetch('https://backend-country-nnxe.onrender.com/race/');
+      const res = await fetch('http://82.25.66.67:8000/race/');
       const data = await res.json();
       setRaces(data);
     } catch (err) {
@@ -113,7 +113,7 @@ const HorsesManagement = () => {
 
   const fetchNutritionalPlans = async () => {
     try {
-      const res = await fetch('https://backend-country-nnxe.onrender.com/nutritional-plans/');
+      const res = await fetch('http://82.25.66.67:8000/nutritional-plans/');
       const data = await res.json();
       setNutritionalPlans(data);
     } catch (err) {
@@ -203,7 +203,7 @@ const HorsesManagement = () => {
 
       console.log("📤 Enviando nuevo caballo (con formato binario):", horseData);
 
-      const res = await fetch("https://backend-country-nnxe.onrender.com/horses/", {
+      const res = await fetch("http://82.25.66.67:8000/horses/", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

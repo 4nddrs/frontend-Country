@@ -13,9 +13,9 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dayjs from "dayjs";
 
-const API_URL = "https://backend-country-nnxe.onrender.com/horse_assignments/";
-const EMPLOYEES_URL = "https://backend-country-nnxe.onrender.com/employees/";
-const HORSES_URL = "https://backend-country-nnxe.onrender.com/horses/";
+const API_URL = "http://82.25.66.67:8000/horse_assignments/";
+const EMPLOYEES_URL = "http://82.25.66.67:8000/employees/";
+const HORSES_URL = "http://82.25.66.67:8000/horses/";
 
 interface HorseAssignment {
   idHorseAssignments?: number;

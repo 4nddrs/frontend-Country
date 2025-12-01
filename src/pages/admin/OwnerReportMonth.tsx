@@ -8,9 +8,9 @@ import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X, Download ,ChevronUp,ChevronDown,} from 'lucide-react';
 
 
-const API_URL = 'https://backend-country-nnxe.onrender.com/owner_report_month/';
-const OWNERS_URL = 'https://backend-country-nnxe.onrender.com/owner/';
-const HORSES_URL = 'https://backend-country-nnxe.onrender.com/horses/';
+const API_URL = 'http://82.25.66.67:8000/owner_report_month/';
+const OWNERS_URL = 'http://82.25.66.67:8000/owner/';
+const HORSES_URL = 'http://82.25.66.67:8000/horses/';
 
 const TABLE_ACCENT_COLOR: [number, number, number] = [38, 72, 131];
 const TABLE_ACCENT_TEXT: [number, number, number] = [255, 255, 255];

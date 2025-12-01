@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
 
-const API_URL = 'https://backend-country-nnxe.onrender.com/food-stock/';
+const API_URL = 'http://82.25.66.67:8000/food-stock/';
 
 
 interface FoodProvider {
@@ -41,7 +41,7 @@ const FoodStocksManagement = () => {
   try {
     const [stocksRes, providersRes] = await Promise.all([
       fetch(API_URL),
-      fetch('https://backend-country-nnxe.onrender.com/food-providers/')
+      fetch('http://82.25.66.67:8000/food-providers/')
     ]);
 
     if (!stocksRes.ok || !providersRes.ok) {

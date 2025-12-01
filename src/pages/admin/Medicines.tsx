@@ -2,7 +2,7 @@
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
 
-const API_URL = 'https://backend-country-nnxe.onrender.com/medicines/';
+const API_URL = 'http://82.25.66.67:8000/medicines/';
 const MEDICATION_TYPE_OPTIONS = [
   'Antibióticos',
   'Antiinflamatorios y analgésicos',
@@ -75,7 +75,7 @@ const MedicinesManagement = () => {
   const [horses, setHorses] = useState<any[]>([]);
   const fetchHorses = async () => {
     try {
-      const res = await fetch("https://backend-country-nnxe.onrender.com/horses/");
+      const res = await fetch("http://82.25.66.67:8000/horses/");
       if (!res.ok) throw new Error("Error al obtener caballos");
       const data = await res.json();
       setHorses(data);

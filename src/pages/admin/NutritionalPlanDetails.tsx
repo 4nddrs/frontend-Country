@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
 
-const API_URL = 'https://backend-country-nnxe.onrender.com/nutritional-plan-details/';
+const API_URL = 'http://82.25.66.67:8000/nutritional-plan-details/';
 
 interface NutritionalPlanDetail {
   idDetail?: number;
@@ -63,7 +63,7 @@ const NutritionalPlanDetailsManagement = () => {
 
   const fetchFoods = async () => {
     try {
-      const res = await fetch("https://backend-country-nnxe.onrender.com/food-stock/");
+      const res = await fetch("http://82.25.66.67:8000/food-stock/");
       if (!res.ok) throw new Error("Error al obtener comidas");
       const data = await res.json();
       setFoods(data);
@@ -74,7 +74,7 @@ const NutritionalPlanDetailsManagement = () => {
 
   const fetchNutritionalPlans = async () => {
     try {
-      const res = await fetch("https://backend-country-nnxe.onrender.com/nutritional-plans/");
+      const res = await fetch("http://82.25.66.67:8000/nutritional-plans/");
       if (!res.ok) throw new Error("Error al obtener planes nutricionales");
       const data = await res.json();
       setNutritionalPlans(data);

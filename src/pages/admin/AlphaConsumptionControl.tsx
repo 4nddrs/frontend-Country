@@ -6,7 +6,7 @@ import autoTable from "jspdf-autotable";
 import dayjs from "dayjs";
 
 
-const API_URL = 'https://backend-country-nnxe.onrender.com/alpha_consumption_control/';
+const API_URL = 'http://82.25.66.67:8000/alpha_consumption_control/';
 
 // Ruta pública del logo (en public/image/LogoHipica.png)
 const LOGO_URL = `${import.meta.env.BASE_URL}image/LogoHipica.png`;

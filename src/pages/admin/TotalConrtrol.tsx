@@ -6,7 +6,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
 
-const API_URL = 'https://backend-country-nnxe.onrender.com/total_control/';
+const API_URL = 'http://82.25.66.67:8000/total_control/';
 const BOX_CHARGE = 100;
 const SECTION_CHARGE = 200;
 
@@ -519,7 +519,7 @@ const TotalControlManagement = () => {
 
   const fetchOwners = async () => {
     try {
-      const res = await fetch("https://backend-country-nnxe.onrender.com/owner/");
+      const res = await fetch("http://82.25.66.67:8000/owner/");
       if (!res.ok) throw new Error("Error al obtener propietarios");
       const data = await res.json();
       setOwners(data);
@@ -530,7 +530,7 @@ const TotalControlManagement = () => {
 
   const fetchAllHorses = async () => {
     try {
-      const res = await fetch("https://backend-country-nnxe.onrender.com/horses/");
+      const res = await fetch("http://82.25.66.67:8000/horses/");
       if (!res.ok) throw new Error("Error al obtener caballos");
       const data = await res.json();
 
@@ -550,7 +550,7 @@ const TotalControlManagement = () => {
 
   const fetchHorsesByOwner = async (ownerId: number) => {
     try {
-      const res = await fetch(`https://backend-country-nnxe.onrender.com/horses/by_owner/${ownerId}`);
+      const res = await fetch(`http://82.25.66.67:8000/horses/by_owner/${ownerId}`);
       if (!res.ok) throw new Error("Error al obtener caballos del propietario");
       const data = await res.json();
       setHorses(data);

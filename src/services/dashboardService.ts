@@ -1,6 +1,6 @@
 // Dashboard Service - Servicio para obtener estadísticas y datos del dashboard
 
-const API_BASE = 'https://backend-country-nnxe.onrender.com';
+const API_BASE = 'http://82.25.66.67:8000';
 
 // Timeout para las peticiones (60 segundos para base de datos grandes)
 const FETCH_TIMEOUT = 60000;

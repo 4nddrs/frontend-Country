@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
 
-const API_URL = 'https://backend-country-nnxe.onrender.com/erp_users/';
+const API_URL = 'http://82.25.66.67:8000/erp_users/';
 
 interface ErpUser {
   idErpUser?: number;
@@ -35,7 +35,7 @@ const ErpUsersManagement = () => {
 
   const fetchOwners = async () => {
     try {
-      const res = await fetch("https://backend-country-nnxe.onrender.com/owner/");
+      const res = await fetch("http://82.25.66.67:8000/owner/");
       if (!res.ok) throw new Error("Error al obtener propietarios");
       const data = await res.json();
       setOwners(data);
@@ -46,7 +46,7 @@ const ErpUsersManagement = () => {
 
   const fetchEmployees = async () => {
     try {
-      const res = await fetch("https://backend-country-nnxe.onrender.com/employees/");
+      const res = await fetch("http://82.25.66.67:8000/employees/");
       if (!res.ok) throw new Error("Error al obtener empleados");
       const data = await res.json();
       setEmployees(data);
@@ -57,7 +57,7 @@ const ErpUsersManagement = () => {
 
   const fetchUserRoles = async () => {
     try {
-      const res = await fetch("https://backend-country-nnxe.onrender.com/user_roles/");
+      const res = await fetch("http://82.25.66.67:8000/user_roles/");
       if (!res.ok) throw new Error("Error al obtener roles de usuario");
       const data = await res.json();
       setUserRoles(data);

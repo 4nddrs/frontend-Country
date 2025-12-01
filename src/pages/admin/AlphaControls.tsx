@@ -15,7 +15,7 @@ declare module "jspdf" {
 }
 
 
-const API_URL = "https://backend-country-nnxe.onrender.com/alpha_controls/";
+const API_URL = "http://82.25.66.67:8000/alpha_controls/";
 
 interface ProviderLite {
   idFoodProvider: number;
@@ -116,7 +116,7 @@ const AlphaControlsManagement: React.FC = () => {
   // ===== Fetch datos =====
   const fetchFoodProviders = async () => {
     try {
-      const res = await fetch("https://backend-country-nnxe.onrender.com/food-providers/");
+      const res = await fetch("http://82.25.66.67:8000/food-providers/");
       if (!res.ok) throw new Error();
       const data = await res.json();
       setFoodProviders(data);

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
 
-const API_URL = 'https://backend-country-nnxe.onrender.com/shift_employeds/';
+const API_URL = 'http://82.25.66.67:8000/shift_employeds/';
 
 interface ShiftEmployed {
   idShiftEmployed?: number;
@@ -26,7 +26,7 @@ const ShiftEmployedsManagement = () => {
   const [shiftTypes, setShiftTypes] = useState<any[]>([]);
   const fetchShiftTypes = async () => {
     try {
-      const res = await fetch("https://backend-country-nnxe.onrender.com/shift_types/");
+      const res = await fetch("http://82.25.66.67:8000/shift_types/");
       if (!res.ok) throw new Error("Error al obtener tipos de turno");
       const data = await res.json();
       setShiftTypes(data);

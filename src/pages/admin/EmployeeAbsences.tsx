@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
 
-const API_URL = 'https://backend-country-nnxe.onrender.com/employee_absences/';
+const API_URL = 'http://82.25.66.67:8000/employee_absences/';
 
 interface EmployeeAbsence {
   idEmployeeAbsence?: number;
@@ -32,7 +32,7 @@ const EmployeeAbsencesManagement = () => {
   const [employees, setEmployees] = useState<any[]>([]);
   const fetchEmployees = async () => {
     try {
-      const res = await fetch("https://backend-country-nnxe.onrender.com/employees/");
+      const res = await fetch("http://82.25.66.67:8000/employees/");
       if (!res.ok) throw new Error("Error al obtener empleados");
       const data = await res.json();
       setEmployees(data);

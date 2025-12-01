@@ -12,7 +12,7 @@ import {
   X,
 } from 'lucide-react';
 
-const API_URL = 'https://backend-country-nnxe.onrender.com';
+const API_URL = 'http://82.25.66.67:8000';
 
 // ====== LOGO (según tu indicación) ======
 const LOGO_URL = `${import.meta.env.BASE_URL}image/LogoHipica.png`;
