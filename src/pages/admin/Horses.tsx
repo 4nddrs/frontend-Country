@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
-import { decodeBackendImage, encodeImageForBackend } from '../../utils/imageHelpers'; // CAMBIO: Importamos la función encodeImageForBackend
+import { Plus, Edit, Save, Trash2, X } from 'lucide-react';
+import { decodeBackendImage, encodeImageForBackend } from '../../utils/imageHelpers'; // CAMBIO: Importamos la funcion encodeImageForBackend
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
@@ -68,6 +68,9 @@ const HorsesManagement = () => {
   const [nutritionalPlans, setNutritionalPlans] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [horses, setHorses] = useState<Horse[]>([]);
+  const [horsePage, setHorsePage] = useState<number>(1);
+  const [horseHasNext, setHorseHasNext] = useState<boolean>(false);
+  const horsePageSize = 9;
   const [newHorse, setNewHorse] = useState<Omit<Horse, 'idHorse'>>({ ...initialHorse });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingHorseData, setEditingHorseData] = useState<Horse | null>(null);
@@ -85,7 +88,7 @@ const HorsesManagement = () => {
 
   // --- EFECTOS ---
   useEffect(() => {
-    fetchHorses();
+    fetchHorses(1);
     fetchOwners();
     fetchRaces();
     fetchNutritionalPlans();
@@ -97,7 +100,7 @@ const HorsesManagement = () => {
       const data = await res.json();
       setOwners(data);
     } catch (err) {
-      toast.error('Error cargando dueños');
+      toast.error('Error cargando duenos');
     }
   };
 
@@ -121,14 +124,17 @@ const HorsesManagement = () => {
     }
   };
 
-  // --- FUNCIONES API ---
-  const fetchHorses = async () => {
+  const fetchHorses = async (page: number) => {
     setLoading(true);
     try {
-      const res = await fetch(API_URL);
+      const skip = (page - 1) * horsePageSize;
+      const res = await fetch(`${API_URL}?skip=${skip}&limit=${horsePageSize}`);
       if (!res.ok) throw new Error('Error al obtener los caballos');
       const data = await res.json();
-      setHorses(data);
+      const sorted = [...data].sort((a: Horse, b: Horse) => (b.idHorse ?? 0) - (a.idHorse ?? 0));
+      setHorses(sorted);
+      setHorsePage(page);
+      setHorseHasNext(sorted.length === horsePageSize);
     } catch (error) {
       toast.error('No se pudo cargar la lista de caballos.');
     } finally {
@@ -152,7 +158,7 @@ const HorsesManagement = () => {
       const file = e.target.files[0];
       setSelectedPhotoFile(file); // CAMBIO: Guardamos el archivo en el nuevo estado
       if (mode === 'create') {
-        // En modo 'create' también podemos mostrar una vista previa si lo deseamos.
+        // En modo 'create' tambien podemos mostrar una vista previa si lo deseamos.
         const base64 = await toBase64(file);
         setNewHorse(prev => ({ ...prev, horsePhoto: base64 }));
       } else {
@@ -201,7 +207,7 @@ const HorsesManagement = () => {
         stateSchool: newHorse.stateSchool,
       };
 
-      console.log("📤 Enviando nuevo caballo (con formato binario):", horseData);
+      console.log('Enviando nuevo caballo (con formato binario):', horseData);
 
       const res = await fetch("http://localhost:8000/horses/", {
         method: 'POST',
@@ -216,7 +222,8 @@ const HorsesManagement = () => {
         throw new Error(`Error del servidor: ${errorText}`);
       }
 
-      toast.success("¡Caballo creado exitosamente!");
+      const createdHorse = await res.json();
+      toast.success('Caballo creado exitosamente!');
 
       // Reset form
       setNewHorse({ ...initialHorse });
@@ -225,9 +232,10 @@ const HorsesManagement = () => {
         fileInputRef.current.value = '';
       }
 
-      fetchHorses();
+      setHorses((prev) => [createdHorse, ...prev]);
+      setHorsePage(1);
     } catch (error: any) {
-      console.error("❌ Error al crear caballo:", error);
+      console.error('Error al crear caballo:', error);
       toast.error(`Error al crear caballo: ${error.message}`);
     }
   };
@@ -235,8 +243,8 @@ const HorsesManagement = () => {
 
   const updateHorse = async (id: number) => {
     if (!editingHorseData) return;
-    console.log("✏️ Actualizando caballo con ID:", id);
-    console.log("📤 Datos actualizados:", editingHorseData);
+    console.log('Actualizando caballo con ID:', id);
+    console.log('Datos actualizados:', editingHorseData);
     if (!editingHorseData.state) {
       toast.error('Selecciona el estado.');
       return;
@@ -246,13 +254,13 @@ const HorsesManagement = () => {
       return;
     }
     try {
-      // CAMBIO: Preparamos la foto para el backend si se seleccionó una nueva
+      // CAMBIO: Preparamos la foto para el backend si se selecciono una nueva
       let photoForBackend: string | null | undefined = undefined; // undefined para no actualizar si no hay cambio
       if (selectedPhotoFile) {
         const base64Full = await toBase64(selectedPhotoFile);
         photoForBackend = encodeImageForBackend(base64Full);
       } else if (editingHorseData.horsePhoto === null) {
-        photoForBackend = null; // Si el usuario borró la foto
+        photoForBackend = null; // Si el usuario borro la foto
       }
 
       const horseDataToUpdate = {
@@ -275,11 +283,11 @@ const HorsesManagement = () => {
         body: JSON.stringify(horseDataToUpdate),
       });
       if (!res.ok) throw new Error('Error al actualizar el caballo');
-      toast.success('¡Caballo actualizado!');
+      toast.success('Caballo actualizado');
       setEditingId(null);
       setEditingHorseData(null);
       setSelectedPhotoFile(null); // CAMBIO: Resetear el estado del archivo
-      fetchHorses();
+      fetchHorses(horsePage);
     } catch (error) {
       toast.error('No se pudo actualizar el caballo.');
     }
@@ -287,19 +295,19 @@ const HorsesManagement = () => {
 
 
   const deleteHorse = async (id: number) => {
-    if (!window.confirm('¿Seguro quieres eliminar este caballo?')) return;
+    if (!window.confirm('Seguro quieres eliminar este caballo?')) return;
     try {
       const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Error al eliminar el caballo');
-      toast.success('¡Caballo eliminado!');
-      fetchHorses();
+      toast.success('Caballo eliminado');
+      fetchHorses(Math.max(1, horsePage));
     } catch (error) {
       toast.error('No se pudo eliminar el caballo.');
     }
   };
 
   const handleEditClick = (horse: Horse) => {
-    console.log("🛠️ Entrando en modo edición con caballo:", horse);
+    console.log('Entrando en modo edicion con caballo:', horse);
     setEditingId(horse.idHorse!);
     setEditingHorseData({ ...horse });
   };
@@ -314,12 +322,12 @@ const HorsesManagement = () => {
     const o = owners.find((x) => x.idOwner === id);
     return o ? `${o.name ?? ''} ${o.FirstName ?? ''}`.trim() || String(id) : String(id);
   };
-  const boolTxt = (b: boolean) => (b ? 'Sí' : 'No');
+  const boolTxt = (b: boolean) => (b ? 'Si' : 'No');
 
   // Total caballos (para mostrar y PDF)
   const totalCaballos = useMemo(() => horses.length, [horses]);
 
-  // Exportar PDF Diseño
+  // Exportar PDF Diseno
   const exportHorsesPDF = async () => {
     try {
       setExporting(true);
@@ -340,16 +348,16 @@ const HorsesManagement = () => {
         console.warn('No se pudo dibujar el logo:', e);
       }
 
-      const titulo = 'Reporte de Caballos y Dueños';
+      const titulo = 'Reporte de Caballos y Duenos';
       const now = dayjs().format('YYYY-MM-DD HH:mm');
 
-      // Título centrado
+      // Titulo centrado
       const pageW = doc.internal.pageSize.getWidth();
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
       doc.text(titulo, pageW / 2, 50, { align: 'center' });
 
-      // Subtítulos
+      // Subtitulos
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.text(`Generado: ${now}`, 40, 70);
@@ -370,7 +378,7 @@ const HorsesManagement = () => {
       autoTable(doc, {
         startY: 110,
         theme: 'striped',
-        head: [['Caballo','Dueño','Nacimiento','Sexo','Color','Pasaporte','Box','Sección','Canasta']],
+        head: [['Caballo','Dueno','Nacimiento','Sexo','Color','Pasaporte','Box','Seccion','Canasta']],
         body,
         styles: { fontSize: 9, cellPadding: 6 }, // cuerpo blanco por defecto
         headStyles: {
@@ -379,7 +387,7 @@ const HorsesManagement = () => {
           fontStyle: 'bold',
         },
 
-        // Pie “TOTAL … CABALLOS”
+        // Pie TOTAL CABALLOS
         foot: [[
           {
             content: 'TOTAL',
@@ -405,7 +413,7 @@ const HorsesManagement = () => {
           const pageCount = doc.getNumberOfPages();
           doc.setFontSize(9);
           doc.text(
-            `Página ${data.pageNumber} de ${pageCount}`,
+            `Pagina ${data.pageNumber} de ${pageCount}`,
             doc.internal.pageSize.getWidth() - 120,
             doc.internal.pageSize.getHeight() - 20
           );
@@ -426,7 +434,7 @@ const HorsesManagement = () => {
   // --- RENDER ---
   return (
     <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
-      <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Caballos</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestion de Caballos</h1>
       
       <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
         <div className="flex items-center justify-between mb-4">
@@ -437,7 +445,7 @@ const HorsesManagement = () => {
             className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white 
                       px-6 py-3 text-lg rounded-xl font-semibold shadow-md
                       hover:shadow-lg transition"
-            title="Generar PDF de caballos y dueños"
+            title="Generar PDF de caballos y duenos"
           >
             {exporting ? 'Exportando...' : 'Exportar PDF'}
           </button>
@@ -485,7 +493,7 @@ const HorsesManagement = () => {
       </div>
 
       <div>
-        <label className="block mb-1">Descripción General</label>
+        <label className="block mb-1">Descripcion General</label>
         <input
           type="text"
           value={newHorse.generalDescription}
@@ -495,7 +503,7 @@ const HorsesManagement = () => {
       </div>
 
       <div>
-        <label className="block mb-1">Número de Pasaporte</label>
+        <label className="block mb-1">Numero de Pasaporte</label>
         <input
           type="number"
           value={newHorse.passportNumber}
@@ -521,7 +529,7 @@ const HorsesManagement = () => {
               checked={newHorse.section}
               onChange={e => setNewHorse({ ...newHorse, section: e.target.checked })}
             />
-            <span className="ml-2">Sección</span>
+            <span className="ml-2">Seccion</span>
           </label>
           <label>
             <input
@@ -535,14 +543,14 @@ const HorsesManagement = () => {
       </div>
 
       <div>
-        <label className="block mb-1">Dueño</label>
+        <label className="block mb-1">Dueno</label>
         <select
           name="fk_idOwner"
           value={newHorse.fk_idOwner || ""}
           onChange={e => setNewHorse({ ...newHorse, fk_idOwner: Number(e.target.value) })}
           className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
         >
-          <option value="">-- Selecciona un dueño --</option>
+          <option value="">-- Selecciona un dueno --</option>
           {owners.map((o) => (
             <option key={o.idOwner} value={o.idOwner}>
               {o.name} {o.FirstName}
@@ -633,7 +641,7 @@ const HorsesManagement = () => {
       </button>
     </div>
 
-    {/* Resumen + Botón PDF */}
+    {/* Resumen + Boton PDF */}
     <div className="flex items-center gap-4">
       <span className="text-base bg-gray-700 px-4 py-2 rounded-lg">
         Total caballos: <b>{totalCaballos}</b>
@@ -643,9 +651,37 @@ const HorsesManagement = () => {
 
       {/* Lista de caballos */}
       <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+        <div className="flex items-center justify-between mb-4 text-sm text-gray-300">
+          <span>Pagina {horsePage}</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => fetchHorses(Math.max(1, horsePage - 1))}
+              disabled={horsePage === 1 || loading}
+              className="px-3 py-1 rounded-md border border-gray-600 bg-gray-700 disabled:opacity-50"
+            >
+              Anterior
+            </button>
+            <button
+              onClick={() => fetchHorses(horsePage + 1)}
+              disabled={!horseHasNext || loading}
+              className="px-3 py-1 rounded-md border border-gray-600 bg-gray-700 disabled:opacity-50"
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
         {loading ? (
-          <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
-            <Loader size={24} className="animate-spin" />Cargando caballos...
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: horsePageSize }).map((_, idx) => (
+              <div key={idx} className="bg-gray-700 p-4 rounded-md shadow-lg animate-pulse space-y-3">
+                <div className="w-full h-40 rounded-md bg-gray-600" />
+                <div className="h-4 bg-gray-600 rounded w-3/4" />
+                <div className="h-3 bg-gray-600 rounded w-1/2" />
+                <div className="h-3 bg-gray-600 rounded w-2/3" />
+                <div className="h-3 bg-gray-600 rounded w-1/3" />
+                <div className="h-3 bg-gray-600 rounded w-1/4" />
+              </div>
+            ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -667,7 +703,7 @@ const HorsesManagement = () => {
                         </label>
                         <label>
                           <input type="checkbox" checked={editingHorseData.section} onChange={e => setEditingHorseData({ ...editingHorseData, section: e.target.checked })} />
-                          <span className="ml-2">Sección</span>
+                          <span className="ml-2">Seccion</span>
                         </label>
                         <label>
                           <input type="checkbox" checked={editingHorseData.basket} onChange={e => setEditingHorseData({ ...editingHorseData, basket: e.target.checked })} />
@@ -680,7 +716,7 @@ const HorsesManagement = () => {
                         onChange={e => setEditingHorseData({ ...editingHorseData, fk_idOwner: Number(e.target.value) })}
                         className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
                       >
-                        <option value="">-- Selecciona un dueño --</option>
+                        <option value="">-- Selecciona un dueno --</option>
                         {owners.map((o) => (
                           <option key={o.idOwner} value={o.idOwner}>
                             {o.name} {o.FirstName}
@@ -768,11 +804,11 @@ const HorsesManagement = () => {
                       <p className="text-sm text-gray-300">Nacimiento: {new Date(horse.birthdate).toLocaleDateString()}</p>
                       <p className="text-sm text-gray-300">Sexo: {horse.sex}</p>
                       <p className="text-sm text-gray-300">Color: {horse.color}</p>
-                      <p className="text-sm text-gray-300">N° Pasaporte: {horse.passportNumber}</p>
-                      <p className="text-sm text-gray-300">Box: {horse.box ? 'Sí' : 'No'} | Sección: {horse.section ? 'Sí' : 'No'} | Canasta: {horse.basket ? 'Sí' : 'No'}</p>
+                      <p className="text-sm text-gray-300">Nro Pasaporte: {horse.passportNumber}</p>
+                      <p className="text-sm text-gray-300">Box: {horse.box ? 'Si' : 'No'} | Seccion: {horse.section ? 'Si' : 'No'} | Canasta: {horse.basket ? 'Si' : 'No'}</p>
                       {horse.generalDescription && <p className="mt-2 text-gray-400 text-sm">{horse.generalDescription}</p>}
                       <p className="text-sm text-gray-300">Estado: {horse.state}</p>
-                      <p className="text-sm text-gray-300">Escuela: {horse.stateSchool ? 'Sí' : 'No'}</p>
+                      <p className="text-sm text-gray-300">Escuela: {horse.stateSchool ? 'Si' : 'No'}</p>
                     </div>
                     <div className="flex items-center justify-end gap-4">
                       <button onClick={() => handleEditClick(horse)} 
@@ -802,9 +838,11 @@ const HorsesManagement = () => {
             ))}
           </div>
         )}
+        {!loading && null}
       </div>
     </div>
   );
 };
 
 export default HorsesManagement;
+

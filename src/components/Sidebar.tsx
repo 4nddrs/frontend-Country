@@ -221,9 +221,12 @@ const Sidebar = ({ userRole }: SidebarProps) => {
           <div className="relative mt-auto px-6 pb-3 pt-5">
             <button
               onClick={async () => {
-                await handleSignOut();
-                // No necesitamos window.location.reload()
-                // El onAuthStateChange en App.tsx maneja la redirección automóticamente
+                try {
+                  await handleSignOut();
+                  window.location.href = '/' ;
+                } catch (error) {
+                  console.error('No se pudo cerrar sesión:', error);
+                }
               }}
               className="flex w-full items-center justify-center gap-3 rounded-2xl 
                         border border-[#167C79] bg-transparent px-4 py-3 text-sm font-semibold 

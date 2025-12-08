@@ -1,6 +1,6 @@
-  import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
   import { Toaster, toast } from 'react-hot-toast';
-  import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+  import { Plus, Edit, Save, Trash2, X } from 'lucide-react';
   import { decodeBackendImage } from '../../utils/imageHelpers';
 
 
@@ -20,6 +20,10 @@
   const OwnersManagement = () => {
    
     const [owners, setOwners] = useState<Owner[]>([]);
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [hasNextPage, setHasNextPage] = useState<boolean>(false);
+    const pageSize = 9;
+    const ownerFileRef = useRef<HTMLInputElement>(null);
     const [newOwner, setNewOwner] = useState<Omit<Owner, 'idOwner'>>({
       name: '',
       FirstName: '',
@@ -34,18 +38,21 @@
     
 
     useEffect(() => {
-      fetchOwners();
+      fetchOwners(1);
     }, []);
 
-
-    const fetchOwners = async () => {
+    const fetchOwners = async (page: number) => {
       setLoading(true);
       try {
-        const res = await fetch(API_URL);
+        const skip = (page - 1) * pageSize;
+        const res = await fetch(`${API_URL}?skip=${skip}&limit=${pageSize}`);
         if (!res.ok) throw new Error('Error al obtener propietarios');
         const data = await res.json();
         console.log("Datos crudos recibidos del backend:", data);
-        setOwners(data);
+        const sorted = [...data].sort((a: Owner, b: Owner) => (b.idOwner ?? 0) - (a.idOwner ?? 0));
+        setOwners(sorted);
+        setCurrentPage(page);
+        setHasNextPage(sorted.length === pageSize);
       } catch (error) {
         console.error(error);
         toast.error('No se pudo cargar la lista de propietarios.');
@@ -67,9 +74,12 @@
           body: JSON.stringify(newOwner),
         });
         if (!res.ok) throw new Error('Error al crear propietario');
-        toast.success('¡Propietario creado!');
+        const createdOwner = await res.json();
+        toast.success('Propietario creado!');
         setNewOwner({ name: '', FirstName: '', SecondName: '', ci: 0, phoneNumber: 0, ownerPhoto: null });
-        fetchOwners();
+        setOwners((prev) => [createdOwner, ...prev]);
+        if (ownerFileRef.current) ownerFileRef.current.value = '';
+        setCurrentPage(1);
       } catch (error) {
         console.error(error);
         toast.error('No se pudo crear el propietario.');
@@ -85,10 +95,10 @@
           body: JSON.stringify(editingOwnerData),
         });
         if (!res.ok) throw new Error('Error al actualizar propietario');
-        toast.success('¡Propietario actualizado!');
+        toast.success('Propietario actualizado!');
         setEditingId(null);
         setEditingOwnerData(null);
-        fetchOwners();
+        fetchOwners(currentPage);
       } catch (error) {
           console.error(error);
         toast.error('No se pudo actualizar el propietario.');
@@ -96,12 +106,12 @@
     };
 
     const deleteOwner = async (id: number) => {
-      if (!window.confirm('¿Estás seguro de que quieres eliminar este propietario?')) return;
+      if (!window.confirm('Estas seguro de que quieres eliminar este propietario?')) return;
       try {
         const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
         if (!res.ok) throw new Error('Error al eliminar propietario');
-        toast.success('¡Propietario eliminado!');
-        fetchOwners();
+        toast.success('Propietario eliminado!');
+        fetchOwners(Math.max(1, currentPage));
       } catch (error) {
           console.error(error);
         toast.error('No se pudo eliminar el propietario.');
@@ -140,7 +150,7 @@
     return (
       <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
         <Toaster position="top-right" toastOptions={{ style: { background: '#334155', color: 'white' } }} />
-        <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Propietarios</h1>
+        <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestion de Propietarios</h1>
         
         <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
           <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Propietario</h2>
@@ -148,9 +158,9 @@
             <input type="text" placeholder="Nombre" value={newOwner.name} onChange={e => setNewOwner({ ...newOwner, name: e.target.value })} className="p-2 rounded-md bg-gray-700" />
             <input type="text" placeholder="Primer Apellido" value={newOwner.FirstName} onChange={e => setNewOwner({ ...newOwner, FirstName: e.target.value })} className="p-2 rounded-md bg-gray-700" />
             <input type="text" placeholder="Segundo Apellido (Opcional)" value={newOwner.SecondName || ''} onChange={e => setNewOwner({ ...newOwner, SecondName: e.target.value })} className="p-2 rounded-md bg-gray-700" />
-            <input type="number" placeholder="Cédula de Identidad" value={newOwner.ci || ''} onChange={e => setNewOwner({ ...newOwner, ci: Number(e.target.value) })} className="p-2 rounded-md bg-gray-700" />
-            <input type="number" placeholder="Teléfono" value={newOwner.phoneNumber || ''} onChange={e => setNewOwner({ ...newOwner, phoneNumber: Number(e.target.value) })} className="p-2 rounded-md bg-gray-700" />
-            <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'new')} className="p-1.5 rounded-md bg-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" />
+            <input type="number" placeholder="Cedula de Identidad" value={newOwner.ci || ''} onChange={e => setNewOwner({ ...newOwner, ci: Number(e.target.value) })} className="p-2 rounded-md bg-gray-700" />
+            <input type="number" placeholder="Telefono" value={newOwner.phoneNumber || ''} onChange={e => setNewOwner({ ...newOwner, phoneNumber: Number(e.target.value) })} className="p-2 rounded-md bg-gray-700" />
+            <input type="file" accept="image/*" ref={ownerFileRef} onChange={(e) => handleFileChange(e, 'new')} className="p-1.5 rounded-md bg-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" />
           </div>
           <div className="mt-4 text-right">
               <button onClick={createOwner} className="bg-green-600 hover:bg-green-700 text-white p-2 px-4 rounded-md font-semibold flex items-center gap-2 inline-flex">
@@ -159,8 +169,38 @@
           </div>
         </div>
         <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+          <div className="flex items-center justify-between mb-4 text-sm text-gray-300">
+            <span>Pagina {currentPage}</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => fetchOwners(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1 || loading}
+                className="px-3 py-1 rounded-md border border-gray-600 bg-gray-700 disabled:opacity-50"
+              >
+                Anterior
+              </button>
+              <button
+                onClick={() => fetchOwners(currentPage + 1)}
+                disabled={!hasNextPage || loading}
+                className="px-3 py-1 rounded-md border border-gray-600 bg-gray-700 disabled:opacity-50"
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
           {loading ? (
-            <div className="flex items-center justify-center gap-2 text-xl text-gray-400"><Loader size={24} className="animate-spin" />Cargando propietarios...</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: pageSize }).map((_, idx) => (
+                <div key={idx} className="bg-gray-700 p-4 rounded-md shadow-lg animate-pulse space-y-3">
+                  <div className="w-full h-40 rounded-md bg-gray-600" />
+                  <div className="h-4 bg-gray-600 rounded w-3/4" />
+                  <div className="h-3 bg-gray-600 rounded w-1/2" />
+                  <div className="h-3 bg-gray-600 rounded w-2/3" />
+                  <div className="h-3 bg-gray-600 rounded w-1/3" />
+                  <div className="h-3 bg-gray-600 rounded w-1/4" />
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {owners.map(owner => (
@@ -191,7 +231,7 @@
                       />
                         <h3 className="text-lg font-semibold">{owner.name} {owner.FirstName} {owner.SecondName}</h3>
                         <p>CI: {owner.ci}</p>   
-                        <p>Teléfono: {owner.phoneNumber}</p>
+                        <p>Telefono: {owner.phoneNumber}</p>
                       </div>
                       <div className="flex items-center justify-end gap-4">
                         <button onClick={() => handleEditClick(owner)} 
