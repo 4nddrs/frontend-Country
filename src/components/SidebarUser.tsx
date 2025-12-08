@@ -113,14 +113,12 @@ export default function SidebarUser() {
         <div className="p-4 border-t border-slate-800/50">
           <div className="mb-4 p-4 rounded-xl bg-slate-800/30 border border-slate-700/50">
             <p className="text-xs text-slate-500 mb-1">Country Club</p>
-            <p className="text-sm text-slate-300">Usuario</p>
+            <p className="text-sm text-slate-300">Dueño</p>
           </div>
 
           <Button
             onClick={async () => {
               await handleSignOut();
-              // No necesitamos window.location.reload()
-              // El onAuthStateChange en App.tsx maneja la redirección automáticamente
             }}
             className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg shadow-emerald-500/20"
           >

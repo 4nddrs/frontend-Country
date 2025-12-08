@@ -5,13 +5,13 @@ import { Plus, Edit, Save, Trash2, Loader, X, ChevronUp, ChevronDown } from 'luc
 const API_URL = 'http://localhost:8000/erp_users/';
 
 interface ErpUser {
-  idErpUser?: number;
+  uid?: string; // UUID from Supabase Auth
   username: string;
   email: string;
-  fk_idOwner?: number;
-  fk_idEmployee?: number;
-  fk_idAuthUser?: string; // UUID, keep as string
+  isapproved: boolean;
+  approved_at?: string;
   fk_idUserRole: number;
+  telegram_chat_id?: number;
   created_at?: string;
 }
 
@@ -20,41 +20,17 @@ const ErpUsersManagement = () => {
   const [newUser, setNewUser] = useState<ErpUser>({
     username: '',
     email: '',
-    fk_idOwner: undefined,
-    fk_idEmployee: undefined,
-    fk_idAuthUser: '',
+    uid: '',
+    isapproved: false,
     fk_idUserRole: 1,
+    telegram_chat_id: undefined,
   });
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   // For selects
-  const [owners, setOwners] = useState<any[]>([]);
-  const [employees, setEmployees] = useState<any[]>([]);
   const [userRoles, setUserRoles] = useState<any[]>([]);
-
-  const fetchOwners = async () => {
-    try {
-      const res = await fetch("http://localhost:8000/owner/");
-      if (!res.ok) throw new Error("Error al obtener propietarios");
-      const data = await res.json();
-      setOwners(data);
-    } catch {
-      toast.error("No se pudieron cargar propietarios");
-    }
-  };
-
-  const fetchEmployees = async () => {
-    try {
-      const res = await fetch("http://localhost:8000/employees/");
-      if (!res.ok) throw new Error("Error al obtener empleados");
-      const data = await res.json();
-      setEmployees(data);
-    } catch {
-      toast.error("No se pudieron cargar empleados");
-    }
-  };
 
   const fetchUserRoles = async () => {
     try {
@@ -83,8 +59,6 @@ const ErpUsersManagement = () => {
 
   useEffect(() => {
     fetchUsers();
-    fetchOwners();
-    fetchEmployees();
     fetchUserRoles();
   }, []);
 
@@ -100,10 +74,10 @@ const ErpUsersManagement = () => {
       setNewUser({
         username: '',
         email: '',
-        fk_idOwner: undefined,
-        fk_idEmployee: undefined,
-        fk_idAuthUser: '',
+        uid: '',
+        isapproved: false,
         fk_idUserRole: 1,
+        telegram_chat_id: undefined,
       });
       fetchUsers();
     } catch {
@@ -111,9 +85,9 @@ const ErpUsersManagement = () => {
     }
   };
 
-  const updateUser = async (id: number, updatedUser: ErpUser) => {
+  const updateUser = async (uid: string, updatedUser: ErpUser) => {
     try {
-      const res = await fetch(`${API_URL}${id}`, {
+      const res = await fetch(`${API_URL}${uid}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedUser),
@@ -127,9 +101,9 @@ const ErpUsersManagement = () => {
     }
   };
 
-  const deleteUser = async (id: number) => {
+  const deleteUser = async (uid: string) => {
     try {
-      const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_URL}${uid}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Error al eliminar usuario');
       toast.success('Usuario eliminado!');
       fetchUsers();
@@ -161,38 +135,12 @@ const ErpUsersManagement = () => {
             onChange={e => setNewUser({ ...newUser, email: e.target.value })}
             className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
           />
-          <select
-            name="fk_idOwner"
-            value={newUser.fk_idOwner || ""}
-            onChange={e => setNewUser({ ...newUser, fk_idOwner: e.target.value ? Number(e.target.value) : undefined })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
-          >
-            <option value="">-- Opcional: Selecciona propietario --</option>
-            {owners.map(owner => (
-              <option key={owner.idOwner} value={owner.idOwner}>
-                {owner.name + " " + owner.FirstName + " " + owner.SecondName}
-              </option>
-            ))}
-          </select>
-          <select
-            name="fk_idEmployee"
-            value={newUser.fk_idEmployee || ""}
-            onChange={e => setNewUser({ ...newUser, fk_idEmployee: e.target.value ? Number(e.target.value) : undefined })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
-          >
-            <option value="">-- Opcional: Selecciona empleado --</option>
-            {employees.map(emp => (
-              <option key={emp.idEmployee} value={emp.idEmployee}>
-                {emp.fullName}
-              </option>
-            ))}
-          </select>
           <input
             type="text"
-            name="fk_idAuthUser"
-            placeholder="ID AuthUser (UUID)"
-            value={newUser.fk_idAuthUser || ""}
-            onChange={e => setNewUser({ ...newUser, fk_idAuthUser: e.target.value })}
+            name="uid"
+            placeholder="UID de Supabase (UUID)"
+            value={newUser.uid || ""}
+            onChange={e => setNewUser({ ...newUser, uid: e.target.value })}
             className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
           />
           <select
@@ -208,6 +156,22 @@ const ErpUsersManagement = () => {
               </option>
             ))}
           </select>
+          <input
+            type="number"
+            name="telegram_chat_id"
+            placeholder="Telegram Chat ID (opcional)"
+            value={newUser.telegram_chat_id || ""}
+            onChange={e => setNewUser({ ...newUser, telegram_chat_id: e.target.value ? Number(e.target.value) : undefined })}
+            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+          />
+          <label className="flex items-center gap-2 p-2 bg-gray-700 rounded-md">
+            <input
+              type="checkbox"
+              checked={newUser.isapproved}
+              onChange={e => setNewUser({ ...newUser, isapproved: e.target.checked })}
+            />
+            <span className="text-white">Aprobado</span>
+          </label>
           <button onClick={createUser} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
             <Plus size={20} /> Agregar
           </button>
@@ -221,13 +185,13 @@ const ErpUsersManagement = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {users.map(user => {
-              const isExpanded = expanded[user.idErpUser ?? 0] ?? false;
+              const isExpanded = expanded[user.uid ?? ''] ?? false;
               return (
               <div
-                key={user.idErpUser}
+                key={user.uid}
                 className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-lime-500/10 via-slate-900/60 to-slate-900/90 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-lime-500/20"
               >
-                {editingId === user.idErpUser ? (
+                {editingId === user.uid ? (
                   <div className="p-6">
                     <div>
                       <label className="block mb-1 text-sm font-medium">Username</label>
@@ -248,42 +212,13 @@ const ErpUsersManagement = () => {
                       />
                     </div>
                     <div>
-                      <label className="block mb-1 text-sm font-medium">Propietario</label>
-                      <select
-                        value={newUser.fk_idOwner || ""}
-                        onChange={e => setNewUser({ ...newUser, fk_idOwner: e.target.value ? Number(e.target.value) : undefined })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
-                      >
-                        <option value="">-- Opcional: Selecciona propietario --</option>
-                        {owners.map(owner => (
-                          <option key={owner.idOwner} value={owner.idOwner}>
-                            {owner.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block mb-1 text-sm font-medium">Empleado</label>
-                      <select
-                        value={newUser.fk_idEmployee || ""}
-                        onChange={e => setNewUser({ ...newUser, fk_idEmployee: e.target.value ? Number(e.target.value) : undefined })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
-                      >
-                        <option value="">-- Opcional: Selecciona empleado --</option>
-                        {employees.map(emp => (
-                          <option key={emp.idEmployee} value={emp.idEmployee}>
-                            {emp.fullName}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block mb-1 text-sm font-medium">Auth UUID</label>
+                      <label className="block mb-1 text-sm font-medium">UID (UUID)</label>
                       <input
                         type="text"
-                        defaultValue={user.fk_idAuthUser || ""}
-                        onChange={e => setNewUser({ ...newUser, fk_idAuthUser: e.target.value })}
+                        defaultValue={user.uid || ""}
+                        onChange={e => setNewUser({ ...newUser, uid: e.target.value })}
                         className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        disabled
                       />
                     </div>
                     <div>
@@ -301,9 +236,26 @@ const ErpUsersManagement = () => {
                         ))}
                       </select>
                     </div>
+                    <div>
+                      <label className="block mb-1 text-sm font-medium">Telegram Chat ID</label>
+                      <input
+                        type="number"
+                        defaultValue={user.telegram_chat_id || ""}
+                        onChange={e => setNewUser({ ...newUser, telegram_chat_id: e.target.value ? Number(e.target.value) : undefined })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <input
+                        type="checkbox"
+                        checked={newUser.isapproved}
+                        onChange={e => setNewUser({ ...newUser, isapproved: e.target.checked })}
+                      />
+                      <label className="text-sm font-medium">Aprobado</label>
+                    </div>
                     <div className="flex justify-end gap-2 mt-2">
                       <button
-                        onClick={() => updateUser(user.idErpUser!, {
+                        onClick={() => updateUser(user.uid!, {
                           ...user,
                           ...newUser,
                         })}
@@ -340,7 +292,7 @@ const ErpUsersManagement = () => {
                         onClick={() =>
                           setExpanded((prev) => ({
                             ...prev,
-                            [user.idErpUser ?? 0]: !prev[user.idErpUser ?? 0],
+                            [user.uid ?? '']: !prev[user.uid ?? ''],
                           }))
                         }
                         className="flex w-full items-center justify-center gap-2 rounded-lg border border-lime-500/40 bg-lime-500/10 py-2 text-sm font-medium text-lime-300 transition hover:bg-lime-500/15"
@@ -359,17 +311,19 @@ const ErpUsersManagement = () => {
                       {isExpanded && (
                         <div className="rounded-xl border border-slate-800/80 bg-slate-900/70 p-4 text-xs leading-relaxed">
                           <ul className="space-y-1">
-                            <li><strong>Propietario:</strong> {owners.find(o => o.idOwner === user.fk_idOwner)?.ownerName || user.fk_idOwner || '-'}</li>
-                            <li><strong>Empleado:</strong> {employees.find(e => e.idEmployee === user.fk_idEmployee)?.fullName || user.fk_idEmployee || '-'}</li>
-                            <li><strong>Auth UUID:</strong> {user.fk_idAuthUser || '-'}</li>
+                            <li><strong>UID:</strong> {user.uid || '-'}</li>
                             <li><strong>Rol:</strong> {userRoles.find(r => r.idUserRole === user.fk_idUserRole)?.roleName || user.fk_idUserRole}</li>
+                            <li><strong>Aprobado:</strong> {user.isapproved ? 'Sí' : 'No'}</li>
+                            <li><strong>Fecha aprobación:</strong> {user.approved_at ? new Date(user.approved_at).toLocaleDateString() : '-'}</li>
+                            <li><strong>Telegram ID:</strong> {user.telegram_chat_id || '-'}</li>
+                            <li><strong>Creado:</strong> {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}</li>
                           </ul>
                         </div>
                       )}
 
                       <div className="flex items-center justify-center gap-6 border-t border-slate-800 pt-6 pb-2">
                       <button
-                        onClick={() => { setEditingId(user.idErpUser!); setNewUser(user); }}
+                        onClick={() => { setEditingId(user.uid!); setNewUser(user); }}
                         className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
                                     bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
                                     shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
@@ -380,7 +334,7 @@ const ErpUsersManagement = () => {
                         <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" />
                       </button>
                       <button
-                        onClick={() => deleteUser(user.idErpUser!)}
+                        onClick={() => deleteUser(user.uid!)}
                         className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
                                   bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
                                   shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]

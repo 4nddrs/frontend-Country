@@ -543,7 +543,7 @@ export default function AuthForm() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <label className="block text-sm text-gray-300 mb-1">Primer nombre</label>
+                    <label className="block text-sm text-gray-300 mb-1">Primer apellido</label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                       <input
@@ -556,12 +556,12 @@ export default function AuthForm() {
                         required
                         maxLength={20}
                         className="w-full pl-10 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
-                        placeholder="Primer nombre"
+                        placeholder="Primer apellido"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-300 mb-1">Segundo nombre (opcional)</label>
+                    <label className="block text-sm text-gray-300 mb-1">Segundo apellido (opcional)</label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                       <input
@@ -573,7 +573,7 @@ export default function AuthForm() {
                         }}
                         maxLength={20}
                         className="w-full pl-10 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
-                        placeholder="Segundo nombre"
+                        placeholder="Segundo apellido"
                       />
                     </div>
                   </div>
