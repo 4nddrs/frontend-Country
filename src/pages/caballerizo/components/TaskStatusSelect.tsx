@@ -15,11 +15,17 @@ interface TaskStatusSelectProps {
   disabled?: boolean;
 }
 
-const normalizeOption = (option: string) => option.trim();
+const normalizeOption = (option: string) => {
+  const value = option.trim().toLowerCase();
+  if (value.includes("cancel")) return "Cancelada";
+  if (value.includes("complet")) return "Completada";
+  if (value.includes("progreso") || value.includes("proceso")) return "En progreso";
+  return "Pendiente";
+};
 
 const formatLabel = (option: string) => {
-  const lower = option.toLowerCase();
-  return lower.charAt(0).toUpperCase() + lower.slice(1);
+  const normalized = normalizeOption(option);
+  return normalized;
 };
 
 export function TaskStatusSelect({
@@ -45,7 +51,7 @@ export function TaskStatusSelect({
   const currentValue =
     typeof value === "string" && value.length > 0
       ? normalizeOption(value)
-      : "PENDIENTE";
+      : "Pendiente";
 
   return (
     <Select

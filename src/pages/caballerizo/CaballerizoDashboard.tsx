@@ -28,11 +28,19 @@ const HORSES_URL = `${API_URL}/horses/`;
 const HORSE_ASSIGNMENTS_URL = `${API_URL}/horse_assignments/`;
 
 const DEFAULT_STATUS_OPTIONS = [
-  "PENDIENTE",
-  "EN PROGRESO",
-  "COMPLETADA",
-  "CANCELADA",
+  "Pendiente",
+  "En progreso",
+  "Completada",
+  "Cancelada",
 ];
+
+const normalizeStatus = (status?: string | null): string => {
+  const value = (status ?? "").trim().toLowerCase();
+  if (value.includes("cancel")) return "Cancelada";
+  if (value.includes("complet")) return "Completada";
+  if (value.includes("progreso") || value.includes("proceso")) return "En progreso";
+  return "Pendiente";
+};
 
 const matchesEmployeeByUid = (employee: CaballerizoEmployee, uid: string) => {
   const record = employee as Record<string, unknown>;
@@ -178,9 +186,12 @@ const CaballerizoDashboard = () => {
 
       setCategoryMap(buildCategoriesMap(categoriesData));
       setTasks(
-        tasksData.filter(
-          (task) => task.fk_idEmployee === foundEmployee.idEmployee,
-        ),
+        tasksData
+          .filter((task) => task.fk_idEmployee === foundEmployee.idEmployee)
+          .map((task) => ({
+            ...task,
+            taskStatus: normalizeStatus(task.taskStatus),
+          })),
       );
       setAssignments(
         assignmentsData.filter(
@@ -209,7 +220,7 @@ const CaballerizoDashboard = () => {
 
     tasks.forEach((task) => {
       if (task.taskStatus) {
-        unique.add(task.taskStatus.toUpperCase());
+        unique.add(normalizeStatus(task.taskStatus));
       }
     });
 
@@ -243,7 +254,9 @@ const CaballerizoDashboard = () => {
 
         setTasks((prev) =>
           prev.map((task) =>
-            task.idTask === taskId ? { ...task, taskStatus: newStatus } : task,
+            task.idTask === taskId
+              ? { ...task, taskStatus: normalizeStatus(newStatus) }
+              : task,
           ),
         );
         toast.success("Estado de la tarea actualizado.");

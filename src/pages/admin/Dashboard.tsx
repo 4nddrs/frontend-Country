@@ -1,16 +1,11 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LineChart, Line, PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { TrendingUp, Users, DollarSign, ClipboardList, AlertCircle, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
-import {
-  getDashboardStats,
-  getRecentAttentions,
-  getMonthlyFinancials,
-  getTasksSummary
-} from '../../services/dashboardService';
+import useDashboard from '../../hooks/useDashboard';
 
 const Dashboard = () => {
-  const [stats, setStats] = useState({
+  const defaultStats = {
     totalHorses: 0,
     activeHorses: 0,
     schoolHorses: 0,
@@ -22,57 +17,105 @@ const Dashboard = () => {
     monthlyIncome: 0,
     monthlyExpenses: 0,
     netBalance: 0
-  });
+  };
 
-  const [recentAttentions, setRecentAttentions] = useState<any[]>([]);
-  const [monthlyFinancials, setMonthlyFinancials] = useState<any[]>([]);
-  const [tasksSummary, setTasksSummary] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, isLoading, isError, error, refetch } = useDashboard();
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  const loadDashboardData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      console.log('🚀 Iniciando carga del dashboard...');
-      
-      // Cargar datos esenciales primero (más rápido)
-      console.log('⏳ Paso 1/4: Cargando estadísticas principales...');
-      const statsData = await getDashboardStats();
-      setStats(statsData);
-      console.log('✅ Estadísticas cargadas');
-
-      // Cargar datos secundarios secuencialmente
-      console.log('⏳ Paso 2/4: Cargando resumen de tareas...');
-      const tasksData = await getTasksSummary();
-      setTasksSummary(tasksData);
-      console.log('✅ Tareas cargadas');
-
-      console.log('⏳ Paso 3/4: Cargando datos financieros...');
-      const financialsData = await getMonthlyFinancials();
-      setMonthlyFinancials(financialsData);
-      console.log('✅ Finanzas cargadas');
-
-      console.log('⏳ Paso 4/4: Cargando atenciones recientes...');
-      const attentionsData = await getRecentAttentions(8);
-      setRecentAttentions(attentionsData);
-      console.log('✅ Atenciones cargadas');
-
-      console.log('✅ Todos los datos cargados exitosamente');
-    } catch (error: any) {
-      console.error('❌ Error loading dashboard:', error);
-      const errorMessage = error.message || 'Error desconocido al cargar el dashboard';
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setLoading(false);
+    if (isError && error) {
+      const message = error instanceof Error ? error.message : 'Error desconocido al cargar el dashboard';
+      toast.error(message);
     }
+  }, [isError, error]);
+
+  const stats = data?.stats || defaultStats;
+  const recentAttentions = data?.recentAttentions || [];
+  const monthlyFinancials = data?.monthlyFinancials || [];
+  const tasksSummary = data?.tasksSummary || [];
+  const dailyFinancials = data?.dailyFinancials || [];
+
+  const formatMonthLabel = (month: string) => {
+    const [year, m] = month.split("-");
+    const date = new Date(Number(year), Number(m) - 1, 1);
+    return date.toLocaleDateString("es-BO", { month: "long", year: "numeric" });
   };
+
+  const addMonths = (month: string, offset: number) => {
+    const [year, m] = month.split("-").map(Number);
+    const dt = new Date(year, m - 1 + offset, 1);
+    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
+  };
+
+  const availableMonths = useMemo(
+    () => monthlyFinancials.map((item) => item.month),
+    [monthlyFinancials]
+  );
+
+  useEffect(() => {
+    if (availableMonths.length > 0) {
+      setSelectedMonth((prev) =>
+        prev && availableMonths.includes(prev)
+          ? prev
+          : availableMonths[availableMonths.length - 1]
+      );
+    } else {
+      setSelectedMonth((prev) => prev ?? new Date().toISOString().slice(0, 7));
+    }
+  }, [availableMonths]);
+
+  const selectedMonthData = useMemo(() => {
+    if (!selectedMonth) return null;
+    return monthlyFinancials.find((item) => item.month === selectedMonth) || null;
+  }, [monthlyFinancials, selectedMonth]);
+
+  const displayedIncome =
+    selectedMonthData?.income ?? stats.monthlyIncome ?? 0;
+  const displayedExpenses =
+    selectedMonthData?.expenses ?? stats.monthlyExpenses ?? 0;
+  const displayedNet = displayedIncome - displayedExpenses;
+
+  const anchorMonth = selectedMonth
+    ? selectedMonth
+    : availableMonths[availableMonths.length - 1];
+
+  const lastThree = useMemo(() => {
+    if (!anchorMonth) return monthlyFinancials.slice(-3);
+    const windowMonths = [
+      addMonths(anchorMonth, -2),
+      addMonths(anchorMonth, -1),
+      anchorMonth,
+    ];
+    return windowMonths.map((m) => {
+      const match = monthlyFinancials.find((item) => item.month === m);
+      return match ?? { month: m, income: 0, expenses: 0 };
+    });
+  }, [anchorMonth, monthlyFinancials]);
+
+  const lineData = useMemo(() => {
+    if (!selectedMonth) {
+      return monthlyFinancials.map((item) => ({
+        label: item.month,
+        income: item.income,
+        expenses: item.expenses,
+      }));
+    }
+    const daily = dailyFinancials
+      .filter((item) => item.date.startsWith(selectedMonth))
+      .map((item) => ({
+        label: new Date(item.date).getDate().toString().padStart(2, "0"),
+        income: item.income,
+        expenses: item.expenses,
+      }));
+    if (daily.length > 0) return daily;
+    return [
+      {
+        label: selectedMonth,
+        income: selectedMonthData?.income ?? 0,
+        expenses: selectedMonthData?.expenses ?? 0,
+      },
+    ];
+  }, [dailyFinancials, monthlyFinancials, selectedMonth, selectedMonthData]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-BO', {
@@ -91,27 +134,28 @@ const Dashboard = () => {
 
   const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6'];
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#bdab62] mx-auto"></div>
           <p className="mt-4 text-[#F8F4E3]">Cargando dashboard...</p>
-          <p className="mt-2 text-sm text-gray-400">Esto puede tardar un momento con mucha información</p>
+          <p className="mt-2 text-sm text-gray-400">Esto puede tardar un momento con mucha informaciÇün</p>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (isError) {
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido al cargar el dashboard';
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center max-w-md bg-white/5 backdrop-blur-lg p-8 rounded-2xl border border-red-500/30">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-red-400 mb-2">Error al cargar el Dashboard</h2>
-          <p className="text-gray-300 mb-4">{error}</p>
+          <p className="text-gray-300 mb-4">{errorMessage}</p>
           <button
-            onClick={loadDashboardData}
+            onClick={() => refetch()}
             className="bg-[#bdab62] hover:bg-[#a89654] text-black px-6 py-2 rounded-lg font-semibold transition-colors"
           >
             Reintentar
@@ -189,36 +233,52 @@ const Dashboard = () => {
                   <DollarSign className="w-5 h-5" />
                   Finanzas del Mes
                 </h2>
-                <p className="text-gray-400 text-sm mt-1">Ingresos y gastos del mes actual</p>
+                <p className="text-gray-400 text-sm mt-1">
+                  Ingresos y gastos de {selectedMonth ? formatMonthLabel(selectedMonth) : "los últimos meses"}
+                </p>
+              </div>
+              <div>
+                <input
+                  type="month"
+                  value={selectedMonth || ''}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="bg-slate-900/60 border border-slate-700/60 text-slate-100 text-sm rounded-lg px-3 py-2"
+                />
               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="bg-green-900/30 p-4 rounded-lg border border-green-700/30">
                 <p className="text-green-400 text-sm">Ingresos</p>
-                <p className="text-2xl font-bold">{formatCurrency(stats.monthlyIncome)}</p>
+                <p className="text-2xl font-bold">{formatCurrency(displayedIncome)}</p>
               </div>
               <div className="bg-red-900/30 p-4 rounded-lg border border-red-700/30">
                 <p className="text-red-400 text-sm">Gastos</p>
-                <p className="text-2xl font-bold">{formatCurrency(stats.monthlyExpenses)}</p>
+                <p className="text-2xl font-bold">{formatCurrency(displayedExpenses)}</p>
               </div>
-              <div className={`${stats.netBalance >= 0 ? 'bg-emerald-900/30 border-emerald-700/30' : 'bg-red-900/30 border-red-700/30'} p-4 rounded-lg border`}>
-                <p className={`${stats.netBalance >= 0 ? 'text-emerald-400' : 'text-red-400'} text-sm`}>Balance</p>
-                <p className="text-2xl font-bold">{formatCurrency(stats.netBalance)}</p>
+              <div className={`${displayedNet >= 0 ? 'bg-emerald-900/30 border-emerald-700/30' : 'bg-red-900/30 border-red-700/30'} p-4 rounded-lg border`}>
+                <p className={`${displayedNet >= 0 ? 'text-emerald-400' : 'text-red-400'} text-sm`}>Balance</p>
+                <p className="text-2xl font-bold">{formatCurrency(displayedNet)}</p>
               </div>
             </div>
 
-            {/* Gráfico de Tendencia Financiera */}
+            {/* GrÇ­fico de Tendencia Financiera */}
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={monthlyFinancials}>
+                <LineChart data={lineData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis 
-                    dataKey="month" 
+                    dataKey="label" 
                     stroke="#9ca3af"
                     tickFormatter={(value) => {
-                      const [year, month] = value.split('-');
-                      return `${month}/${year.slice(2)}`;
+                      if (typeof value === "string" && value.length === 2 && !value.includes("-")) {
+                        return value;
+                      }
+                      if (typeof value === "string" && value.includes("-")) {
+                        const [year, month] = value.split('-');
+                        return `${month}/${year.slice(2)}`;
+                      }
+                      return value;
                     }}
                   />
                   <YAxis stroke="#9ca3af" />
@@ -234,7 +294,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* GRÁFICOS INFERIORES */}
+          {/* GRÇ?FICOS INFERIORES */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Tareas por Estado */}
             <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700/50 shadow-lg">
@@ -265,21 +325,29 @@ const Dashboard = () => {
               </div>
               <div className="mt-4 text-center">
                 <p className="text-gray-400 text-sm">
-                  <span className="text-amber-400 font-bold">{stats.pendingTasks}</span> pendientes · 
+                  <span className="text-amber-400 font-bold">{stats.pendingTasks}</span> pendientes 
                   <span className="text-green-400 font-bold ml-1">{stats.completedTasks}</span> completadas
                 </p>
               </div>
             </div>
 
-            {/* Comparación Mensual */}
+            {/* ComparaciÇün Mensual */}
             <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700/50 shadow-lg">
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
-                Últimos 3 Meses
+                Ultimos 3 Meses
               </h2>
+              <div className="mb-4">
+                <input
+                  type="month"
+                  value={selectedMonth || ''}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="bg-slate-900/60 border border-slate-700/60 text-slate-100 text-sm rounded-lg px-3 py-2"
+                />
+              </div>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyFinancials.slice(-3)}>
+                  <BarChart data={lastThree}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis 
                       dataKey="month" 
