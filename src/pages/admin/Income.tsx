@@ -424,13 +424,27 @@ const IncomeManagement = () => {
             {incomes.map((income) => (
               <div
                 key={income.idIncome}
-                className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between"
+                className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-indigo-500/10 via-slate-900/60 to-slate-900/90 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-indigo-500/20"
               >
-                <h3 className="text-lg font-semibold">Descripción: {income.description}</h3>
-                <p>Fecha: {income.date?.slice(0, 10)}</p>
-                <p>Monto: {income.amountBsCaptureType}</p>
-                <p>Periodo: {income.period?.slice(0, 10)}</p>
-                <div className="flex items-center justify-end gap-4">
+                <div className="flex flex-col items-center gap-2 py-5">
+                  <span className="h-4 w-4 rounded-full bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.6)]" />
+                  <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                    Ingreso
+                  </span>
+                </div>
+
+                <div className="px-6 pb-6 space-y-4 text-sm text-slate-200">
+                  <div className="text-center space-y-1">
+                    <h3 className="text-lg font-semibold text-indigo-300">{income.description}</h3>
+                  </div>
+
+                  <div className="space-y-2 text-center">
+                    <p><span className="font-medium text-slate-400">Fecha:</span> {income.date?.slice(0, 10)}</p>
+                    <p><span className="font-medium text-slate-400">Monto:</span> <span className="text-indigo-300">{income.amountBsCaptureType}</span></p>
+                    <p><span className="font-medium text-slate-400">Periodo:</span> {income.period?.slice(0, 10)}</p>
+                  </div>
+
+                  <div className="flex items-center justify-center gap-6 border-t border-slate-800 pt-6 pb-2">
                   <button
                     onClick={() => {
                       setEditingId(income.idIncome!);
@@ -465,8 +479,9 @@ const IncomeManagement = () => {
                                   active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
                                   transition-all duration-300 ease-in-out"
                   >
-                    <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
-                  </button>
+                      <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

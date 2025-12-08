@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import { Plus, Edit, Save, Trash2, Loader, X, ChevronUp, ChevronDown } from 'lucide-react';
 
 const API_URL = 'http://localhost:8000/medicines/';
 const MEDICATION_TYPE_OPTIONS = [
@@ -70,6 +70,7 @@ const MedicinesManagement = () => {
   const [newMedicine, setNewMedicine] = useState<Medicine>({ ...EMPTY_MEDICINE });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
 
   // For horse select
   const [horses, setHorses] = useState<any[]>([]);
@@ -446,22 +447,67 @@ const MedicinesManagement = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {medicines.map(med => (
+            {medicines.map(med => {
+              const isExpanded = expanded[med.idMedicine ?? 0] ?? false;
+              return (
               <div
                 key={med.idMedicine}
-                className={`bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between border ${editingId === med.idMedicine ? 'border-teal-400' : 'border-transparent'}`}
+                className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-emerald-500/10 via-slate-900/60 to-slate-900/90 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-emerald-500/20"
               >
-                <h3 className="text-lg font-semibold text-white mb-2">{med.name}</h3>
-                <p>Tipo Medicamento: {med.medicationType || '-'}</p>
-                <p>Cantidad en Stock: {med.stock ?? 0} (min: {med.minStock ?? 0})</p>
-                <p>Fecha de Vencimiento: {med.boxExpirationDate?.slice(0, 10) || '-'}</p>
-                <p>Estado vencimiento: {med.expiryStatus || '-'}</p>
-                <p>Estado stock: {med.stockStatus || '-'}</p>
-                <p>Aviso de Vencimiento: {med.notifyDaysBefore ?? 0} sem. antes</p>
-                <p>Origen Medicamento: {med.source || '-'}</p>
-                <p>Pertenece al Caballo: {horses.find(h => h.idHorse === med.fk_idHorse)?.horseName || med.fk_idHorse || '-'}</p>
-                <p className="text-sm text-gray-300 mt-2">{med.description || 'Sin descripción registrada.'}</p>
-                <div className="flex items-center justify-end gap-4">
+                <div className="flex flex-col items-center gap-2 py-5">
+                  <span className="h-4 w-4 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.6)]" />
+                  <span className="text-xs uppercase tracking-[0_3em] text-slate-400">
+                    Medicamento
+                  </span>
+                </div>
+
+                <div className="px-6 pb-6 space-y-4 text-sm text-slate-200">
+                  <div className="text-center space-y-1">
+                    <h3 className="text-lg font-semibold text-emerald-300">{med.name}</h3>
+                    <p className="text-slate-400">
+                      <span className="font-medium text-slate-200">{med.medicationType || '-'}</span>
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 text-center">
+                    <p><span className="font-medium text-slate-400">Stock:</span> {med.stock ?? 0} <span className="text-xs">(min: {med.minStock ?? 0})</span></p>
+                    <p><span className="font-medium text-slate-400">Vencimiento:</span> {med.boxExpirationDate?.slice(0, 10) || '-'}</p>
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      setExpanded((prev) => ({
+                        ...prev,
+                        [med.idMedicine ?? 0]: !prev[med.idMedicine ?? 0],
+                      }))
+                    }
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 py-2 text-sm font-medium text-emerald-300 transition hover:bg-emerald-500/15"
+                  >
+                    {isExpanded ? (
+                      <>
+                        <ChevronUp size={16} /> Ver menos
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown size={16} /> Ver más
+                      </>
+                    )}
+                  </button>
+
+                  {isExpanded && (
+                    <div className="rounded-xl border border-slate-800/80 bg-slate-900/70 p-4 text-xs leading-relaxed">
+                      <ul className="space-y-1">
+                        <li><strong>Estado vencimiento:</strong> {med.expiryStatus || '-'}</li>
+                        <li><strong>Estado stock:</strong> {med.stockStatus || '-'}</li>
+                        <li><strong>Aviso:</strong> {med.notifyDaysBefore ?? 0} sem. antes</li>
+                        <li><strong>Origen:</strong> {med.source || '-'}</li>
+                        <li><strong>Caballo:</strong> {horses.find(h => h.idHorse === med.fk_idHorse)?.horseName || med.fk_idHorse || '-'}</li>
+                        <li><strong>Descripción:</strong> {med.description || 'Sin descripción registrada.'}</li>
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-center gap-6 border-t border-slate-800 pt-6 pb-2">
                   <button
                     onClick={() => startEditing(med)}
                     className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
@@ -482,11 +528,13 @@ const MedicinesManagement = () => {
                                   active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
                                   transition-all duration-300 ease-in-out"
                   >
-                    <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
-                  </button>
+                      <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

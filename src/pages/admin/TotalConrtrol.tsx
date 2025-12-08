@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { ChangeEvent } from 'react';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import { Plus, Edit, Save, Trash2, Loader, X, ChevronUp, ChevronDown } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
@@ -387,6 +387,7 @@ const TotalControlManagement = () => {
   const [editId, setEditId] = useState<number | null>(null);
 
   const [loading, setLoading] = useState<boolean>(true);
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   
   // For related data selects
   const [owners, setOwners] = useState<any[]>([]);
@@ -1350,6 +1351,7 @@ const TotalControlManagement = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {controls.map((control) => {
+              const isExpanded = expanded[control.idTotalControl ?? 0] ?? false;
               const ownerRecord = owners.find(
                 (o) => o.idOwner === control.fk_idOwner
               );
@@ -1359,78 +1361,114 @@ const TotalControlManagement = () => {
               return (
                 <div
                   key={control.idTotalControl}
-                  className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between"
+                  className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-teal-500/10 via-slate-900/60 to-slate-900/90 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-teal-500/20"
                 >
-                  <h3 className="text-lg font-semibold">
-                    Propietario: {ownerDisplayName}
-                  </h3>
-                <p>
-                  Caballo:{" "}
-                  {horseLookup[control.fk_idHorse] ??
-                    horses.find((h) => h.idHorse === control.fk_idHorse)?.horseName ??
-                    control.fk_idHorse}
-                </p>
-                <p>Periodo: {normalizeDateForInput(control.period) || "Sin periodo"}</p>
-                <p>Box: {control.box}</p>
-                <p>Sección: {control.section}</p>
-                <p>Canasta: {control.basket}</p>
-                <p>A caballerizo: {control.toCaballerizo}</p>
-                <p>Vacunas: {control.vaccines}</p>
-                <p>Anemia: {control.anemia}</p>
-                <p>Desparasitación: {control.deworming}</p>
-                <p>Consumo alfalfa por día (Kg): {control.consumptionAlfaDiaKlg}</p>
-                <p>Costo alfalfa (Bs): {control.costAlfaBs}</p>
-                <p>Días de consumo al mes: {control.daysConsumptionMonth}</p>
-                <p>Consumo alfalfa mes (Kg): {control.consumptionAlphaMonthKlg}</p>
-                <p>Costo total alfalfa (Bs): {control.costTotalAlphaBs}</p>
-                <p>Cubo de chala: {control.cubeChala}</p>
-                <p>Costo unitario chala (Bs): {control.UnitCostChalaBs}</p>
-                <p>Costo total chala (Bs): {control.costTotalChalaBs}</p>
-                <p>Cargo total: {control.totalCharge}</p>
-                
-                <div className="flex items-center justify-end gap-4">
-                  <button
-                    onClick={() => {
-                      setIsEditing(true);
-                      setEditId(control.idTotalControl!);
-                      const normalizedControl = applyDerivedValues(control);
-                      setNewControl(normalizedControl);
-                      setFormValues(formatControlToForm(normalizedControl));
+                  <div className="flex flex-col items-center gap-2 py-5">
+                    <span className="h-4 w-4 rounded-full bg-teal-500 shadow-[0_0_12px_rgba(20,184,166,0.6)]" />
+                    <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                      Control Total
+                    </span>
+                  </div>
 
-                      setSelectedOwner(control.fk_idOwner || null);
-                      if (control.fk_idOwner) {
-                        fetchHorsesByOwner(control.fk_idOwner);
-                      } else {
-                        setHorses([]);
+                  <div className="px-6 pb-6 space-y-4 text-sm text-slate-200">
+                    <div className="text-center space-y-1">
+                      <h3 className="text-lg font-semibold text-teal-300">{ownerDisplayName}</h3>
+                      <p className="text-slate-400">
+                        <span className="font-medium text-slate-200">{horseLookup[control.fk_idHorse] ?? horses.find((h) => h.idHorse === control.fk_idHorse)?.horseName ?? control.fk_idHorse}</span>
+                      </p>
+                    </div>
+
+                    <div className="space-y-2 text-center">
+                      <p><span className="font-medium text-slate-400">Periodo:</span> {normalizeDateForInput(control.period) || "Sin periodo"}</p>
+                      <p><span className="font-medium text-slate-400">Box:</span> {control.box}</p>
+                      <p><span className="font-medium text-slate-400">Cargo total:</span> <span className="text-teal-300">{control.totalCharge}</span></p>
+                    </div>
+
+                    <button
+                      onClick={() =>
+                        setExpanded((prev) => ({
+                          ...prev,
+                          [control.idTotalControl ?? 0]: !prev[control.idTotalControl ?? 0],
+                        }))
                       }
+                      className="flex w-full items-center justify-center gap-2 rounded-lg border border-teal-500/40 bg-teal-500/10 py-2 text-sm font-medium text-teal-300 transition hover:bg-teal-500/15"
+                    >
+                      {isExpanded ? (
+                        <>
+                          <ChevronUp size={16} /> Ver menos
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown size={16} /> Ver más
+                        </>
+                      )}
+                    </button>
 
-                      toast.success("Modo edición activado", { position: "top-right" });
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                      setTimeout(() => document.querySelector<HTMLInputElement>('input[name="toCaballerizo"]')?.focus(), 300);
-                    }}
-                    className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
+                    {isExpanded && (
+                      <div className="rounded-xl border border-slate-800/80 bg-slate-900/70 p-4 text-xs leading-relaxed">
+                        <ul className="space-y-1">
+                          <li><strong>Sección:</strong> {control.section}</li>
+                          <li><strong>Canasta:</strong> {control.basket}</li>
+                          <li><strong>A caballerizo:</strong> {control.toCaballerizo}</li>
+                          <li><strong>Vacunas:</strong> {control.vaccines}</li>
+                          <li><strong>Anemia:</strong> {control.anemia}</li>
+                          <li><strong>Desparasitación:</strong> {control.deworming}</li>
+                          <li><strong>Consumo alfalfa/día (Kg):</strong> {control.consumptionAlfaDiaKlg}</li>
+                          <li><strong>Costo alfalfa (Bs):</strong> {control.costAlfaBs}</li>
+                          <li><strong>Días consumo/mes:</strong> {control.daysConsumptionMonth}</li>
+                          <li><strong>Consumo alfalfa/mes (Kg):</strong> {control.consumptionAlphaMonthKlg}</li>
+                          <li><strong>Costo total alfalfa (Bs):</strong> {control.costTotalAlphaBs}</li>
+                          <li><strong>Cubo de chala:</strong> {control.cubeChala}</li>
+                          <li><strong>Costo unitario chala (Bs):</strong> {control.UnitCostChalaBs}</li>
+                          <li><strong>Costo total chala (Bs):</strong> {control.costTotalChalaBs}</li>
+                        </ul>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-center gap-6 border-t border-slate-800 pt-6 pb-2">
+                      <button
+                        onClick={() => {
+                          setIsEditing(true);
+                          setEditId(control.idTotalControl!);
+                          const normalizedControl = applyDerivedValues(control);
+                          setNewControl(normalizedControl);
+                          setFormValues(formatControlToForm(normalizedControl));
+
+                          setSelectedOwner(control.fk_idOwner || null);
+                          if (control.fk_idOwner) {
+                            fetchHorsesByOwner(control.fk_idOwner);
+                          } else {
+                            setHorses([]);
+                          }
+
+                          toast.success("Modo edición activado", { position: "top-right" });
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                          setTimeout(() => document.querySelector<HTMLInputElement>('input[name="toCaballerizo"]')?.focus(), 300);
+                        }}
+                        className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
+                                      bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                                      shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
+                                      hover:scale-[1.1]
+                                      active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                                      transition-all duration-300 ease-in-out"
+                      >
+                        <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" />
+                      </button>
+
+                      <button
+                        onClick={() => deleteControl(control.idTotalControl!)}
+                        className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
                                     bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
                                     shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
                                     hover:scale-[1.1]
                                     active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
                                     transition-all duration-300 ease-in-out"
-                  >
-                    <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" />
-                  </button>
-
-                  <button
-                    onClick={() => deleteControl(control.idTotalControl!)}
-                    className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
-                                  bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
-                                  shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
-                                  hover:scale-[1.1]
-                                  active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
-                                  transition-all duration-300 ease-in-out"
-                  >
-                    <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
-                  </button>
+                      >
+                        <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
               );
             })}
           </div>

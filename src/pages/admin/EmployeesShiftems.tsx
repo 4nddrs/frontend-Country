@@ -186,10 +186,15 @@ const EmployeesShiftemManagement = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {emps.map(emp => (
-              <div key={emp.idEmployeesShiftem} className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between">
+              <div
+                key={emp.idEmployeesShiftem}
+                className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-fuchsia-500/10 via-slate-900/60 to-slate-900/90 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-fuchsia-500/20"
+              >
                 {editingId === emp.idEmployeesShiftem ? (
-                  <>
-                    <select
+                  <div className="p-6">
+                    <div>
+                      <label className="block mb-1 text-sm font-medium">Empleado</label>
+                      <select
                       value={newEmp.fk_idEmployee || ""}
                       onChange={e => setNewEmp({ ...newEmp, fk_idEmployee: e.target.value ? Number(e.target.value) : undefined })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
@@ -200,7 +205,10 @@ const EmployeesShiftemManagement = () => {
                         </option>
                       ))}
                     </select>
-                    <select
+                    </div>
+                    <div>
+                      <label className="block mb-1 text-sm font-medium">Turno</label>
+                      <select
                       value={newEmp.fk_idShiftEmployees || ""}
                       onChange={e => setNewEmp({ ...newEmp, fk_idShiftEmployees: e.target.value ? Number(e.target.value) : undefined })}
                       className="p-2 rounded-md bg-gray-600 text-white mb-2"
@@ -211,7 +219,8 @@ const EmployeesShiftemManagement = () => {
                         </option>
                       ))}
                     </select>
-                    <div className="flex justify-end gap-2">
+                    </div>
+                    <div className="flex justify-end gap-2 mt-2">
                       <button
                         onClick={() => updateEmp(emp.idEmployeesShiftem!, {
                           fk_idEmployee: newEmp.fk_idEmployee ?? emp.fk_idEmployee,
@@ -228,18 +237,31 @@ const EmployeesShiftemManagement = () => {
                         <X size={16} /> Cancelar
                       </button>
                     </div>
-                  </>
+                  </div>
                 ) : (
                   <>
-                    <h3 className="text-lg font-semibold">Empleado: {employees.find(em => em.idEmployee === emp.fk_idEmployee)?.fullName || emp.fk_idEmployee}</h3>
-                    <p>
-                      Turno empleado:&nbsp;
-                      {(() => {
-                        const shiftAssigned = shiftEmployees.find(se => se.idShiftEmployed === emp.fk_idShiftEmployees);
-                        return shiftAssigned ? formatShiftOption(shiftAssigned) : `Turno #${emp.fk_idShiftEmployees}`;
-                      })()}
-                    </p>
-                    <div className="flex items-center justify-end gap-4 mt-4">
+                    <div className="flex flex-col items-center gap-2 py-5">
+                      <span className="h-4 w-4 rounded-full bg-fuchsia-500 shadow-[0_0_12px_rgba(217,70,239,0.6)]" />
+                      <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                        Asignación
+                      </span>
+                    </div>
+
+                    <div className="px-6 pb-6 space-y-4 text-sm text-slate-200">
+                      <div className="text-center space-y-1">
+                        <h3 className="text-lg font-semibold text-fuchsia-300">{employees.find(em => em.idEmployee === emp.fk_idEmployee)?.fullName || 'Empleado'}</h3>
+                      </div>
+
+                      <div className="rounded-xl border border-slate-800/80 bg-slate-900/70 p-4 text-xs leading-relaxed">
+                        <ul className="space-y-1">
+                          <li><strong>Turno:</strong> {(() => {
+                            const shiftAssigned = shiftEmployees.find(se => se.idShiftEmployed === emp.fk_idShiftEmployees);
+                            return shiftAssigned ? formatShiftOption(shiftAssigned) : `Turno #${emp.fk_idShiftEmployees}`;
+                          })()}</li>
+                        </ul>
+                      </div>
+
+                      <div className="flex items-center justify-center gap-6 border-t border-slate-800 pt-6 pb-2">
                       <button
                         onClick={() => { setEditingId(emp.idEmployeesShiftem!); setNewEmp(emp); }}
                         className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
@@ -261,7 +283,8 @@ const EmployeesShiftemManagement = () => {
                                   transition-all duration-300 ease-in-out"
                       >
                          <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
-                      </button>
+                        </button>
+                      </div>
                     </div>
                   </>
                 )}

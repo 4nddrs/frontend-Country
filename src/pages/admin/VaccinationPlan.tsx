@@ -527,7 +527,7 @@ const VaccinationPlanManagement = () => {
               const parsedDosesByMonth = safeJsonParse(plan.dosesByMonth);
 
               return (
-                <div key={plan.idVaccinationPlan} className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between">
+                <div key={plan.idVaccinationPlan} className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-teal-500/10 via-slate-900/60 to-slate-900/90 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-teal-500/20">
                   {editingId === plan.idVaccinationPlan ? (
                     <>
                       <input
@@ -567,36 +567,48 @@ const VaccinationPlanManagement = () => {
                     </>
                   ) : (
                     <>
-                      <div className="flex-grow space-y-1 mb-4">
-                        <h3 className="text-xl font-bold">{plan.planName}</h3>
-                        <p className="text-sm text-gray-400">Medicina: {medicines.find(m => m.idMedicine === plan.fk_idMedicine)?.name || 'N/A'}</p>
-                        <p className="text-sm text-gray-400">Estado de Alerta: {plan.alertStatus}</p>
-                        
-                        <div className="mt-2 text-sm">
-                          <h4 className="font-semibold text-gray-300">Meses Programados:</h4>
-                          <ul className="list-disc list-inside ml-2">
-                            {parsedScheduledMonths ?
-                              Object.values(parsedScheduledMonths).map((month: any, index) => (
-                                <li key={index}>{month}</li>
-                              ))
-                              : <li>{plan.scheduledMonths}</li>
-                            }
-                          </ul>
-                        </div>
-                        
-                        <div className="mt-2 text-sm">
-                          <h4 className="font-semibold text-gray-300">Dosis por Mes:</h4>
-                          <ul className="list-disc list-inside ml-2">
-                            {parsedDosesByMonth ?
-                              Object.entries(parsedDosesByMonth).map(([month, doses]: any) => (
-                                <li key={month}>{month}: {doses} dosis</li>
-                              ))
-                              : <li>{plan.dosesByMonth}</li>
-                            }
-                          </ul>
-                        </div>
+                      <div className="flex flex-col items-center gap-2 py-5">
+                        <span className="h-4 w-4 rounded-full bg-teal-500 shadow-[0_0_12px_rgba(20,184,166,0.6)]" />
+                        <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                          Plan
+                        </span>
                       </div>
-                      <div className="flex items-center justify-end gap-4">
+
+                      <div className="px-6 pb-6 space-y-4 text-sm text-slate-200">
+                        <div className="text-center space-y-1">
+                          <h3 className="text-lg font-semibold text-teal-300">{plan.planName}</h3>
+                          <p className="text-slate-400">
+                            <span className="font-medium text-slate-200">{medicines.find(m => m.idMedicine === plan.fk_idMedicine)?.name || 'N/A'}</span>
+                          </p>
+                        </div>
+
+                        <div className="space-y-2 text-center text-xs">
+                          <div>
+                            <p className="font-semibold text-teal-300 mb-1">Meses Programados:</p>
+                            <ul className="list-none space-y-1">
+                              {parsedScheduledMonths ?
+                                Object.values(parsedScheduledMonths).map((month: any, index) => (
+                                  <li key={index}>{month}</li>
+                                ))
+                                : <li>{plan.scheduledMonths}</li>
+                              }
+                            </ul>
+                          </div>
+                          
+                          <div>
+                            <p className="font-semibold text-teal-300 mb-1">Dosis por Mes:</p>
+                            <ul className="list-none space-y-1">
+                              {parsedDosesByMonth ?
+                                Object.entries(parsedDosesByMonth).map(([month, doses]: any) => (
+                                  <li key={month}>{month}: {doses} dosis</li>
+                                ))
+                                : <li>{plan.dosesByMonth}</li>
+                              }
+                            </ul>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-center gap-6 border-t border-slate-800 pt-6 pb-2">
                         <button
                           onClick={() => handleEditClick(plan)}
                           className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
@@ -620,6 +632,7 @@ const VaccinationPlanManagement = () => {
                           <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
                         </button>
                       </div>
+                    </div>
                     </>
                   )}
                 </div>

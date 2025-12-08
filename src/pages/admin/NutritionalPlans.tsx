@@ -169,94 +169,116 @@ const NutritionalPlansManagement = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {plans.map(plan => (
-              <div key={plan.idNutritionalPlan} className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between">
-                {editingId === plan.idNutritionalPlan ? (
-                  <>
-                    <input
-                      type="text"
-                      defaultValue={plan.name}
-                      onChange={e => setNewPlan({ ...newPlan, name: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="date"
-                      defaultValue={plan.assignmentDate?.slice(0, 10)}
-                      onChange={e => setNewPlan({ ...newPlan, assignmentDate: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="date"
-                      defaultValue={plan.endDate?.slice(0, 10)}
-                      onChange={e => setNewPlan({ ...newPlan, endDate: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="text"
-                      defaultValue={plan.state}
-                      onChange={e => setNewPlan({ ...newPlan, state: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="text"
-                      defaultValue={plan.description}
-                      onChange={e => setNewPlan({ ...newPlan, description: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => updatePlan(plan.idNutritionalPlan!, {
-                          name: newPlan.name || plan.name,
-                          assignmentDate: newPlan.assignmentDate || plan.assignmentDate,
-                          endDate: newPlan.endDate || plan.endDate,
-                          state: newPlan.state || plan.state,
-                          description: newPlan.description || plan.description,
-                        })}
-                        className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center gap-1"
-                      >
-                        <Save size={16} /> Guardar
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
-                      >
-                        <X size={16} /> Cancelar
-                      </button>
+                <div 
+                  key={plan.idNutritionalPlan}
+                  className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-blue-500/10 via-slate-900/60 to-slate-900/90 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-blue-500/20"
+                >
+                  {editingId === plan.idNutritionalPlan ? (
+                    <div className="p-6">
+                      <input
+                        type="text"
+                        defaultValue={plan.name}
+                        onChange={e => setNewPlan({ ...newPlan, name: e.target.value })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                      />
+                      <input
+                        type="date"
+                        defaultValue={plan.assignmentDate?.slice(0, 10)}
+                        onChange={e => setNewPlan({ ...newPlan, assignmentDate: e.target.value })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                      />
+                      <input
+                        type="date"
+                        defaultValue={plan.endDate?.slice(0, 10)}
+                        onChange={e => setNewPlan({ ...newPlan, endDate: e.target.value })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                      />
+                      <input
+                        type="text"
+                        defaultValue={plan.state}
+                        onChange={e => setNewPlan({ ...newPlan, state: e.target.value })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                      />
+                      <input
+                        type="text"
+                        defaultValue={plan.description}
+                        onChange={e => setNewPlan({ ...newPlan, description: e.target.value })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => updatePlan(plan.idNutritionalPlan!, {
+                            name: newPlan.name || plan.name,
+                            assignmentDate: newPlan.assignmentDate || plan.assignmentDate,
+                            endDate: newPlan.endDate || plan.endDate,
+                            state: newPlan.state || plan.state,
+                            description: newPlan.description || plan.description,
+                          })}
+                          className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center gap-1"
+                        >
+                          <Save size={16} /> Guardar
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
+                        >
+                          <X size={16} /> Cancelar
+                        </button>
+                      </div>
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <h3 className="text-lg font-semibold">{plan.name}</h3>
-                    <p>Asignado: {plan.assignmentDate?.slice(0, 10)}</p>
-                    <p>Fin: {plan.endDate?.slice(0, 10)}</p>
-                    <p>Estado: {plan.state}</p>
-                    <p>{plan.description}</p>
-                    <div className="flex items-center justify-end gap-4">
-                      <button
-                        onClick={() => { setEditingId(plan.idNutritionalPlan!); setNewPlan(plan); }}
-                        className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
-                                    bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
-                                    shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
-                                    hover:scale-[1.1]
-                                    active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
-                                    transition-all duration-300 ease-in-out"
-                      >
-                        <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" />                                             
-                      </button>
-                      <button
-                        onClick={() => deletePlan(plan.idNutritionalPlan!)}
-                        className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
-                                  bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
-                                  shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
-                                  hover:scale-[1.1]
-                                  active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
-                                  transition-all duration-300 ease-in-out"
-                      >
-                        <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
+                  ) : (
+                    <>
+                      <div className="flex flex-col items-center gap-2 py-5">
+                        <span className="h-4 w-4 rounded-full bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.6)]" />
+                        <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                          {plan.state || 'Plan'}
+                        </span>
+                      </div>
+
+                      <div className="px-6 pb-6 space-y-4 text-sm text-slate-200">
+                        <div className="text-center space-y-1">
+                          <h3 className="text-lg font-semibold text-blue-300">{plan.name}</h3>
+                          <p className="text-slate-400">
+                            Asignado: <span className="font-medium text-slate-200">{plan.assignmentDate?.slice(0, 10)}</span>
+                          </p>
+                        </div>
+
+                        <div className="rounded-xl border border-slate-800/80 bg-slate-900/70 p-4 text-xs leading-relaxed">
+                          <ul className="space-y-1">
+                            <li><strong>Fin:</strong> {plan.endDate?.slice(0, 10)}</li>
+                            <li><strong>Estado:</strong> {plan.state}</li>
+                            <li><strong>Descripción:</strong> {plan.description || 'Sin descripción'}</li>
+                          </ul>
+                        </div>
+
+                        <div className="flex items-center justify-center gap-6 border-t border-slate-800 pt-6 pb-2">
+                          <button
+                            onClick={() => { setEditingId(plan.idNutritionalPlan!); setNewPlan(plan); }}
+                            className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
+                                        bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                                        shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
+                                        hover:scale-[1.1]
+                                        active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                                        transition-all duration-300 ease-in-out"
+                          >
+                            <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" />                                             
+                          </button>
+                          <button
+                            onClick={() => deletePlan(plan.idNutritionalPlan!)}
+                            className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
+                                      bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                                      shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
+                                      hover:scale-[1.1]
+                                      active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                                      transition-all duration-300 ease-in-out"
+                          >
+                            <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
             ))}
           </div>
         )}

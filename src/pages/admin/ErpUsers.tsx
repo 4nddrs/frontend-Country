@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import { Plus, Edit, Save, Trash2, Loader, X, ChevronUp, ChevronDown } from 'lucide-react';
 
 const API_URL = 'http://localhost:8000/erp_users/';
 
@@ -27,6 +27,7 @@ const ErpUsersManagement = () => {
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
 
   // For selects
   const [owners, setOwners] = useState<any[]>([]);
@@ -219,65 +220,88 @@ const ErpUsersManagement = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {users.map(user => (
-              <div key={user.idErpUser} className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between">
+            {users.map(user => {
+              const isExpanded = expanded[user.idErpUser ?? 0] ?? false;
+              return (
+              <div
+                key={user.idErpUser}
+                className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-lime-500/10 via-slate-900/60 to-slate-900/90 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-lime-500/20"
+              >
                 {editingId === user.idErpUser ? (
-                  <>
-                    <input
-                      type="text"
-                      defaultValue={user.username}
-                      onChange={e => setNewUser({ ...newUser, username: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="email"
-                      defaultValue={user.email}
-                      onChange={e => setNewUser({ ...newUser, email: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <select
-                      value={newUser.fk_idOwner || ""}
-                      onChange={e => setNewUser({ ...newUser, fk_idOwner: e.target.value ? Number(e.target.value) : undefined })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    >
-                      <option value="">-- Opcional: Selecciona propietario --</option>
-                      {owners.map(owner => (
-                        <option key={owner.idOwner} value={owner.idOwner}>
-                          {owner.name}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={newUser.fk_idEmployee || ""}
-                      onChange={e => setNewUser({ ...newUser, fk_idEmployee: e.target.value ? Number(e.target.value) : undefined })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    >
-                      <option value="">-- Opcional: Selecciona empleado --</option>
-                      {employees.map(emp => (
-                        <option key={emp.idEmployee} value={emp.idEmployee}>
-                          {emp.fullName}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="text"
-                      defaultValue={user.fk_idAuthUser || ""}
-                      onChange={e => setNewUser({ ...newUser, fk_idAuthUser: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <select
-                      value={newUser.fk_idUserRole}
-                      onChange={e => setNewUser({ ...newUser, fk_idUserRole: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    >
-                      <option value="">-- Selecciona rol --</option>
-                      {userRoles.map(role => (
-                        <option key={role.idUserRole} value={role.idUserRole}>
-                          {role.roleName}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="flex justify-end gap-2">
+                  <div className="p-6">
+                    <div>
+                      <label className="block mb-1 text-sm font-medium">Username</label>
+                      <input
+                        type="text"
+                        defaultValue={user.username}
+                        onChange={e => setNewUser({ ...newUser, username: e.target.value })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1 text-sm font-medium">Email</label>
+                      <input
+                        type="email"
+                        defaultValue={user.email}
+                        onChange={e => setNewUser({ ...newUser, email: e.target.value })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1 text-sm font-medium">Propietario</label>
+                      <select
+                        value={newUser.fk_idOwner || ""}
+                        onChange={e => setNewUser({ ...newUser, fk_idOwner: e.target.value ? Number(e.target.value) : undefined })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                      >
+                        <option value="">-- Opcional: Selecciona propietario --</option>
+                        {owners.map(owner => (
+                          <option key={owner.idOwner} value={owner.idOwner}>
+                            {owner.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block mb-1 text-sm font-medium">Empleado</label>
+                      <select
+                        value={newUser.fk_idEmployee || ""}
+                        onChange={e => setNewUser({ ...newUser, fk_idEmployee: e.target.value ? Number(e.target.value) : undefined })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                      >
+                        <option value="">-- Opcional: Selecciona empleado --</option>
+                        {employees.map(emp => (
+                          <option key={emp.idEmployee} value={emp.idEmployee}>
+                            {emp.fullName}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block mb-1 text-sm font-medium">Auth UUID</label>
+                      <input
+                        type="text"
+                        defaultValue={user.fk_idAuthUser || ""}
+                        onChange={e => setNewUser({ ...newUser, fk_idAuthUser: e.target.value })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1 text-sm font-medium">Rol de Usuario</label>
+                      <select
+                        value={newUser.fk_idUserRole}
+                        onChange={e => setNewUser({ ...newUser, fk_idUserRole: Number(e.target.value) })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                      >
+                        <option value="">-- Selecciona rol --</option>
+                        {userRoles.map(role => (
+                          <option key={role.idUserRole} value={role.idUserRole}>
+                            {role.roleName}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex justify-end gap-2 mt-2">
                       <button
                         onClick={() => updateUser(user.idErpUser!, {
                           ...user,
@@ -294,16 +318,56 @@ const ErpUsersManagement = () => {
                         <X size={16} /> Cancelar
                       </button>
                     </div>
-                  </>
+                  </div>
                 ) : (
                   <>
-                    <h3 className="text-lg font-semibold">{user.username}</h3>
-                    <p>Correo: {user.email}</p>
-                    <p>Propietario: {owners.find(o => o.idOwner === user.fk_idOwner)?.ownerName || user.fk_idOwner || '-'}</p>
-                    <p>Empleado: {employees.find(e => e.idEmployee === user.fk_idEmployee)?.fullName || user.fk_idEmployee || '-'}</p>
-                    <p>Auth UUID: {user.fk_idAuthUser || '-'}</p>
-                    <p>Rol: {userRoles.find(r => r.idUserRole === user.fk_idUserRole)?.roleName || user.fk_idUserRole}</p>
-                    <div className="flex items-center justify-end gap-4">
+                    <div className="flex flex-col items-center gap-2 py-5">
+                      <span className="h-4 w-4 rounded-full bg-lime-500 shadow-[0_0_12px_rgba(132,204,22,0.6)]" />
+                      <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                        Usuario
+                      </span>
+                    </div>
+
+                    <div className="px-6 pb-6 space-y-4 text-sm text-slate-200">
+                      <div className="text-center space-y-1">
+                        <h3 className="text-lg font-semibold text-lime-300">{user.username}</h3>
+                        <p className="text-slate-400">
+                          <span className="font-medium text-slate-200">{user.email}</span>
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() =>
+                          setExpanded((prev) => ({
+                            ...prev,
+                            [user.idErpUser ?? 0]: !prev[user.idErpUser ?? 0],
+                          }))
+                        }
+                        className="flex w-full items-center justify-center gap-2 rounded-lg border border-lime-500/40 bg-lime-500/10 py-2 text-sm font-medium text-lime-300 transition hover:bg-lime-500/15"
+                      >
+                        {isExpanded ? (
+                          <>
+                            <ChevronUp size={16} /> Ver menos
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown size={16} /> Ver más
+                          </>
+                        )}
+                      </button>
+
+                      {isExpanded && (
+                        <div className="rounded-xl border border-slate-800/80 bg-slate-900/70 p-4 text-xs leading-relaxed">
+                          <ul className="space-y-1">
+                            <li><strong>Propietario:</strong> {owners.find(o => o.idOwner === user.fk_idOwner)?.ownerName || user.fk_idOwner || '-'}</li>
+                            <li><strong>Empleado:</strong> {employees.find(e => e.idEmployee === user.fk_idEmployee)?.fullName || user.fk_idEmployee || '-'}</li>
+                            <li><strong>Auth UUID:</strong> {user.fk_idAuthUser || '-'}</li>
+                            <li><strong>Rol:</strong> {userRoles.find(r => r.idUserRole === user.fk_idUserRole)?.roleName || user.fk_idUserRole}</li>
+                          </ul>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-center gap-6 border-t border-slate-800 pt-6 pb-2">
                       <button
                         onClick={() => { setEditingId(user.idErpUser!); setNewUser(user); }}
                         className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
@@ -325,12 +389,14 @@ const ErpUsersManagement = () => {
                                   transition-all duration-300 ease-in-out"
                       >
                         <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
-                      </button>
+                        </button>
+                      </div>
                     </div>
                   </>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

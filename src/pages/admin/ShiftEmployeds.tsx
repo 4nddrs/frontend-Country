@@ -159,7 +159,7 @@ const ShiftEmployedsManagement = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {shifts.map(shift => (
-              <div key={shift.idShiftEmployed} className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between">
+              <div key={shift.idShiftEmployed} className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-slate-500/10 via-slate-900/60 to-slate-900/90 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-slate-500/20">
                 {editingId === shift.idShiftEmployed ? (
                   <>
                   <div>
@@ -224,10 +224,24 @@ const ShiftEmployedsManagement = () => {
                   </>
                 ) : (
                   <>
-                    <h3 className="text-lg font-semibold">Tipo de turno: {shiftTypes.find(type => type.idShiftType === shift.fk_idShiftType)?.shiftName || shift.fk_idShiftType}</h3>
-                    <p>Inicio: {shift.startDateTime?.replace('T', ' ').slice(0, 16)}</p>
-                    <p>Fin: {shift.endDateTime?.replace('T', ' ').slice(0, 16)}</p>
-                    <div className="flex items-center justify-end gap-4">
+                    <div className="flex flex-col items-center gap-2 py-5">
+                      <span className="h-4 w-4 rounded-full bg-slate-500 shadow-[0_0_12px_rgba(148,163,184,0.6)]" />
+                      <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                        Turno
+                      </span>
+                    </div>
+
+                    <div className="px-6 pb-6 space-y-4 text-sm text-slate-200">
+                      <div className="text-center space-y-1">
+                        <h3 className="text-lg font-semibold text-slate-300">{shiftTypes.find(type => type.idShiftType === shift.fk_idShiftType)?.shiftName || shift.fk_idShiftType}</h3>
+                      </div>
+
+                      <div className="space-y-2 text-center">
+                        <p><span className="font-medium text-slate-400">Inicio:</span> {shift.startDateTime?.replace('T', ' ').slice(0, 16)}</p>
+                        <p><span className="font-medium text-slate-400">Fin:</span> {shift.endDateTime?.replace('T', ' ').slice(0, 16)}</p>
+                      </div>
+
+                      <div className="flex items-center justify-center gap-6 border-t border-slate-800 pt-6 pb-2">
                       <button
                         onClick={() => { setEditingId(shift.idShiftEmployed!); setNewShift(shift); }}
                         className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
@@ -251,6 +265,7 @@ const ShiftEmployedsManagement = () => {
                         <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
                       </button>
                     </div>
+                  </div>
                   </>
                 )}
               </div>

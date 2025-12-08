@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import { Plus, Edit, Save, Trash2, Loader, X, ChevronUp, ChevronDown } from 'lucide-react';
 
 const API_URL = 'http://localhost:8000/nutritional-plan-details/';
 
@@ -28,6 +28,7 @@ const NutritionalPlanDetailsManagement = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [foods, setFoods] = useState<any[]>([]);
   const [nutritionalPlans, setNutritionalPlans] = useState<any[]>([]);
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
 
   const foodNameMap = useMemo(() => {
     return foods.reduce<Record<number, string>>((acc, food) => {
@@ -244,115 +245,163 @@ const NutritionalPlanDetailsManagement = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {details.map(detail => (
-              <div key={detail.idDetail} className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between">
-                {editingId === detail.idDetail ? (
-                  <>
-                    <input
-                      type="number"
-                      defaultValue={detail.consumptionKlg}
-                      onChange={e => setNewDetail({ ...newDetail, consumptionKlg: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="number"
-                      defaultValue={detail.daysConsumptionMonth}
-                      onChange={e => setNewDetail({ ...newDetail, daysConsumptionMonth: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="number"
-                      defaultValue={detail.totalConsumption}
-                      onChange={e => setNewDetail({ ...newDetail, totalConsumption: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="date"
-                      defaultValue={detail.period?.slice(0, 10)}
-                      onChange={e => setNewDetail({ ...newDetail, period: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <select
-                      value={newDetail.fk_idFood}
-                      onChange={e => setNewDetail({ ...newDetail, fk_idFood: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    >
-                      {foods.map(food => (
-                        <option key={food.idFood} value={food.idFood}>
-                          {food.foodName}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={newDetail.fk_idNutritionalPlan}
-                      onChange={e => setNewDetail({ ...newDetail, fk_idNutritionalPlan: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    >
-                      {nutritionalPlans.map(plan => (
-                        <option key={plan.idNutritionalPlan} value={plan.idNutritionalPlan}>
-                          {plan.name}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => updateDetail(detail.idDetail!, {
-                          consumptionKlg: newDetail.consumptionKlg || detail.consumptionKlg,
-                          daysConsumptionMonth: newDetail.daysConsumptionMonth || detail.daysConsumptionMonth,
-                          totalConsumption: newDetail.totalConsumption || detail.totalConsumption,
-                          period: newDetail.period || detail.period,
-                          fk_idFood: newDetail.fk_idFood || detail.fk_idFood,
-                          fk_idNutritionalPlan: newDetail.fk_idNutritionalPlan || detail.fk_idNutritionalPlan,
-                        })}
-                        className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center gap-1"
+            {details.map(detail => {
+              const isExpanded = expanded[detail.idDetail ?? 0] ?? false;
+              return (
+                <div 
+                  key={detail.idDetail}
+                  className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-cyan-500/10 via-slate-900/60 to-slate-900/90 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-cyan-500/20"
+                >
+                  {editingId === detail.idDetail ? (
+                    <div className="p-6">
+                      <input
+                        type="number"
+                        defaultValue={detail.consumptionKlg}
+                        onChange={e => setNewDetail({ ...newDetail, consumptionKlg: Number(e.target.value) })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                      />
+                      <input
+                        type="number"
+                        defaultValue={detail.daysConsumptionMonth}
+                        onChange={e => setNewDetail({ ...newDetail, daysConsumptionMonth: Number(e.target.value) })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                      />
+                      <input
+                        type="number"
+                        defaultValue={detail.totalConsumption}
+                        onChange={e => setNewDetail({ ...newDetail, totalConsumption: Number(e.target.value) })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                      />
+                      <input
+                        type="date"
+                        defaultValue={detail.period?.slice(0, 10)}
+                        onChange={e => setNewDetail({ ...newDetail, period: e.target.value })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                      />
+                      <select
+                        value={newDetail.fk_idFood}
+                        onChange={e => setNewDetail({ ...newDetail, fk_idFood: Number(e.target.value) })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
                       >
-                        <Save size={16} /> Guardar
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
+                        {foods.map(food => (
+                          <option key={food.idFood} value={food.idFood}>
+                            {food.foodName}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        value={newDetail.fk_idNutritionalPlan}
+                        onChange={e => setNewDetail({ ...newDetail, fk_idNutritionalPlan: Number(e.target.value) })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
                       >
-                        <X size={16} /> Cancelar
-                      </button>
+                        {nutritionalPlans.map(plan => (
+                          <option key={plan.idNutritionalPlan} value={plan.idNutritionalPlan}>
+                            {plan.name}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => updateDetail(detail.idDetail!, {
+                            consumptionKlg: newDetail.consumptionKlg || detail.consumptionKlg,
+                            daysConsumptionMonth: newDetail.daysConsumptionMonth || detail.daysConsumptionMonth,
+                            totalConsumption: newDetail.totalConsumption || detail.totalConsumption,
+                            period: newDetail.period || detail.period,
+                            fk_idFood: newDetail.fk_idFood || detail.fk_idFood,
+                            fk_idNutritionalPlan: newDetail.fk_idNutritionalPlan || detail.fk_idNutritionalPlan,
+                          })}
+                          className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center gap-1"
+                        >
+                          <Save size={16} /> Guardar
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
+                        >
+                          <X size={16} /> Cancelar
+                        </button>
+                      </div>
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <h3 className="text-lg font-semibold">
-                      {(foodNameMap[detail.fk_idFood] ?? `Comida #${detail.fk_idFood}`)} — {(planNameMap[detail.fk_idNutritionalPlan] ?? `Plan #${detail.fk_idNutritionalPlan}`)}
-                    </h3>
-                    <p>Consumo (Kg): {detail.consumptionKlg}</p>
-                    <p>Días/mes: {detail.daysConsumptionMonth}</p>
-                    <p>Total consumo: {detail.totalConsumption}</p>
-                    <p>Periodo: {detail.period?.slice(0, 10)}</p>
-                    <div className="flex items-center justify-end gap-4">
-                      <button
-                        onClick={() => { setEditingId(detail.idDetail!); setNewDetail(detail); }}
-                        className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
-                                    bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
-                                    shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
-                                    hover:scale-[1.1]
-                                    active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
-                                    transition-all duration-300 ease-in-out"
-                      >
-                        <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" />
-                      </button>
-                      <button
-                        onClick={() => deleteDetail(detail.idDetail!)}
-                        className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
-                                  bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
-                                  shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
-                                  hover:scale-[1.1]
-                                  active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
-                                  transition-all duration-300 ease-in-out"
-                      >
-                        <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
+                  ) : (
+                    <>
+                      <div className="flex flex-col items-center gap-2 py-5">
+                        <span className="h-4 w-4 rounded-full bg-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.6)]" />
+                        <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                          Detalle
+                        </span>
+                      </div>
+
+                      <div className="px-6 pb-6 space-y-4 text-sm text-slate-200">
+                        <div className="text-center space-y-1">
+                          <h3 className="text-lg font-semibold text-cyan-300">
+                            {(foodNameMap[detail.fk_idFood] ?? `Comida #${detail.fk_idFood}`)}
+                          </h3>
+                          <p className="text-slate-400">
+                            Plan: <span className="font-medium text-slate-200">{(planNameMap[detail.fk_idNutritionalPlan] ?? `Plan #${detail.fk_idNutritionalPlan}`)}</span>
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={() =>
+                            setExpanded((prev) => ({
+                              ...prev,
+                              [detail.idDetail ?? 0]: !prev[detail.idDetail ?? 0],
+                            }))
+                          }
+                          className="flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-500/40 bg-cyan-500/10 py-2 text-sm font-medium text-cyan-300 transition hover:bg-cyan-500/15"
+                        >
+                          {isExpanded ? (
+                            <>
+                              <ChevronUp size={16} /> Ver menos
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown size={16} /> Ver más
+                            </>
+                          )}
+                        </button>
+
+                        {isExpanded && (
+                          <div className="rounded-xl border border-slate-800/80 bg-slate-900/70 p-4 text-xs leading-relaxed">
+                            <ul className="space-y-1">
+                              <li><strong>Consumo (Kg):</strong> {detail.consumptionKlg}</li>
+                              <li><strong>Días/mes:</strong> {detail.daysConsumptionMonth}</li>
+                              <li><strong>Total consumo:</strong> {detail.totalConsumption}</li>
+                              <li><strong>Periodo:</strong> {detail.period?.slice(0, 10)}</li>
+                            </ul>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-center gap-6 border-t border-slate-800 pt-6 pb-2">
+                          <button
+                            onClick={() => { setEditingId(detail.idDetail!); setNewDetail(detail); }}
+                            className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
+                                        bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                                        shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
+                                        hover:scale-[1.1]
+                                        active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                                        transition-all duration-300 ease-in-out"
+                          >
+                            <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" />
+                          </button>
+                          <button
+                            onClick={() => deleteDetail(detail.idDetail!)}
+                            className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
+                                      bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                                      shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
+                                      hover:scale-[1.1]
+                                      active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                                      transition-all duration-300 ease-in-out"
+                          >
+                            <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

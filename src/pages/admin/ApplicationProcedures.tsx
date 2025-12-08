@@ -202,7 +202,7 @@ const ApplicationProceduresManagement = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {procedures.map(proc => (
-              <div key={proc.idApplicationProcedure} className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between">
+              <div key={proc.idApplicationProcedure} className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-pink-500/10 via-slate-900/60 to-slate-900/90 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-pink-500/20">
                 {editingId === proc.idApplicationProcedure ? (
                   <>
                     <input
@@ -261,35 +261,48 @@ const ApplicationProceduresManagement = () => {
                   </>
                 ) : (
                   <>
-                    <h3 className="text-lg font-semibold">Fecha ejecución: {proc.executionDate?.slice(0, 10)}</h3>
-                    <p>Procedimiento: {scheduledProcedures.find(s => s.idScheduledProcedure === proc.fk_idScheduledProcedure)?.name || proc.fk_idScheduledProcedure}</p>
-                    <p>Caballo: {horses.find(h => h.idHorse === proc.fk_idHorse)?.horseName || proc.fk_idHorse}</p>
-                    <p>Observaciones: {proc.observations}</p>
-                    <div className="flex justify-end gap-2 mt-2">
-                      <button
-                        onClick={() => { setEditingId(proc.idApplicationProcedure!); setNewProcedure(proc); }}
-                        className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
-                                  bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
-                                  shadow-[8px_8px_16px_rgba(0,0,0,0.8),-5px_-5px_12px_rgba(255,255,255,0.07)]
-                                  hover:scale-[1.08] active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.85),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
-                                  transition-all duration-300 ease-in-out
-                                  before:absolute before:inset-0 before:rounded-[20px]
-                                  before:bg-gradient-to-b before:from-white/10 before:to-transparent before:opacity-25"
-                      >
-                        <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_6px_rgba(255,215,100,0.85)]" />
-                      </button>
-                      <button
-                        onClick={() => deleteProcedure(proc.idApplicationProcedure!)}
-                        className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
-                                  bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
-                                  shadow-[8px_8px_16px_rgba(0,0,0,0.8),-5px_-5px_12px_rgba(255,255,255,0.07)]
-                                  hover:scale-[1.08] active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.85),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
-                                  transition-all duration-300 ease-in-out
-                                  before:absolute before:inset-0 before:rounded-[20px]
-                                  before:bg-gradient-to-b before:from-white/10 before:to-transparent before:opacity-25"
-                      >
-                        <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_7px_rgba(255,80,80,0.9)]" />
-                      </button>
+                    <div className="flex flex-col items-center gap-2 py-5">
+                      <span className="h-4 w-4 rounded-full bg-pink-500 shadow-[0_0_12px_rgba(236,72,153,0.6)]" />
+                      <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                        Aplicación
+                      </span>
+                    </div>
+
+                    <div className="px-6 pb-6 space-y-4 text-sm text-slate-200">
+                      <div className="text-center space-y-1">
+                        <h3 className="text-lg font-semibold text-pink-300">{proc.executionDate?.slice(0, 10)}</h3>
+                      </div>
+
+                      <div className="space-y-2 text-center">
+                        <p><span className="font-medium text-slate-400">Procedimiento:</span> {scheduledProcedures.find(s => s.idScheduledProcedure === proc.fk_idScheduledProcedure)?.name || proc.fk_idScheduledProcedure}</p>
+                        <p><span className="font-medium text-slate-400">Caballo:</span> {horses.find(h => h.idHorse === proc.fk_idHorse)?.horseName || proc.fk_idHorse}</p>
+                        <p><span className="font-medium text-slate-400">Observaciones:</span> {proc.observations}</p>
+                      </div>
+
+                      <div className="flex items-center justify-center gap-6 border-t border-slate-800 pt-6 pb-2">
+                        <button
+                          onClick={() => { setEditingId(proc.idApplicationProcedure!); setNewProcedure(proc); }}
+                          className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
+                                    bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                                    shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
+                                    hover:scale-[1.1]
+                                    active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                                    transition-all duration-300 ease-in-out"
+                        >
+                          <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" />
+                        </button>
+                        <button
+                          onClick={() => deleteProcedure(proc.idApplicationProcedure!)}
+                          className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
+                                    bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                                    shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
+                                    hover:scale-[1.1]
+                                    active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                                    transition-all duration-300 ease-in-out"
+                        >
+                          <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
+                        </button>
+                      </div>
                     </div>
                   </>
                 )}

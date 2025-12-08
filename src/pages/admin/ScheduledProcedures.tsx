@@ -226,7 +226,7 @@ const ScheduledProceduresManagement = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {procedures.map(proc => (
-              <div key={proc.idScheduledProcedure} className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between">
+              <div key={proc.idScheduledProcedure} className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-purple-500/10 via-slate-900/60 to-slate-900/90 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-purple-500/20">
                 {editingId === proc.idScheduledProcedure ? (
                   <>
                     <div className="flex flex-col mb-2">
@@ -310,13 +310,26 @@ const ScheduledProceduresManagement = () => {
                   </>
                 ) : (
                   <>
-                    {/* Visualización de procedimientos */}
-                    <h3 className="text-lg font-semibold">{proc.name}</h3>
-                    <p>Año: {proc.year?.slice(0, 10)}</p>
-                    <p>Descripción: {proc.description}</p>
-                    <p>Meses programados: {Array.isArray(proc.scheduledMonths) ? proc.scheduledMonths.map(m => months.find(mo => mo.value === m)?.label).join(', ') : String(proc.scheduledMonths)}</p>
-                    <p>Etiqueta de alerta: {proc.alertLabel}</p>
-                    <div className="flex justify-end gap-2 mt-2">
+                    <div className="flex flex-col items-center gap-2 py-5">
+                      <span className="h-4 w-4 rounded-full bg-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.6)]" />
+                      <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                        Procedimiento
+                      </span>
+                    </div>
+
+                    <div className="px-6 pb-6 space-y-4 text-sm text-slate-200">
+                      <div className="text-center space-y-1">
+                        <h3 className="text-lg font-semibold text-purple-300">{proc.name}</h3>
+                      </div>
+
+                      <div className="space-y-2 text-center">
+                        <p><span className="font-medium text-slate-400">Año:</span> {proc.year?.slice(0, 10)}</p>
+                        <p><span className="font-medium text-slate-400">Descripción:</span> {proc.description}</p>
+                        <p><span className="font-medium text-slate-400">Meses:</span> {Array.isArray(proc.scheduledMonths) ? proc.scheduledMonths.map(m => months.find(mo => mo.value === m)?.label).join(', ') : String(proc.scheduledMonths)}</p>
+                        <p><span className="font-medium text-slate-400">Alerta:</span> {proc.alertLabel}</p>
+                      </div>
+
+                      <div className="flex items-center justify-center gap-6 border-t border-slate-800 pt-6 pb-2">
                       <button
                         onClick={() => {
                           setEditingId(proc.idScheduledProcedure!);
@@ -349,6 +362,7 @@ const ScheduledProceduresManagement = () => {
                         <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
                       </button>
                     </div>
+                  </div>
                   </>
                 )}
               </div>

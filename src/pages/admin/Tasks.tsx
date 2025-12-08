@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import { Plus, Edit, Save, Trash2, Loader, X, ChevronUp, ChevronDown } from 'lucide-react';
 
 const API_URL = 'http://localhost:8000/tasks/';
 
@@ -30,6 +30,7 @@ const TasksManagement = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [categories, setCategories] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
 
   const fetchTasks = async () => {
     setLoading(true);
@@ -231,122 +232,169 @@ const fetchEmployees = async () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tasks.map(task => (
-              <div key={task.idTask} className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between">
-                {editingId === task.idTask ? (
-                  <>
-                    <input
-                      type="text"
-                      defaultValue={task.taskName}
-                      onChange={e => setNewTask({ ...newTask, taskName: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="text"
-                      defaultValue={task.description}
-                      onChange={e => setNewTask({ ...newTask, description: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                      <div className="flex-1">
-                      <label className="block text-sm mb-1">Fecha de asignación</label>
+            {tasks.map(task => {
+              const isExpanded = expanded[task.idTask ?? 0] ?? false;
+              const categoryName = categories.find(c => c.idTaskCategory === task.fk_idTaskCategory)?.categoryName || `Categoría #${task.fk_idTaskCategory}`;
+              const employeeName = employees.find(e => e.idEmployee === task.fk_idEmployee)?.fullName || 'Sin asignar';
+              return (
+                <div 
+                  key={task.idTask}
+                  className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-pink-500/10 via-slate-900/60 to-slate-900/90 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-pink-500/20"
+                >
+                  {editingId === task.idTask ? (
+                    <div className="p-6 space-y-2">
+                      <input
+                        type="text"
+                        defaultValue={task.taskName}
+                        onChange={e => setNewTask({ ...newTask, taskName: e.target.value })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white"
+                      />
+                      <input
+                        type="text"
+                        defaultValue={task.description}
+                        onChange={e => setNewTask({ ...newTask, description: e.target.value })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white"
+                      />
+                      <div>
+                        <label className="block text-sm mb-1">Fecha de asignación</label>
+                        <input
+                          type="date"
+                          value={newTask.assignmentDate}
+                          onChange={e => setNewTask({ ...newTask, assignmentDate: e.target.value })}
+                          className="w-full p-2 rounded-md bg-gray-700 text-white"
+                        />
+                      </div>
                       <input
                         type="date"
-                        name="assignmentDate"
-                        value={newTask.assignmentDate}
-                        onChange={e => setNewTask({ ...newTask, assignmentDate: e.target.value })}
-                        className="w-full p-2 rounded-md bg-gray-700 text-white"
+                        defaultValue={task.completionDate?.slice(0,10)}
+                        onChange={e => setNewTask({ ...newTask, completionDate: e.target.value })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white"
                       />
+                      <input
+                        type="text"
+                        defaultValue={task.taskStatus}
+                        onChange={e => setNewTask({ ...newTask, taskStatus: e.target.value })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white"
+                      />
+                      <select
+                        value={newTask.fk_idTaskCategory}
+                        onChange={e => setNewTask({ ...newTask, fk_idTaskCategory: Number(e.target.value) })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white"
+                      >
+                        {categories.map(cat => (
+                          <option key={cat.idTaskCategory} value={cat.idTaskCategory}>
+                            {cat.categoryName}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        value={newTask.fk_idEmployee || ''}
+                        onChange={e => setNewTask({ ...newTask, fk_idEmployee: Number(e.target.value) || undefined })}
+                        className="w-full p-2 rounded-md bg-gray-600 text-white"
+                      >
+                        <option value="">-- Selecciona un empleado --</option>
+                        {employees.map(emp => (
+                          <option key={emp.idEmployee} value={emp.idEmployee}>
+                            {emp.fullName}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="flex justify-end gap-2 pt-2">
+                        <button
+                          onClick={() => updateTask(task.idTask!, {
+                            ...task,
+                            ...newTask,
+                          })}
+                          className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center gap-1"
+                        >
+                          <Save size={16} /> Guardar
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
+                        >
+                          <X size={16} /> Cancelar
+                        </button>
+                      </div>
                     </div>
-                    <input
-                      type="date"
-                      defaultValue={task.completionDate?.slice(0,10)}
-                      onChange={e => setNewTask({ ...newTask, completionDate: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <input
-                      type="text"
-                      defaultValue={task.taskStatus}
-                      onChange={e => setNewTask({ ...newTask, taskStatus: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    />
-                    <select
-                      value={newTask.fk_idTaskCategory}
-                      onChange={e => setNewTask({ ...newTask, fk_idTaskCategory: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    >
-                      {categories.map(cat => (
-                        <option key={cat.idTaskCategory} value={cat.idTaskCategory}>
-                          {cat.categoryName}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={newTask.fk_idEmployee || ''}
-                      onChange={e => setNewTask({ ...newTask, fk_idEmployee: Number(e.target.value) || undefined })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
-                    >
-                      <option value="">-- Selecciona un empleado --</option>
-                      {employees.map(emp => (
-                        <option key={emp.idEmployee} value={emp.idEmployee}>
-                          {emp.fullName}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => updateTask(task.idTask!, {
-                          ...task,
-                          ...newTask,
-                        })}
-                        className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center gap-1"
-                      >
-                        <Save size={16} /> Guardar
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
-                      >
-                        <X size={16} /> Cancelar
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <h3 className="text-lg font-semibold">{task.taskName}</h3>
-                    <p>{task.description}</p>
-                    <p>Asignada: {task.assignmentDate?.slice(0,10)}</p>
-                    <p>Finaliza: {task.completionDate?.slice(0,10)}</p>
-                    <p>Estado: {task.taskStatus}</p>
-                    <p>Categoría: {categories.find(c => c.idTaskCategory === task.fk_idTaskCategory)?.name || task.fk_idTaskCategory}</p>
-                    <p>Empleado: {employees.find(e => e.idEmployee === task.fk_idEmployee)?.fullName || '-'}</p>
-                    <div className="flex items-center justify-end gap-4">
-                      <button
-                        onClick={() => { setEditingId(task.idTask!); setNewTask(task); }}
-                        className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
-                                    bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
-                                    shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
-                                    hover:scale-[1.1]
-                                    active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
-                                    transition-all duration-300 ease-in-out"
-                      >
-                        <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" />
-                      </button>
-                      <button
-                        onClick={() => deleteTask(task.idTask!)}
-                        className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
-                                  bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
-                                  shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
-                                  hover:scale-[1.1]
-                                  active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
-                                  transition-all duration-300 ease-in-out"
-                      >
-                        <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
+                  ) : (
+                    <>
+                      <div className="flex flex-col items-center gap-2 py-5">
+                        <span className="h-4 w-4 rounded-full bg-pink-500 shadow-[0_0_12px_rgba(236,72,153,0.6)]" />
+                        <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                          {task.taskStatus || 'Tarea'}
+                        </span>
+                      </div>
+
+                      <div className="px-6 pb-6 space-y-4 text-sm text-slate-200">
+                        <div className="text-center space-y-1">
+                          <h3 className="text-lg font-semibold text-pink-300">{task.taskName}</h3>
+                          <p className="text-slate-400">
+                            Asignada: <span className="font-medium text-slate-200">{task.assignmentDate?.slice(0,10)}</span>
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={() =>
+                            setExpanded((prev) => ({
+                              ...prev,
+                              [task.idTask ?? 0]: !prev[task.idTask ?? 0],
+                            }))
+                          }
+                          className="flex w-full items-center justify-center gap-2 rounded-lg border border-pink-500/40 bg-pink-500/10 py-2 text-sm font-medium text-pink-300 transition hover:bg-pink-500/15"
+                        >
+                          {isExpanded ? (
+                            <>
+                              <ChevronUp size={16} /> Ver menos
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown size={16} /> Ver más
+                            </>
+                          )}
+                        </button>
+
+                        {isExpanded && (
+                          <div className="rounded-xl border border-slate-800/80 bg-slate-900/70 p-4 text-xs leading-relaxed">
+                            <ul className="space-y-1">
+                              <li><strong>Descripción:</strong> {task.description || 'Sin descripción'}</li>
+                              <li><strong>Finaliza:</strong> {task.completionDate?.slice(0,10)}</li>
+                              <li><strong>Categoría:</strong> {categoryName}</li>
+                              <li><strong>Empleado:</strong> {employeeName}</li>
+                            </ul>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-center gap-6 border-t border-slate-800 pt-6 pb-2">
+                          <button
+                            onClick={() => { setEditingId(task.idTask!); setNewTask(task); }}
+                            className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
+                                        bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                                        shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
+                                        hover:scale-[1.1]
+                                        active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                                        transition-all duration-300 ease-in-out"
+                          >
+                            <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" />
+                          </button>
+                          <button
+                            onClick={() => deleteTask(task.idTask!)}
+                            className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
+                                      bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                                      shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
+                                      hover:scale-[1.1]
+                                      active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                                      transition-all duration-300 ease-in-out"
+                          >
+                            <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

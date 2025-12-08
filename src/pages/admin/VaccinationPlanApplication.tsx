@@ -246,7 +246,7 @@ const VaccinationPlanApplicationManagement = () => {
               <p className="text-center text-gray-400 col-span-full">No hay aplicaciones de planes de vacunación registradas.</p>
             ) : (
               applications.map(app => (
-                <div key={app.idVaccinationPlanApplication} className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between border border-gray-600">
+                <div key={app.idVaccinationPlanApplication} className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-amber-500/10 via-slate-900/60 to-slate-900/90 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-amber-500/20">
                   {editedApplication?.idVaccinationPlanApplication === app.idVaccinationPlanApplication ? (
                     <>
                       <div className="flex flex-col gap-2 mb-4"> {/* Consistent styling for edit inputs */}
@@ -321,12 +321,26 @@ const VaccinationPlanApplicationManagement = () => {
                     </>
                   ) : (
                     <>
-                      <h3 className="text-lg font-semibold text-gray-100">Aplicación del Plan: {plans.find(p => p.idVaccinationPlan === app.fk_idVaccinationPlan)?.planName || 'N/A'}</h3>
-                      <p className="text-gray-300">Fecha: {app.applicationDate?.slice(0, 10)}</p>
-                      <p className="text-gray-300">Caballo: {horses.find(h => h.idHorse === app.fk_idHorse)?.horseName || 'N/A'}</p>
-                      <p className="text-gray-300">Empleado: {employees.find(e => e.idEmployee === app.fk_idEmployee)?.fullName || 'N/A'}</p>
-                      <p className="text-gray-300">Observación: {app.observation || 'N/A'}</p>
-                      <div className="flex items-center justify-end gap-4">
+                      <div className="flex flex-col items-center gap-2 py-5">
+                        <span className="h-4 w-4 rounded-full bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.6)]" />
+                        <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                          Aplicación
+                        </span>
+                      </div>
+
+                      <div className="px-6 pb-6 space-y-4 text-sm text-slate-200">
+                        <div className="text-center space-y-1">
+                          <h3 className="text-lg font-semibold text-amber-300">{plans.find(p => p.idVaccinationPlan === app.fk_idVaccinationPlan)?.planName || 'N/A'}</h3>
+                        </div>
+
+                        <div className="space-y-2 text-center">
+                          <p><span className="font-medium text-slate-400">Fecha:</span> {app.applicationDate?.slice(0, 10)}</p>
+                          <p><span className="font-medium text-slate-400">Caballo:</span> {horses.find(h => h.idHorse === app.fk_idHorse)?.horseName || 'N/A'}</p>
+                          <p><span className="font-medium text-slate-400">Empleado:</span> {employees.find(e => e.idEmployee === app.fk_idEmployee)?.fullName || 'N/A'}</p>
+                          <p><span className="font-medium text-slate-400">Observación:</span> {app.observation || 'N/A'}</p>
+                        </div>
+
+                        <div className="flex items-center justify-center gap-6 border-t border-slate-800 pt-6 pb-2">
                         <button
                           onClick={() => setEditedApplication(app)}
                           className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
@@ -350,6 +364,7 @@ const VaccinationPlanApplicationManagement = () => {
                           <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
                         </button>
                       </div>
+                    </div>
                     </>
                   )}
                 </div>
