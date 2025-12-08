@@ -39,9 +39,9 @@ const AppUser = () => {
   };
 
   return (
-    <div className="flex">
+    <div className="flex min-h-screen bg-slate-950">
       <SidebarUser />
-  <div className="flex-1 ml-0 lg:ml-80 bg-slate-900 min-h-screen p-6">
+      <div className="flex-1 ml-0 lg:ml-72 min-h-screen">
         <Routes>
           <Route path="/user/home" element={<UserHome setCurrentView={setCurrentView} />} />
           <Route path="/user/horses" element={<UserHorses />} />

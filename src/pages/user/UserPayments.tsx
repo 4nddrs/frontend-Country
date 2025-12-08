@@ -10,8 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '../../components/ui/table';
-import { supabase } from '../../supabaseClient';
-import { toast } from 'react-hot-toast';
+import { useCurrentUser, useOwnerData, useOwnerReports } from '../../hooks/useUserData';
 
 interface PagosEstadoProps {}
 
@@ -44,109 +43,46 @@ interface TotalControl {
 }
 
 export function UserPayments(_: PagosEstadoProps) {
-  const [totalControls, setTotalControls] = useState<TotalControl[]>([]);
-  const [loading, setLoading] = useState(true);
   const [totalPaid, setTotalPaid] = useState(0);
   const [totalPending, setTotalPending] = useState(0);
 
+  // Usar hooks optimizados con React Query
+  const { data: user } = useCurrentUser();
+  const { data: ownerData, isLoading: ownerLoading } = useOwnerData(user?.id);
+  const { data: reports = [], isLoading: reportsLoading } = useOwnerReports(ownerData?.idOwner);
+
+  const loading = ownerLoading || reportsLoading;
+  const totalControls = reports as TotalControl[];
+
   useEffect(() => {
-    fetchPaymentData();
-  }, []);
-
-  const fetchPaymentData = async () => {
-    try {
-      setLoading(true);
-      
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error('No hay sesión activa');
-        return;
-      }
-
-      // Get owner data - try query param or filter all owners
-      let ownerData;
-      const ownerRes = await fetch(`http://localhost:8000/owner/?uid=${user.id}`);
-      
-      if (ownerRes.status === 404 || !ownerRes.ok) {
-        // Try getting all owners and filter by uid
-        const allOwnersRes = await fetch(`http://localhost:8000/owner/`);
-        if (!allOwnersRes.ok) {
-          toast.error('Tu usuario no está registrado como propietario. Contacta al administrador.');
-          console.log('Usuario no encontrado como owner:', user.id);
-          return;
-        }
-        const allOwners = await allOwnersRes.json();
-        ownerData = allOwners.find((o: any) => o.uid === user.id);
-        
-        if (!ownerData) {
-          toast.error('Tu usuario no está registrado como propietario. Contacta al administrador.');
-          console.log('Usuario no encontrado como owner:', user.id);
-          return;
-        }
-      } else {
-        const result = await ownerRes.json();
-        // If it's an array, find the matching uid; otherwise use directly
-        if (Array.isArray(result)) {
-          ownerData = result.find((o: any) => o.uid === user.id);
-          if (!ownerData) {
-            toast.error('Tu usuario no está registrado como propietario. Contacta al administrador.');
-            console.log('Usuario no encontrado en array de owners:', user.id);
-            return;
-          }
-        } else {
-          ownerData = result;
-        }
-      }
-
-      // Get owner reports (payment data)
-      console.log('📊 Buscando reportes de pago para owner ID:', ownerData.idOwner);
-      const reportsRes = await fetch(`http://localhost:8000/owner_report_month/`);
-      
-      if (!reportsRes.ok) {
-        console.log('❌ Error en respuesta:', reportsRes.status, reportsRes.statusText);
-        throw new Error('Error al obtener datos de pago');
-      }
-      
-      const allReports = await reportsRes.json();
-      console.log('📦 Total de reportes:', allReports.length);
-      
-      // Filter by owner ID
-      const ownerReports = allReports.filter((r: any) => r.fk_idOwner === ownerData.idOwner);
-      console.log('✅ Reportes filtrados para este owner:', ownerReports.length);
-      
-      setTotalControls(ownerReports);
-
-      // Calculate totals
-      const paid = ownerReports
-        .filter((r: any) => r.state === 'Pagado')
-        .reduce((sum: number, r: any) => {
-          const total = r.box + r.section + r.aBasket + r.contributionCabFlyer + 
-                       r.VaccineApplication + r.deworming + r.AmeniaExam + 
-                       r.externalTeacher + r.fine + r.saleChala + 
-                       r.costPerBucket + r.healthCardPayment + r.other;
-          return sum + total;
-        }, 0);
-      
-      const pending = ownerReports
-        .filter((r: any) => r.state === 'Pendiente')
-        .reduce((sum: number, r: any) => {
-          const total = r.box + r.section + r.aBasket + r.contributionCabFlyer + 
-                       r.VaccineApplication + r.deworming + r.AmeniaExam + 
-                       r.externalTeacher + r.fine + r.saleChala + 
-                       r.costPerBucket + r.healthCardPayment + r.other;
-          return sum + total;
-        }, 0);
-
-      setTotalPaid(paid);
-      setTotalPending(pending);
-      
-    } catch (error: any) {
-      console.error('Error fetching payment data:', error);
-      toast.error('Error al cargar datos de pagos');
-    } finally {
-      setLoading(false);
+    if (totalControls.length > 0) {
+      calculateTotals();
     }
+  }, [totalControls]);
+
+  const calculateTotals = () => {
+    const paid = totalControls
+      .filter((r) => r.state === 'Pagado')
+      .reduce((sum, r) => {
+        const total = r.box + r.section + r.aBasket + r.contributionCabFlyer + 
+                     r.VaccineApplication + r.deworming + r.AmeniaExam + 
+                     r.externalTeacher + r.fine + r.saleChala + 
+                     r.costPerBucket + r.healthCardPayment + r.other;
+        return sum + total;
+      }, 0);
+    
+    const pending = totalControls
+      .filter((r) => r.state === 'Pendiente')
+      .reduce((sum, r) => {
+        const total = r.box + r.section + r.aBasket + r.contributionCabFlyer + 
+                     r.VaccineApplication + r.deworming + r.AmeniaExam + 
+                     r.externalTeacher + r.fine + r.saleChala + 
+                     r.costPerBucket + r.healthCardPayment + r.other;
+        return sum + total;
+      }, 0);
+
+    setTotalPaid(paid);
+    setTotalPending(pending);
   };
 
   if (loading) {
@@ -158,53 +94,53 @@ export function UserPayments(_: PagosEstadoProps) {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900">
       <UserHeader title="Mis Pagos y Estado Económico" />
 
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="px-3 py-4 md:px-6 md:py-6 max-w-6xl mx-auto space-y-4 md:space-y-6">
         {/* Summary Cards */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 border-slate-700/50 backdrop-blur-sm">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-full blur-2xl" />
-            <div className="relative p-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 flex items-center justify-center mb-4">
-                <DollarSign className="w-5 h-5 text-cyan-400" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+          <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 border border-slate-700/50 backdrop-blur-md shadow-lg">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl" />
+            <div className="relative p-4 md:p-6">
+              <div className="w-12 h-12 md:w-10 md:h-10 rounded-2xl bg-gradient-to-br from-amber-500/30 to-amber-600/30 flex items-center justify-center mb-3 md:mb-4 shadow-lg shadow-amber-500/20">
+                <DollarSign className="w-6 h-6 md:w-5 md:h-5 text-amber-400" />
               </div>
-              <p className="text-xs text-slate-500 mb-2">Balance pendiente</p>
-              <p className="text-2xl text-white mb-1">${totalPending.toLocaleString()}</p>
-              <p className="text-xs text-amber-400">{totalPending === 0 ? 'Al día' : 'Por pagar'}</p>
+              <p className="text-xs text-slate-400 mb-2">Balance pendiente</p>
+              <p className="text-3xl md:text-2xl text-white font-bold mb-1">${totalPending.toLocaleString()}</p>
+              <p className="text-xs text-amber-400 font-medium">{totalPending === 0 ? 'Al día ✓' : 'Por pagar'}</p>
             </div>
           </Card>
 
-          <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 border-slate-700/50 backdrop-blur-sm">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl" />
-            <div className="relative p-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 flex items-center justify-center mb-4">
-                <TrendingUp className="w-5 h-5 text-emerald-400" />
+          <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 border border-slate-700/50 backdrop-blur-md shadow-lg">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl" />
+            <div className="relative p-4 md:p-6">
+              <div className="w-12 h-12 md:w-10 md:h-10 rounded-2xl bg-gradient-to-br from-emerald-500/30 to-emerald-600/30 flex items-center justify-center mb-3 md:mb-4 shadow-lg shadow-emerald-500/20">
+                <TrendingUp className="w-6 h-6 md:w-5 md:h-5 text-emerald-400" />
               </div>
-              <p className="text-xs text-slate-500 mb-2">Total pagado</p>
-              <p className="text-2xl text-white mb-1">${totalPaid.toLocaleString()}</p>
-              <p className="text-xs text-slate-400">Histórico</p>
+              <p className="text-xs text-slate-400 mb-2">Total pagado</p>
+              <p className="text-3xl md:text-2xl text-white font-bold mb-1">${totalPaid.toLocaleString()}</p>
+              <p className="text-xs text-slate-400 font-medium">Histórico</p>
             </div>
           </Card>
 
-          <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 border-slate-700/50 backdrop-blur-sm sm:col-span-2 lg:col-span-1">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-full blur-2xl" />
-            <div className="relative p-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 flex items-center justify-center mb-4">
-                <Calendar className="w-5 h-5 text-cyan-400" />
+          <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 border border-slate-700/50 backdrop-blur-md shadow-lg sm:col-span-2 lg:col-span-1">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl" />
+            <div className="relative p-4 md:p-6">
+              <div className="w-12 h-12 md:w-10 md:h-10 rounded-2xl bg-gradient-to-br from-cyan-500/30 to-cyan-600/30 flex items-center justify-center mb-3 md:mb-4 shadow-lg shadow-cyan-500/20">
+                <Calendar className="w-6 h-6 md:w-5 md:h-5 text-cyan-400" />
               </div>
-              <p className="text-xs text-slate-500 mb-2">Total registros</p>
-              <p className="text-2xl text-white mb-1">{totalControls.length}</p>
-              <p className="text-xs text-cyan-400">{totalControls.filter((c: any) => c.state === 'Pendiente').length} pendientes</p>
+              <p className="text-xs text-slate-400 mb-2">Total registros</p>
+              <p className="text-3xl md:text-2xl text-white font-bold mb-1">{totalControls.length}</p>
+              <p className="text-xs text-cyan-400 font-medium">{totalControls.filter((c: any) => c.state === 'Pendiente').length} pendientes</p>
             </div>
           </Card>
         </div>
 
         {/* Payments Table */}
-        <Card className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm overflow-hidden">
+        <Card className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-slate-700/50 backdrop-blur-md shadow-lg overflow-hidden">
           <div className="p-4 md:p-6">
-            <h3 className="text-lg text-white mb-6">Historial de Pagos</h3>
+            <h3 className="text-lg md:text-xl text-white font-semibold mb-4 md:mb-6">Historial de Pagos</h3>
             
             {totalControls.length === 0 ? (
               <div className="text-center py-8 text-slate-400">
@@ -221,37 +157,43 @@ export function UserPayments(_: PagosEstadoProps) {
                                  report.costPerBucket + report.healthCardPayment + report.other;
                     const horsesCount = report.horses_report?.length || 0;
                     return (
-                    <div key={report.idOwnerReportMonth} className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/30">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <p className="text-sm text-white mb-1">{horsesCount} caballo(s)</p>
-                          <p className="text-xs text-slate-500">
-                            {new Date(report.period).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                    <div key={report.idOwnerReportMonth} className="p-4 rounded-xl bg-slate-800/70 border border-slate-700/40 active:scale-[0.98] transition-transform shadow-md">
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            <p className="text-base text-white font-semibold">{horsesCount} caballo(s)</p>
+                            <span className="text-xs text-slate-500">•</span>
+                            <p className="text-xs text-slate-400">
+                              {new Date(report.period).toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })}
+                            </p>
+                          </div>
+                          <p className="text-xs text-slate-400">
+                            📅 {new Date(report.paymentDate).toLocaleDateString('es-ES')}
                           </p>
-                          <p className="text-xs text-slate-400 mt-1">Fecha pago: {new Date(report.paymentDate).toLocaleDateString('es-ES')}</p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm text-white mb-1">${total.toFixed(2)}</p>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-lg text-white font-bold mb-2 whitespace-nowrap">${total.toFixed(2)}</p>
                           <span
-                            className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full ${
+                            className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap ${
                               report.state === 'Pagado'
-                                ? 'bg-emerald-500/10 text-emerald-400'
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                                 : report.state === 'Anulado'
-                                ? 'bg-red-500/10 text-red-400'
-                                : 'bg-amber-500/10 text-amber-400'
+                                ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                                : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                             }`}
                           >
                             {report.state === 'Pagado' ? (
-                              <CheckCircle2 className="w-3 h-3" />
+                              <CheckCircle2 className="w-3.5 h-3.5" />
                             ) : (
-                              <XCircle className="w-3 h-3" />
+                              <XCircle className="w-3.5 h-3.5" />
                             )}
                             {report.state}
                           </span>
                         </div>
                       </div>
                     </div>
-                  )})}
+                  );
+                  })}
                 </div>
 
                 {/* Desktop View */}

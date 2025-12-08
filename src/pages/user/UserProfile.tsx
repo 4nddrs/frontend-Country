@@ -4,145 +4,80 @@ import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import UserHeader from '../../components/UserHeader';
-import { supabase } from '../../supabaseClient';
+import { useCurrentUser, useOwnerData, useOwnerHorses } from '../../hooks/useUserData';
+import { updateOwner, type Owner, type Horse } from '../../services/userService';
 import { toast } from 'react-hot-toast';
 
 interface PerfilProps {}
 
-interface Owner {
-  idOwner: number;
-  ownerName: string;
-  email: string;
-  phone: string;
-  cellPhone: string;
-  ci: string;
-}
-
-interface Horse {
-  horseName: string;
-}
-
 export function UserProfile(_: PerfilProps) {
-  const [owner, setOwner] = useState<Owner | null>(null);
-  const [horses, setHorses] = useState<Horse[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
-    ownerName: '',
+    name: '',
+    FirstName: '',
+    SecondName: '',
     email: '',
-    phone: '',
-    cellPhone: ''
+    phoneNumber: '',
+    ci: ''
   });
+  const [saving, setSaving] = useState(false);
+
+  // Usar hooks optimizados con React Query
+  const { data: user } = useCurrentUser();
+  const { data: ownerData, isLoading: ownerLoading, refetch: refetchOwner } = useOwnerData(user?.id);
+  const { data: horses = [], isLoading: horsesLoading } = useOwnerHorses(ownerData?.idOwner);
+
+  const loading = ownerLoading || horsesLoading;
+  const owner = ownerData;
+  const horsesList = horses as Horse[];
 
   useEffect(() => {
-    fetchOwnerData();
-  }, []);
-
-  const fetchOwnerData = async () => {
-    try {
-      setLoading(true);
-      
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error('No hay sesión activa');
-        return;
-      }
-
-      // Get owner data directly by uid - try query param approach
-      const ownerRes = await fetch(`http://localhost:8000/owner/?uid=${user.id}`);
-      
-      let ownerData;
-      if (ownerRes.status === 404 || !ownerRes.ok) {
-        // If query param doesn't work, try getting all owners and filter
-        const allOwnersRes = await fetch(`http://localhost:8000/owner/`);
-        if (!allOwnersRes.ok) {
-          toast.error('Tu usuario no está registrado como propietario. Contacta al administrador.');
-          console.log('Usuario no encontrado como owner:', user.id);
-          return;
-        }
-        const allOwners = await allOwnersRes.json();
-        ownerData = allOwners.find((o: any) => o.uid === user.id);
-        
-        if (!ownerData) {
-          toast.error('Tu usuario no está registrado como propietario. Contacta al administrador.');
-          console.log('Usuario no encontrado como owner:', user.id);
-          return;
-        }
-      } else {
-        const result = await ownerRes.json();
-        // If it's an array, find the matching uid; otherwise use directly
-        if (Array.isArray(result)) {
-          ownerData = result.find((o: any) => o.uid === user.id);
-          if (!ownerData) {
-            toast.error('Tu usuario no está registrado como propietario. Contacta al administrador.');
-            console.log('Usuario no encontrado en array de owners:', user.id);
-            return;
-          }
-        } else {
-          ownerData = result;
-        }
-      }
-      
-      setOwner(ownerData);
+    if (owner) {
       setEditForm({
-        ownerName: ownerData.ownerName || '',
-        email: ownerData.email || '',
-        phone: ownerData.phone || '',
-        cellPhone: ownerData.cellPhone || ''
+        name: owner.name || '',
+        FirstName: owner.FirstName || '',
+        SecondName: owner.SecondName || '',
+        email: owner.email || '',
+        phoneNumber: owner.phoneNumber?.toString() || '',
+        ci: owner.ci?.toString() || ''
       });
-
-      // Get horses by owner
-      const horsesRes = await fetch(`http://localhost:8000/horses/by_owner/${ownerData.idOwner}`);
-      if (horsesRes.ok) {
-        setHorses(await horsesRes.json());
-      }
-      
-    } catch (error: any) {
-      console.error('Error fetching owner data:', error);
-      toast.error('Error al cargar datos del perfil');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [owner]);
 
   const handleSave = async () => {
     if (!owner) return;
 
     try {
-      setLoading(true);
+      setSaving(true);
       
-      const response = await fetch(`http://localhost:8000/owners/${owner.idOwner}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...owner,
-          ownerName: editForm.ownerName,
-          email: editForm.email,
-          phone: editForm.phone,
-          cellPhone: editForm.cellPhone
-        })
+      await updateOwner(owner.idOwner, {
+        name: editForm.name,
+        FirstName: editForm.FirstName,
+        SecondName: editForm.SecondName,
+        email: editForm.email,
+        phoneNumber: editForm.phoneNumber,
+        ci: editForm.ci
       });
 
-      if (!response.ok) throw new Error('Error al actualizar perfil');
-
-      const updatedOwner = await response.json();
-      setOwner(updatedOwner);
       setIsEditing(false);
       toast.success('Perfil actualizado correctamente');
+      await refetchOwner(); // Refrescar datos desde el servidor
       
     } catch (error: any) {
       console.error('Error updating owner:', error);
       toast.error('Error al actualizar perfil');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
   if (loading && !owner) {
     return (
-      <div className="min-h-screen p-4 md:p-6 lg:p-8 flex items-center justify-center">
-        <Loader className="w-8 h-8 animate-spin text-cyan-500" />
+      <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <Loader className="w-12 h-12 animate-spin text-cyan-500 mx-auto mb-4" />
+          <p className="text-slate-400">Cargando perfil...</p>
+        </div>
       </div>
     );
   }
@@ -175,7 +110,9 @@ export function UserProfile(_: PerfilProps) {
                   <User className="w-10 h-10" />
                 </div>
                 <div>
-                  <h2 className="text-2xl text-white mb-1">{owner.ownerName}</h2>
+                  <h2 className="text-2xl text-white mb-1">
+                    {owner.name || `${owner.FirstName || ''} ${owner.SecondName || ''}`.trim() || 'Sin nombre'}
+                  </h2>
                   <p className="text-sm text-slate-400">CI: {owner.ci || 'No especificado'}</p>
                 </div>
               </div>
@@ -191,20 +128,22 @@ export function UserProfile(_: PerfilProps) {
                 <div className="flex gap-2 w-full sm:w-auto">
                   <Button 
                     onClick={handleSave}
-                    disabled={loading}
+                    disabled={saving}
                     className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white flex-1 sm:flex-initial"
                   >
-                    {loading ? <Loader className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                    Guardar
+                    {saving ? <Loader className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                    {saving ? 'Guardando...' : 'Guardar'}
                   </Button>
                   <Button 
                     onClick={() => {
                       setIsEditing(false);
                       setEditForm({
-                        ownerName: owner.ownerName || '',
+                        name: owner.name || '',
+                        FirstName: owner.FirstName || '',
+                        SecondName: owner.SecondName || '',
                         email: owner.email || '',
-                        phone: owner.phone || '',
-                        cellPhone: owner.cellPhone || ''
+                        phoneNumber: owner.phoneNumber?.toString() || '',
+                        ci: owner.ci?.toString() || ''
                       });
                     }}
                     variant="outline"
@@ -225,13 +164,48 @@ export function UserProfile(_: PerfilProps) {
                   <div className="min-w-0 flex-1">
                     <p className="text-xs text-slate-500 mb-1">Nombre completo</p>
                     {isEditing ? (
+                      <div className="space-y-2">
+                        <Input 
+                          placeholder="Nombre"
+                          value={editForm.name}
+                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                          className="bg-slate-700 border-slate-600 text-white"
+                        />
+                        <Input 
+                          placeholder="Primer Apellido"
+                          value={editForm.FirstName}
+                          onChange={(e) => setEditForm({ ...editForm, FirstName: e.target.value })}
+                          className="bg-slate-700 border-slate-600 text-white"
+                        />
+                        <Input 
+                          placeholder="Segundo Apellido"
+                          value={editForm.SecondName}
+                          onChange={(e) => setEditForm({ ...editForm, SecondName: e.target.value })}
+                          className="bg-slate-700 border-slate-600 text-white"
+                        />
+                      </div>
+                    ) : (
+                      <p className="text-sm text-white">
+                        {owner.name || `${owner.FirstName || ''} ${owner.SecondName || ''}`.trim() || 'No especificado'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-slate-800/50 flex items-center justify-center flex-shrink-0">
+                    <User className="w-5 h-5 text-cyan-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-slate-500 mb-1">Cédula de Identidad</p>
+                    {isEditing ? (
                       <Input 
-                        value={editForm.ownerName}
-                        onChange={(e) => setEditForm({ ...editForm, ownerName: e.target.value })}
+                        value={editForm.ci}
+                        onChange={(e) => setEditForm({ ...editForm, ci: e.target.value })}
                         className="bg-slate-700 border-slate-600 text-white"
                       />
                     ) : (
-                      <p className="text-sm text-white">{owner.ownerName}</p>
+                      <p className="text-sm text-white">{owner.ci || 'No especificado'}</p>
                     )}
                   </div>
                 </div>
@@ -265,30 +239,12 @@ export function UserProfile(_: PerfilProps) {
                     <p className="text-xs text-slate-500 mb-1">Teléfono</p>
                     {isEditing ? (
                       <Input 
-                        value={editForm.phone}
-                        onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                        value={editForm.phoneNumber}
+                        onChange={(e) => setEditForm({ ...editForm, phoneNumber: e.target.value })}
                         className="bg-slate-700 border-slate-600 text-white"
                       />
                     ) : (
-                      <p className="text-sm text-white">{owner.phone || 'No especificado'}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-slate-800/50 flex items-center justify-center flex-shrink-0">
-                    <Phone className="w-5 h-5 text-cyan-400" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-slate-500 mb-1">Celular</p>
-                    {isEditing ? (
-                      <Input 
-                        value={editForm.cellPhone}
-                        onChange={(e) => setEditForm({ ...editForm, cellPhone: e.target.value })}
-                        className="bg-slate-700 border-slate-600 text-white"
-                      />
-                    ) : (
-                      <p className="text-sm text-white">{owner.cellPhone || 'No especificado'}</p>
+                      <p className="text-sm text-white">{owner.phoneNumber || 'No especificado'}</p>
                     )}
                   </div>
                 </div>
@@ -329,11 +285,11 @@ export function UserProfile(_: PerfilProps) {
         <Card className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm">
           <div className="p-6">
             <h3 className="text-lg text-white mb-6">Mis caballos</h3>
-            {horses.length === 0 ? (
+            {horsesList.length === 0 ? (
               <p className="text-center text-slate-400">No tienes caballos registrados</p>
             ) : (
               <div className="space-y-3">
-                {horses.map((horse, index) => (
+                {horsesList.map((horse: Horse, index: number) => (
                   <div key={index} className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 hover:bg-slate-800/70 transition-colors">
                     <div>
                       <p className="text-sm text-white mb-1">{horse.horseName}</p>
