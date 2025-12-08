@@ -6,9 +6,9 @@ import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
 
 
-const API_URL = "http://82.25.66.67:8000/salary_payments/";
-const EMPLOYEES_URL = "http://82.25.66.67:8000/employees/";
-const EXPENSES_URL = "http://82.25.66.67:8000/expenses/";
+const API_URL = "http://localhost:8000/salary_payments/";
+const EMPLOYEES_URL = "http://localhost:8000/employees/";
+const EXPENSES_URL = "http://localhost:8000/expenses/";
 
 interface EmployeeLite {
   idEmployee: number;
