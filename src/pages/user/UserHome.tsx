@@ -44,17 +44,18 @@ export function UserHome({ setCurrentView }: HomeProps) {
   const horsesList = horses as Horse[];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900">
-      <UserHeader title={`Bienvenido${ownerName ? ', ' + ownerName : ''}`} />
+    <div className="min-h-screen bg-black">
+      <div className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl m-6 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
+        <UserHeader title={`Bienvenido${ownerName ? ', ' + ownerName : ''}`} />
 
-      {/* Widgets Grid */}
-      <div className="px-3 py-4 md:px-6 md:py-6 max-w-6xl mx-auto space-y-3 md:space-y-4">
+        {/* Widgets Grid */}
+        <div className="px-0 py-4 md:px-0 md:py-6 max-w-6xl mx-auto space-y-3 md:space-y-4">
         {/* My Horses */}
         {horsesList.length > 0 ? (
           horsesList.map((horse: Horse) => (
             <Card 
               key={horse.idHorse}
-              className="group relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-slate-700/50 backdrop-blur-md hover:border-cyan-500/60 active:scale-[0.98] transition-all duration-200 cursor-pointer shadow-lg"
+              className="group relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-slate-700/50 backdrop-blur-md hover:border-cyan-500/60 active:scale-[0.98] transition-all duration-200 cursor-pointer shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
               onClick={() => setCurrentView('UserHorses')}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/0 to-cyan-500/0 group-hover:from-cyan-500/10 group-hover:to-transparent transition-all duration-300" />
@@ -82,7 +83,7 @@ export function UserHome({ setCurrentView }: HomeProps) {
 
         {/* Cámara Activa Widget */}
         <Card 
-          className="group relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-slate-700/50 backdrop-blur-md hover:border-cyan-500/60 active:scale-[0.98] transition-all duration-200 cursor-pointer shadow-lg"
+          className="group relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-slate-700/50 backdrop-blur-md hover:border-cyan-500/60 active:scale-[0.98] transition-all duration-200 cursor-pointer shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
           onClick={() => setCurrentView('UserCamera')}
         >
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/0 to-cyan-500/0 group-hover:from-cyan-500/10 group-hover:to-transparent transition-all duration-300" />
@@ -105,7 +106,7 @@ export function UserHome({ setCurrentView }: HomeProps) {
 
         {/* Estado Financiero Widget */}
         <Card 
-          className="group relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-slate-700/50 backdrop-blur-md hover:border-cyan-500/60 active:scale-[0.98] transition-all duration-200 cursor-pointer shadow-lg"
+          className="group relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-slate-700/50 backdrop-blur-md hover:border-cyan-500/60 active:scale-[0.98] transition-all duration-200 cursor-pointer shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
           onClick={() => setCurrentView('UserPayments')}
         >
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/0 to-cyan-500/0 group-hover:from-emerald-500/10 group-hover:to-transparent transition-all duration-300" />
@@ -124,13 +125,13 @@ export function UserHome({ setCurrentView }: HomeProps) {
         </Card>
 
         {/* Noticias del Club Widget */}
-        <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-slate-700/50 backdrop-blur-md shadow-lg">
+        <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-slate-700/50 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
           <div className="p-4 md:p-6">
             <div className="flex items-center gap-3 mb-4 md:mb-6">
               <div className="w-12 h-12 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30 flex-shrink-0">
                 <Newspaper className="w-6 h-6" />
               </div>
-              <h3 className="text-lg md:text-xl text-amber-400 font-semibold">Noticias del Club</h3>
+              <h3 className="text-lg md:text-xl font-semibold text-teal-400">Noticias del Club</h3>
             </div>
             
             <div className="space-y-3">
@@ -151,6 +152,7 @@ export function UserHome({ setCurrentView }: HomeProps) {
             </div>
           </div>
         </Card>
+        </div>
       </div>
     </div>
   );

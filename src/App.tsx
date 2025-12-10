@@ -1,6 +1,6 @@
 // src/App.tsx
 import { useEffect, useState } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import MainLayout from './components/MainLayout';
 import AuthForm from './components/AuthForm';
@@ -91,7 +91,6 @@ const fetchUserRole = async (userId: string) => {
 
 
 export default function App() {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<any | null>(null);
   const [role, setRole] = useState<number | null>(null);
@@ -289,10 +288,7 @@ export default function App() {
                   )}
                   <div className="flex justify-center gap-3">
                     <button
-                      onClick={async () => {
-                        await handleSignOut();
-                        navigate('/', { replace: true });
-                      }}
+                      onClick={handleSignOut}
                       className="px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-600"
                     >
                       Cerrar sesión

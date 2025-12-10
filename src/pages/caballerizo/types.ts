@@ -6,7 +6,8 @@ export interface CaballerizoEmployee {
   startContractDate?: string | null;
   endContractDate?: string | null;
   employeePhoto?: string | null;
-  fk_idAuthUser?: string | null;
+  uid?: string | null;              // ← Campo principal del backend
+  fk_idAuthUser?: string | null;    // ← Por compatibilidad
   status?: boolean | null;
   [key: string]: unknown;
 }

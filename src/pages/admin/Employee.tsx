@@ -41,11 +41,20 @@ interface Employee {
   salary: number;
   status: boolean;
   fk_idPositionEmployee: number;
+  uid?: string | null; // UUID de Supabase (cambiado de fk_idAuthUser a uid)
   employeePhoto?: string | null;
 }
+
 interface Position {
   idPositionEmployee: number;
   namePosition: string;
+}
+
+interface UserAccountData {
+  email: string;
+  password: string;
+  username: string;
+  createAccount: boolean; // Flag para saber si se debe crear cuenta
 }
 
 // ====== Helpers ======
@@ -86,12 +95,20 @@ const Employees = () => {
     salary: 0,
     status: true,
     fk_idPositionEmployee: 1,
+    uid: null,
     employeePhoto: null,
+  });
+  const [userAccount, setUserAccount] = useState<UserAccountData>({
+    email: '',
+    password: '',
+    username: '',
+    createAccount: false,
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const [creatingAccount, setCreatingAccount] = useState<boolean>(false);
 
   // estado para exportación
   const [exporting, setExporting] = useState<boolean>(false);
@@ -107,6 +124,7 @@ const Employees = () => {
     salary: 0,
     status: true,
     fk_idPositionEmployee: positions.length > 0 ? positions[0].idPositionEmployee : 0,
+    uid: null,
     employeePhoto: null,
   });
 
@@ -146,7 +164,56 @@ const Employees = () => {
   // Crear o actualizar empleado
   const handleCreateOrUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validar si se quiere crear cuenta
+    if (!editingId && userAccount.createAccount) {
+      if (!userAccount.email || !userAccount.password || !userAccount.username) {
+        toast.error("Debe completar todos los campos de la cuenta de usuario");
+        return;
+      }
+      
+      if (userAccount.password.length < 6) {
+        toast.error("La contraseña debe tener al menos 6 caracteres");
+        return;
+      }
+    }
+    
     try {
+      setCreatingAccount(true);
+      let authUserId: string | null = null;
+
+      // 1. Crear cuenta de usuario en Supabase Auth + ERP User (solo si es nuevo empleado y checkbox está marcado)
+      if (!editingId && userAccount.createAccount) {
+        try {
+          // Crear cuenta en backend (el backend manejará Supabase Auth y erp_user)
+          const createAccountResponse = await fetch(`${API_URL}/employees/create-account`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: userAccount.email,
+              password: userAccount.password,
+              username: userAccount.username,
+              fullName: newEmployee.fullName,
+            }),
+          });
+
+          if (!createAccountResponse.ok) {
+            const errorData = await createAccountResponse.json();
+            throw new Error(errorData.detail || 'Error al crear cuenta de usuario');
+          }
+
+          const accountData = await createAccountResponse.json();
+          authUserId = accountData.uid; // UID retornado por el backend
+          
+          toast.success(`Cuenta de usuario creada para ${userAccount.email}`);
+        } catch (accountError: any) {
+          toast.error(`Error al crear cuenta: ${accountError.message}`);
+          setCreatingAccount(false);
+          return; // No continuar si falla la creación de cuenta
+        }
+      }
+
+      // 2. Crear/actualizar empleado con la foto
       let employeePhoto: string | null = null;
       if (selectedPhoto) {
         const base64Full = await toBase64(selectedPhoto);
@@ -163,11 +230,13 @@ const Employees = () => {
         exitTime: newEmployee.endContractDate
           ? `${newEmployee.endContractDate}T${newEmployee.exitTime || '17:00'}:00`
           : '',
+        uid: authUserId || newEmployee.uid, // Vincular con la cuenta creada (cambiado a uid)
         ...(employeePhoto !== null && { employeePhoto }),
       };
 
       if (!newEmployee.fk_idPositionEmployee) {
         toast.error("Debe seleccionar una posición válida para el empleado.");
+        setCreatingAccount(false);
         return;
       }
 
@@ -185,18 +254,37 @@ const Employees = () => {
           body: JSON.stringify(employeeData),
         });
       }
+      
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Error: ${response.status} - ${errorText}`);
       }
+      
       await response.json();
-      toast.success(`Empleado ${editingId ? 'actualizado' : 'creado'} con éxito!`);
+      
+      const successMessage = editingId 
+        ? 'Empleado actualizado con éxito!' 
+        : userAccount.createAccount 
+          ? 'Empleado creado con cuenta de acceso!' 
+          : 'Empleado creado con éxito!';
+      
+      toast.success(successMessage);
+      
+      // Resetear formularios
       setNewEmployee(getEmptyEmployee());
+      setUserAccount({
+        email: '',
+        password: '',
+        username: '',
+        createAccount: false,
+      });
       setEditingId(null);
       setSelectedPhoto(null);
       fetchData();
     } catch (error: any) {
       toast.error(`Ocurrió un error en la operación: ${error.message}`);
+    } finally {
+      setCreatingAccount(false);
     }
   };
 
@@ -229,6 +317,12 @@ const Employees = () => {
 
   const cancelEdit = () => {
     setNewEmployee(getEmptyEmployee());
+    setUserAccount({
+      email: '',
+      password: '',
+      username: '',
+      createAccount: false,
+    });
     setEditingId(null);
     setSelectedPhoto(null);
   };
@@ -358,10 +452,21 @@ const Employees = () => {
        className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]"
       >
   
-        <div className="flex items-center mb-4">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-teal-300">
             {editingId ? "Editar Empleado" : "Crear Nuevo Empleado"}
           </h2>
+
+          <button
+            type="button"
+            onClick={exportEmployeesPDF}
+            disabled={loading || exporting || employees.length === 0}
+            className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white
+                      px-3 py-1.5 text-sm rounded-md font-medium shadow-sm hover:shadow-md transition"
+            title="Generar PDF de empleados"
+          >
+            {exporting ? 'Exportando…' : 'Exportar PDF'}
+          </button>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -423,53 +528,110 @@ const Employees = () => {
           </div>
         </div>
 
+        {/* Sección de Cuenta de Usuario (solo al crear nuevo empleado) */}
+        {!editingId && (
+          <div className="mt-6 pt-6 border-t border-slate-600">
+            <div className="flex items-center gap-3 mb-4">
+              <input
+                type="checkbox"
+                id="createAccount"
+                checked={userAccount.createAccount}
+                onChange={(e) => setUserAccount({ ...userAccount, createAccount: e.target.checked })}
+                className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-teal-500 focus:ring-2 focus:ring-teal-500"
+              />
+              <label htmlFor="createAccount" className="text-lg font-semibold text-teal-300 cursor-pointer">
+                ✨ Crear cuenta de acceso al sistema
+              </label>
+            </div>
+
+            {userAccount.createAccount && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-800/50 p-4 rounded-lg border border-teal-500/30">
+                <div>
+                  <label htmlFor="username" className="text-sm text-slate-300">
+                    Usuario <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="username"
+                    placeholder="Ej: juan.perez"
+                    value={userAccount.username}
+                    onChange={(e) => setUserAccount({ ...userAccount, username: e.target.value })}
+                    className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    required={userAccount.createAccount}
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Nombre de usuario para iniciar sesión</p>
+                </div>
+
+                <div>
+                  <label htmlFor="email" className="text-sm text-slate-300">
+                    Correo Electrónico <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    placeholder="empleado@ejemplo.com"
+                    value={userAccount.email}
+                    onChange={(e) => setUserAccount({ ...userAccount, email: e.target.value })}
+                    className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    required={userAccount.createAccount}
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Se usará para recuperar contraseña</p>
+                </div>
+
+                <div>
+                  <label htmlFor="password" className="text-sm text-slate-300">
+                    Contraseña <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    id="password"
+                    placeholder="Mínimo 6 caracteres"
+                    value={userAccount.password}
+                    onChange={(e) => setUserAccount({ ...userAccount, password: e.target.value })}
+                    className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    required={userAccount.createAccount}
+                    minLength={6}
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Mínimo 6 caracteres</p>
+                </div>
+
+                <div className="md:col-span-3 bg-blue-900/30 border border-blue-500/30 rounded-lg p-3">
+                  <p className="text-sm text-blue-200">
+                   ℹ️ Al crear la cuenta, el empleado podrá iniciar sesión como <strong>Caballerizo</strong> y ver sus tareas asignadas.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Barra de acciones inferiores */}
         <div className="flex flex-wrap items-center gap-3 mt-6">
           <span className="text-sm bg-gray-700 px-3 py-1 rounded-md">
             Total: <b>{formatCurrency(employees.reduce((acc, e) => acc + Number(e.salary || 0), 0))}</b>
           </span>
 
-          <div className="flex flex-wrap gap-2 ml-auto">
-            <button
-              type="button"
-              onClick={exportEmployeesPDF}
-              disabled={loading || exporting || employees.length === 0}
-            className="group relative flex items-center justify-start gap-3 overflow-hidden pr-[64px]
-                       rounded-xl bg-gradient-to-r from-[#3d8ae6] to-[#5aa8ff]
-                       text-white text-sm font-semibold tracking-wide uppercase
-                       px-6 py-3 pr-16 shadow-lg transition-all duration-200 w-full sm:w-auto min-w-[240px]
-                       hover:brightness-[1.09] hover:shadow-[0_0_18px_rgba(90,168,255,0.45)]
-                       active:translate-y-[1px]
-                       focus:outline-none focus:ring-0
-                       disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Generar PDF de empleados"
-          >
-            <span className="text-left pl-4">Exportar PDF</span>
-            <span className="absolute inset-y-0 right-0 w-14 grid place-items-center bg-[#2f73d2]/90 transition-colors group-hover:bg-[#3d86ef]">
-              <Save size={20} />
-            </span>
-          </button>
-
+          <div className="ml-auto flex gap-2">
             {editingId ? (
               <>
-                <button type="submit" className="flex items-center gap-2 px-4 py-3 bg-green-600 text-white rounded-md shadow-md hover:bg-green-700 transition-colors"><Save size={18} /> Guardar Cambios</button>
-                <button type="button" onClick={cancelEdit} className="flex items-center gap-2 px-4 py-3 bg-red-600 text-white rounded-md shadow-md hover:bg-red-700 transition-colors"><X size={18} /> Cancelar</button>
+                <button 
+                  type="submit" 
+                  disabled={creatingAccount}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md shadow-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {creatingAccount ? <Loader size={18} className="animate-spin" /> : <Save size={18} />}
+                  {creatingAccount ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+                <button type="button" onClick={cancelEdit} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md shadow-md hover:bg-red-700 transition-colors"><X size={18} /> Cancelar</button>
               </>
             ) : (
-               <button
-                type="submit"
-                className="group relative flex items-center justify-start gap-3 overflow-hidden pr-[64px]
-                           rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500
-                           text-white text-sm font-semibold tracking-wide uppercase
-                           px-6 py-3 pr-16 pl-4 shadow-lg transition-all duration-200 w-full sm:w-auto min-w-[260px]
-                           hover:brightness-[1.07]
-                           active:translate-y-[1px]
-                           focus:outline-none focus:ring-0"
+              <button 
+                type="submit" 
+                disabled={creatingAccount}
+                className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-md shadow-md hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span className="text-left pl-0">Agregar Empleado</span>
-                <span className="absolute inset-y-0 right-0 w-14 grid place-items-center bg-emerald-600/90 transition-colors group-hover:bg-emerald-700">
-                  <UserPlus size={20} />
-                </span>
+                {creatingAccount ? <Loader size={18} className="animate-spin" /> : <UserPlus size={18} />}
+                {creatingAccount ? 'Creando...' : userAccount.createAccount ? 'Crear Empleado + Cuenta' : 'Agregar Empleado'}
               </button>
             )}
           </div>

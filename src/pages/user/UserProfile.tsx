@@ -5,8 +5,9 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import UserHeader from '../../components/UserHeader';
 import { useCurrentUser, useOwnerData, useOwnerHorses } from '../../hooks/useUserData';
-import { updateOwner, type Owner, type Horse } from '../../services/userService';
+import { updateOwner, type Horse } from '../../services/userService';
 import { toast } from 'react-hot-toast';
+import { decodeBackendImage } from '../../utils/imageHelpers';
 
 interface PerfilProps {}
 
@@ -37,12 +38,12 @@ export function UserProfile(_: PerfilProps) {
         name: owner.name || '',
         FirstName: owner.FirstName || '',
         SecondName: owner.SecondName || '',
-        email: owner.email || '',
+        email: owner.email || user?.email || '',
         phoneNumber: owner.phoneNumber?.toString() || '',
         ci: owner.ci?.toString() || ''
       });
     }
-  }, [owner]);
+  }, [owner, user]);
 
   const handleSave = async () => {
     if (!owner) return;
@@ -96,21 +97,30 @@ export function UserProfile(_: PerfilProps) {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-6 lg:p-8">
-      <UserHeader title="Mi Perfil" />
+    <div className="min-h-screen bg-black text-white">
+      <div className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl m-6 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
+        <UserHeader title="Mi Perfil" />
 
-      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="max-w-4xl mx-auto space-y-6">
         {/* Profile Header */}
-        <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 border-slate-700/50 backdrop-blur-sm">
+        <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 border-slate-700/50 backdrop-blur-sm shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
           <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl" />
           <div className="relative p-6 md:p-8">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
               <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-                  <User className="w-10 h-10" />
-                </div>
+                {ownerData?.ownerPhoto ? (
+                  <img 
+                    src={decodeBackendImage(ownerData.ownerPhoto)} 
+                    alt={owner.name || owner.FirstName || 'Owner'} 
+                    className="w-20 h-20 rounded-2xl object-cover shadow-lg shadow-cyan-500/20 border-2 border-cyan-400/30"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                    <User className="w-10 h-10" />
+                  </div>
+                )}
                 <div>
-                  <h2 className="text-2xl text-white mb-1">
+                  <h2 className="text-2xl font-semibold text-teal-400 mb-1">
                     {owner.name || `${owner.FirstName || ''} ${owner.SecondName || ''}`.trim() || 'Sin nombre'}
                   </h2>
                   <p className="text-sm text-slate-400">CI: {owner.ci || 'No especificado'}</p>
@@ -141,7 +151,7 @@ export function UserProfile(_: PerfilProps) {
                         name: owner.name || '',
                         FirstName: owner.FirstName || '',
                         SecondName: owner.SecondName || '',
-                        email: owner.email || '',
+                        email: owner.email || user?.email || '',
                         phoneNumber: owner.phoneNumber?.toString() || '',
                         ci: owner.ci?.toString() || ''
                       });
@@ -224,7 +234,7 @@ export function UserProfile(_: PerfilProps) {
                         className="bg-slate-700 border-slate-600 text-white"
                       />
                     ) : (
-                      <p className="text-sm text-white break-all">{owner.email || 'No especificado'}</p>
+                      <p className="text-sm text-white break-all">{user?.email || owner.email || 'No especificado'}</p>
                     )}
                   </div>
                 </div>
@@ -248,34 +258,6 @@ export function UserProfile(_: PerfilProps) {
                     )}
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Membership Info */}
-        <Card className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm">
-          <div className="p-6">
-            <h3 className="text-lg text-white mb-6">Información de membresía</h3>
-            <div className="space-y-3">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-4 rounded-lg bg-slate-800/50">
-                <span className="text-sm text-slate-300">Tipo de membresía</span>
-                <span className="text-sm text-cyan-400">Premium</span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-4 rounded-lg bg-slate-800/50">
-                <span className="text-sm text-slate-300">Fecha de inicio</span>
-                <span className="text-sm text-white">01/03/2021</span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-4 rounded-lg bg-slate-800/50">
-                <span className="text-sm text-slate-300">Estado</span>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="text-sm text-emerald-400">Activa</span>
-                </div>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-4 rounded-lg bg-slate-800/50">
-                <span className="text-sm text-slate-300">Renovación próxima</span>
-                <span className="text-sm text-white">01/03/2026</span>
               </div>
             </div>
           </div>
@@ -312,10 +294,6 @@ export function UserProfile(_: PerfilProps) {
             <h3 className="text-lg text-white mb-6">Información adicional</h3>
             <div className="space-y-3">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-4 rounded-lg bg-slate-800/50">
-                <span className="text-sm text-slate-300">ID de Propietario</span>
-                <span className="text-sm text-cyan-400">#{owner.idOwner}</span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-4 rounded-lg bg-slate-800/50">
                 <span className="text-sm text-slate-300">Documento de identidad</span>
                 <span className="text-sm text-white">{owner.ci || 'No registrado'}</span>
               </div>
@@ -326,6 +304,7 @@ export function UserProfile(_: PerfilProps) {
             </div>
           </div>
         </Card>
+        </div>
       </div>
     </div>
   );

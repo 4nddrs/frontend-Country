@@ -39,7 +39,7 @@ const AppUser = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-950">
+    <div className="flex min-h-screen bg-black">
       <SidebarUser />
       <div className="flex-1 ml-0 lg:ml-72 min-h-screen">
         <Routes>

@@ -120,15 +120,11 @@ export default function SidebarCaballerizo() {
           </div>
 
           <Button
-            onClick={async () => {
-              await handleSignOut();
-              // No necesitamos window.location.reload()
-              // El onAuthStateChange en App.tsx maneja la redirección automáticamente
-            }}
+            onClick={handleSignOut}
             className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg shadow-emerald-500/20"
           >
             <LogOut className="w-4 h-4 mr-2" />
-            Cerrar sesion
+            Cerrar sesión
           </Button>
         </div>
       </aside>

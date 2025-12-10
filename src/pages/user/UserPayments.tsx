@@ -94,13 +94,14 @@ export function UserPayments(_: PagosEstadoProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900">
-      <UserHeader title="Mis Pagos y Estado Económico" />
+    <div className="min-h-screen bg-black text-white">
+      <div className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl m-6 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
+        <UserHeader title="Mis Pagos y Estado Económico" />
 
-      <div className="px-3 py-4 md:px-6 md:py-6 max-w-6xl mx-auto space-y-4 md:space-y-6">
+        <div className="px-0 py-4 md:px-0 md:py-6 max-w-6xl mx-auto space-y-4 md:space-y-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-          <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 border border-slate-700/50 backdrop-blur-md shadow-lg">
+          <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 border border-slate-700/50 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
             <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl" />
             <div className="relative p-4 md:p-6">
               <div className="w-12 h-12 md:w-10 md:h-10 rounded-2xl bg-gradient-to-br from-amber-500/30 to-amber-600/30 flex items-center justify-center mb-3 md:mb-4 shadow-lg shadow-amber-500/20">
@@ -112,7 +113,7 @@ export function UserPayments(_: PagosEstadoProps) {
             </div>
           </Card>
 
-          <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 border border-slate-700/50 backdrop-blur-md shadow-lg">
+          <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 border border-slate-700/50 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl" />
             <div className="relative p-4 md:p-6">
               <div className="w-12 h-12 md:w-10 md:h-10 rounded-2xl bg-gradient-to-br from-emerald-500/30 to-emerald-600/30 flex items-center justify-center mb-3 md:mb-4 shadow-lg shadow-emerald-500/20">
@@ -124,7 +125,7 @@ export function UserPayments(_: PagosEstadoProps) {
             </div>
           </Card>
 
-          <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 border border-slate-700/50 backdrop-blur-md shadow-lg sm:col-span-2 lg:col-span-1">
+          <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/70 to-slate-900/70 border border-slate-700/50 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.4)] sm:col-span-2 lg:col-span-1">
             <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl" />
             <div className="relative p-4 md:p-6">
               <div className="w-12 h-12 md:w-10 md:h-10 rounded-2xl bg-gradient-to-br from-cyan-500/30 to-cyan-600/30 flex items-center justify-center mb-3 md:mb-4 shadow-lg shadow-cyan-500/20">
@@ -138,9 +139,9 @@ export function UserPayments(_: PagosEstadoProps) {
         </div>
 
         {/* Payments Table */}
-        <Card className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-slate-700/50 backdrop-blur-md shadow-lg overflow-hidden">
+        <Card className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-slate-700/50 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden">
           <div className="p-4 md:p-6">
-            <h3 className="text-lg md:text-xl text-white font-semibold mb-4 md:mb-6">Historial de Pagos</h3>
+            <h3 className="text-lg md:text-xl font-semibold text-teal-400 mb-4 md:mb-6">Historial de Pagos</h3>
             
             {totalControls.length === 0 ? (
               <div className="text-center py-8 text-slate-400">
@@ -271,6 +272,7 @@ export function UserPayments(_: PagosEstadoProps) {
             </div>
           </div>
         </Card>
+        </div>
       </div>
     </div>
   );

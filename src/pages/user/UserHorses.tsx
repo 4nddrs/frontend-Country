@@ -121,11 +121,12 @@ export function UserHorses(_: MiCaballoProps) {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-6 lg:p-8">
-      {/* Header */}
-      <UserHeader title="Mi Caballo" />
+    <div className="min-h-screen bg-black text-white">
+      <div className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl m-6 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
+        {/* Header */}
+        <UserHeader title="Mi Caballo" />
 
-      <div className="max-w-4xl mx-auto space-y-5">
+        <div className="max-w-4xl mx-auto space-y-5 p-0">
         {/* Horse Selector if multiple horses */}
         {horsesList.length > 1 && (
           <Card className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm p-4">
@@ -150,11 +151,11 @@ export function UserHorses(_: MiCaballoProps) {
         {selectedHorse && (
           <>
             {/* Main Info Card */}
-            <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 border-slate-700/50 backdrop-blur-sm">
+            <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 border-slate-700/50 backdrop-blur-sm shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
           <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl" />
           <div className="relative p-6 md:p-8">
             <div className="flex items-start justify-between mb-6">
-              <h2 className="text-xl md:text-2xl text-cyan-400">{selectedHorse.horseName}</h2>
+              <h2 className="text-xl md:text-2xl font-semibold text-teal-400">{selectedHorse.horseName}</h2>
               <Heart className="w-6 h-6 text-slate-400 hover:text-red-400 cursor-pointer transition-colors" />
             </div>
             
@@ -190,7 +191,7 @@ export function UserHorses(_: MiCaballoProps) {
             {/* Stats Grid */}
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-5">
           {/* Plan Nutricional */}
-          <Card className="group relative overflow-hidden bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm hover:border-cyan-500/30 transition-all">
+          <Card className="group relative overflow-hidden bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm hover:border-cyan-500/30 transition-all shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
             <div className="p-6">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 flex items-center justify-center mb-4">
                 <Apple className="w-5 h-5 text-cyan-400" />
@@ -232,22 +233,20 @@ export function UserHorses(_: MiCaballoProps) {
 
             {/* Additional Info */}
             <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm">
-          <div className="p-4 md:p-6">
-            <h3 className="text-sm text-slate-400 mb-4">Información adicional</h3>
-            <div className="space-y-3">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3 rounded-lg bg-slate-800/50">
-                <span className="text-sm text-slate-300">ID del Caballo</span>
-                <span className="text-sm text-cyan-400">#{selectedHorse.idHorse}</span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3 rounded-lg bg-slate-800/50">
-                <span className="text-sm text-slate-300">Box actual</span>
-                <span className="text-sm text-white">{controlData?.box ? `Box #${controlData.box}` : 'No asignado'}</span>
+              <div className="p-4 md:p-6">
+                <h3 className="text-sm text-slate-400 mb-4">Información adicional</h3>
+                <div className="space-y-3">
+                  
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3 rounded-lg bg-slate-800/50">
+                    <span className="text-sm text-slate-300">Box actual</span>
+                    <span className="text-sm text-white">{controlData?.box ? `Box #${controlData.box}` : 'No asignado'}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Card>
+            </Card>
           </>
         )}
+        </div>
       </div>
     </div>
   );

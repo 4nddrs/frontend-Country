@@ -9,12 +9,12 @@ export function UserCamera(_: CamaraEstabloProps) {
   const [isMuted, setIsMuted] = useState(true);
 
   return (
-    <div className="min-h-screen p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-black text-white">
       <UserHeader title="Cámara del Establo" />
 
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-6 p-4 md:p-6 lg:p-8">
         {/* Main Camera Feed */}
-        <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 border-slate-700/50 backdrop-blur-sm">
+        <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 border-slate-700/50 backdrop-blur-sm shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
           <div className="p-4 md:p-6">
             {/* Video Container */}
             <div className="relative aspect-video bg-black rounded-xl overflow-hidden mb-4">
@@ -61,7 +61,7 @@ export function UserCamera(_: CamaraEstabloProps) {
 
         {/* Camera Stats */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm">
+          <Card className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
             <div className="p-4">
               <p className="text-xs text-slate-500 mb-2">Estado de la cámara</p>
               <div className="flex items-center gap-2">
@@ -71,14 +71,14 @@ export function UserCamera(_: CamaraEstabloProps) {
             </div>
           </Card>
 
-          <Card className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm">
+          <Card className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
             <div className="p-4">
               <p className="text-xs text-slate-500 mb-2">Ubicación</p>
               <p className="text-sm text-white">Box A-12</p>
             </div>
           </Card>
 
-          <Card className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm sm:col-span-2 lg:col-span-1">
+          <Card className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm shadow-[0_8px_32px_rgba(0,0,0,0.4)] sm:col-span-2 lg:col-span-1">
             <div className="p-4">
               <p className="text-xs text-slate-500 mb-2">Calidad de conexión</p>
               <p className="text-sm text-cyan-400">HD 1080p</p>
@@ -87,9 +87,9 @@ export function UserCamera(_: CamaraEstabloProps) {
         </div>
 
         {/* Additional Info */}
-        <Card className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm">
+        <Card className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
           <div className="p-4 md:p-6">
-            <h3 className="text-sm text-slate-400 mb-4">Información</h3>
+            <h3 className="text-sm font-semibold text-teal-400 mb-4">Información</h3>
             <div className="space-y-3">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3 rounded-lg bg-slate-800/50">
                 <span className="text-sm text-slate-300">Horario de transmisión</span>
