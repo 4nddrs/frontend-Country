@@ -39,7 +39,7 @@ const ErpUsersManagement = () => {
       const data = await res.json();
       setUserRoles(data);
     } catch {
-      toast.error("No se pudieron cargar roles de usuario");
+      // Silenciar error de carga
     }
   };
 

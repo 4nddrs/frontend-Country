@@ -69,7 +69,7 @@ const NutritionalPlanDetailsManagement = () => {
       const data = await res.json();
       setFoods(data);
     } catch {
-      toast.error("No se pudieron cargar comidas");
+      // Silenciar error de carga
     }
   };
 
@@ -80,7 +80,7 @@ const NutritionalPlanDetailsManagement = () => {
       const data = await res.json();
       setNutritionalPlans(data);
     } catch {
-      toast.error("No se pudieron cargar planes nutricionales");
+      // Silenciar error de carga
     }
   };
 

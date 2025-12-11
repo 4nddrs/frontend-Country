@@ -100,7 +100,7 @@ const HorsesManagement = () => {
       const data = await res.json();
       setOwners(data);
     } catch (err) {
-      toast.error('Error cargando duenos');
+      // Silenciar error de carga
     }
   };
 
@@ -110,7 +110,7 @@ const HorsesManagement = () => {
       const data = await res.json();
       setRaces(data);
     } catch (err) {
-      toast.error('Error cargando razas');
+      // Silenciar error de carga
     }
   };
 
@@ -120,7 +120,7 @@ const HorsesManagement = () => {
       const data = await res.json();
       setNutritionalPlans(data);
     } catch (err) {
-      toast.error('Error cargando planes nutricionales');
+      // Silenciar error de carga
     }
   };
 

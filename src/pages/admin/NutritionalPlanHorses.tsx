@@ -45,7 +45,7 @@ const NutritionalPlanHorsesManagement = () => {
      console.log("✅ Nutritional Plans recibidos:", data);
     setNutritionalPlans(data);
   } catch {
-    toast.error("No se pudieron cargar planes nutricionales");
+    // Silenciar error de carga
   }
 };
 
@@ -56,7 +56,7 @@ const NutritionalPlanHorsesManagement = () => {
     const data = await res.json();
     setHorses(data);
   } catch {
-    toast.error("No se pudieron cargar caballos");
+    // Silenciar error de carga
   }
 };
 

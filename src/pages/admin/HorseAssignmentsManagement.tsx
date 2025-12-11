@@ -108,7 +108,7 @@ const HorseAssignmentsManagement = () => {
       );
       setHorses(activos);
     } catch {
-      toast.error("No se pudieron cargar los caballos.");
+      // Silenciar error de carga
     }
   };
 
@@ -127,7 +127,7 @@ const HorseAssignmentsManagement = () => {
       setEmployees(validEmployees);
     } catch (err) {
       console.error("Error cargando empleados:", err);
-      toast.error("No se pudieron cargar los empleados.");
+      // Silenciar error de carga
     }
   };
 

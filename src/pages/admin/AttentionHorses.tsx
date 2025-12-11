@@ -189,7 +189,7 @@ const AttentionHorsesManagement = () => {
       const data = await res.json();
       setHorses(Array.isArray(data) ? data : []);
     } catch {
-      toast.error('No se pudieron cargar caballos');
+      // Silenciar error de carga
     }
   };
 
@@ -202,7 +202,7 @@ const AttentionHorsesManagement = () => {
       const data = await res.json();
       setMedicines(Array.isArray(data) ? data : []);
     } catch {
-      toast.error('No se pudieron cargar medicinas');
+      // Silenciar error de carga
     }
   };
 
@@ -215,7 +215,7 @@ const AttentionHorsesManagement = () => {
       const data = await res.json();
       setEmployees(Array.isArray(data) ? data : []);
     } catch {
-      toast.error('No se pudieron cargar empleados');
+      // Silenciar error de carga
     }
   };
 

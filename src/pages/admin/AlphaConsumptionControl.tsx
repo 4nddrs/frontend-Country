@@ -90,7 +90,7 @@ const AlphaConsumptionControl: React.FC = () => {
       setFoods(data);
     } catch (e: any) {
       console.error(e);
-      toast.error("No se pudieron cargar los alimentos.");
+      // Silenciar error de carga
       setFoods([]);
     }
   };
@@ -106,7 +106,7 @@ const AlphaConsumptionControl: React.FC = () => {
       setPeriod(data[0] || "");
     } catch (e: any) {
       console.error(e);
-      toast.error("No se pudieron cargar los periodos.");
+      // Silenciar error de carga
       setPeriods([]);
       setPeriod("");
     } finally {

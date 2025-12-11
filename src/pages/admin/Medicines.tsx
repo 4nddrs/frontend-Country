@@ -81,7 +81,7 @@ const MedicinesManagement = () => {
       const data = await res.json();
       setHorses(data);
     } catch {
-      toast.error("No se pudieron cargar caballos");
+      // Silenciar error de carga
     }
   };
 

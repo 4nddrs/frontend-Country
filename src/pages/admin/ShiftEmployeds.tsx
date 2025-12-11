@@ -31,7 +31,7 @@ const ShiftEmployedsManagement = () => {
       const data = await res.json();
       setShiftTypes(data);
     } catch {
-      toast.error("No se pudieron cargar tipos de turno");
+      // Silenciar error de carga
     }
   };
 

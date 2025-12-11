@@ -625,7 +625,7 @@ const OwnerReportMonthManagement = () => {
       const data = await res.json();
       setOwners(data);
     } catch {
-      toast.error('No se pudieron cargar propietarios');
+      // Silenciar error de carga
     }
   };
 
@@ -636,7 +636,7 @@ const OwnerReportMonthManagement = () => {
       const data = await res.json();
       setHorses(data);
     } catch {
-      toast.error('No se pudieron cargar caballos');
+      // Silenciar error de carga
     }
   };
 
@@ -686,7 +686,7 @@ const OwnerReportMonthManagement = () => {
         })
       );
     } catch {
-      toast.error('No se pudieron cargar los caballos del propietario.');
+      // Silenciar error de carga
       setOwnerHorses([]);
       setHorsesReport([]);
     } finally {

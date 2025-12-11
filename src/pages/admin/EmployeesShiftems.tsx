@@ -32,7 +32,7 @@ const EmployeesShiftemManagement = () => {
       const data = await res.json();
       setEmployees(data);
     } catch {
-      toast.error("No se pudieron cargar empleados");
+      // Silenciar error de carga
     }
   };
 
@@ -43,7 +43,7 @@ const EmployeesShiftemManagement = () => {
       const data = await res.json();
       setShiftEmployees(data);
     } catch {
-      toast.error("No se pudieron cargar turnos empleados");
+      // Silenciar error de carga
     }
   };
 
@@ -54,7 +54,7 @@ const EmployeesShiftemManagement = () => {
       const data = await res.json();
       setShiftTypes(data);
     } catch {
-      toast.error("No se pudieron cargar los tipos de turno");
+      // Silenciar error de carga
     }
   };
 

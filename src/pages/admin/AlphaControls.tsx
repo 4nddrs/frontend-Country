@@ -139,7 +139,7 @@ const AlphaControlsManagement: React.FC = () => {
       // 🔹 recalcular saldo en orden correcto
       setControls(calculateWithBalance(sorted));
     } catch {
-      toast.error("No se pudieron cargar los controles");
+      // Silenciar error de carga
     } finally {
       setLoading(false);
     }

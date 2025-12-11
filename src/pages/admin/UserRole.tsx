@@ -26,7 +26,7 @@ const UserRolesManagement = () => {
       const data = await res.json();
       setRoles(data);
     } catch {
-      toast.error('No se pudieron cargar los roles.');
+      // Silenciar error de carga
     } finally {
       setLoading(false);
     }

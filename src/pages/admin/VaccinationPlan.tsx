@@ -72,7 +72,7 @@ const VaccinationPlanManagement = () => {
       const data = await res.json();
       setMedicines(data);
     } catch {
-      toast.error("No se pudieron cargar las medicinas");
+      // Silenciar error de carga
     }
   };
 

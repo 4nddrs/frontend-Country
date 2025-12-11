@@ -38,7 +38,7 @@ const EmployeeAbsencesManagement = () => {
       const data = await res.json();
       setEmployees(data);
     } catch {
-      toast.error("No se pudieron cargar empleados");
+      // Silenciar error de carga
     }
   };
 

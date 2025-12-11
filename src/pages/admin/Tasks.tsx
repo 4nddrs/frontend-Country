@@ -54,7 +54,7 @@ const TasksManagement = () => {
     console.log("Categorías obtenidas:", data);
     setCategories(data);
   } catch {
-    toast.error("No se pudieron cargar categorías");
+    // Silenciar error de carga
   }
 };
 
@@ -66,7 +66,7 @@ const fetchEmployees = async () => {
     console.log("Empleados obtenidos:", data);
     setEmployees(data);
   } catch {
-    toast.error("No se pudieron cargar empleados");
+    // Silenciar error de carga
   }
 };
 

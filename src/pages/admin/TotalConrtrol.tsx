@@ -525,7 +525,7 @@ const TotalControlManagement = () => {
       const data = await res.json();
       setOwners(data);
     } catch {
-      toast.error("No se pudieron cargar propietarios");
+      // Silenciar error de carga
     }
   };
 
@@ -545,7 +545,7 @@ const TotalControlManagement = () => {
         return updated;
       });
     } catch {
-      toast.error("No se pudieron cargar los caballos.");
+      // Silenciar error de carga
     }
   };
 
@@ -566,7 +566,7 @@ const TotalControlManagement = () => {
         return updated;
       });
     } catch {
-      toast.error("No se pudieron cargar caballos");
+      // Silenciar error de carga
     }
   };
 

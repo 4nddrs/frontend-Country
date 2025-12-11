@@ -35,7 +35,7 @@ const ApplicationProceduresManagement = () => {
       const data = await res.json();
       setScheduledProcedures(data);
     } catch {
-      toast.error("No se pudieron cargar procedimientos programados");
+      // Silenciar error de carga
     }
   };
 
@@ -46,7 +46,7 @@ const ApplicationProceduresManagement = () => {
       const data = await res.json();
       setHorses(data);
     } catch {
-      toast.error("No se pudieron cargar caballos");
+      // Silenciar error de carga
     }
   };
 
