@@ -543,7 +543,7 @@ const HorsesManagement = () => {
       </div>
 
       <div>
-        <label className="block mb-1">Dueno</label>
+        <label className="block mb-1">Dueño</label>
         <select
           name="fk_idOwner"
           value={newHorse.fk_idOwner || ""}
