@@ -1,6 +1,7 @@
 import { type ReactNode, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { handleSignOut } from '../utils/auth';
+import { useCurrentUser, useErpUser } from '../hooks/useUserData';
 import {
   Home,
   Menu,
@@ -55,7 +56,7 @@ const empleadosSection: MenuItem[] = [
   { label: 'Empleados por Turno', icon: <Calendar size={18} />, path: '/shiftEmployees', roles: ADMIN_ROLES },
   { label: 'Turnos de Empleados', icon: <Calendar size={18} />, path: '/EmployeesShiftem', roles: ADMIN_ROLES },
   { label: 'Empleados', icon: <User size={18} />, path: '/employee', roles: ADMIN_ROLES },
-  { label: 'Categorias de Tareas', icon: <List size={18} />, path: '/task-categories', roles: ADMIN_ROLES },
+  { label: 'Categorías de Tareas', icon: <List size={18} />, path: '/task-categories', roles: ADMIN_ROLES },
   { label: 'Tareas', icon: <Calendar size={18} />, path: '/tasks', roles: ADMIN_ROLES },
   { label: 'Asignacion de Caballos', icon: <ClipboardList size={18} />, path: '/HorseAssignmentsManagement', roles: ADMIN_ROLES },
   { label: 'Ausencias de Empleados', icon: <Calendar size={18} />, path: '/employee-absences', roles: ADMIN_ROLES },
@@ -147,6 +148,8 @@ const Sidebar = ({ userRole }: SidebarProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const location = useLocation();
+  const { data: user } = useCurrentUser();
+  const { data: erpUser } = useErpUser(user?.id);
 
   const closeSidebar = () => setIsOpen(false);
   const logoUrl = `${import.meta.env.BASE_URL}image/Logo9.png`;
@@ -253,6 +256,24 @@ const Sidebar = ({ userRole }: SidebarProps) => {
               <h2 className="text-[1rem] font-medium tracking-[0.22em] bg-gradient-to-r from-[#F3EAD0] via-[#E7CA84] to-[#C8A13A] bg-clip-text text-transparent mt-1">
                 COCHABAMBA
               </h2>
+            </div>
+
+            {/* ROL BADGE */}
+            <div className="mt-3 inline-flex items-center justify-center w-full">
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-widest
+                            bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-400/30 
+                            text-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.3)] backdrop-blur-sm">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                {erpUser?.fk_idUserRole === 6 || erpUser?.fk_idUserRole === 8
+                  ? "Administrador"
+                  : erpUser?.fk_idUserRole === 9
+                  ? "Caballerizo"
+                  : erpUser?.fk_idUserRole === 10
+                  ? "Veterinario"
+                  : erpUser?.fk_idUserRole === 7
+                  ? "Propietario"
+                  : "Usuario"}
+              </span>
             </div>
           </div>
 

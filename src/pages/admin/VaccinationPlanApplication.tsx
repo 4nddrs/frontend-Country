@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast, Toaster } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'http://localhost:8000/vaccination_plan_application/';
 const BASE_URL = 'http://localhost:8000';
@@ -144,6 +145,13 @@ const VaccinationPlanApplicationManagement = () => {
   };
 
   const deleteApplication = async (id: number) => {
+    const confirmed = await confirmDialog({
+      title: '¿Eliminar aplicación?',
+      description: 'Esta acción eliminará la aplicación de vacunación permanentemente.',
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Error al eliminar aplicación');

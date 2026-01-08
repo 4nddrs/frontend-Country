@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import { confirmDialog } from '../../utils/confirmDialog';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -165,6 +166,13 @@ const ExpensesManagement = () => {
 
 
   const deleteExpense = async (id: number) => {
+    const confirmed = await confirmDialog({
+      title: '¿Eliminar gasto?',
+      description: 'Esta acción eliminará el registro de gasto permanentemente.',
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Error al eliminar gasto');
@@ -320,7 +328,7 @@ const ExpensesManagement = () => {
               <input
                 type="text"
                 name="description"
-                placeholder="Descripcion"
+                placeholder="Descripción"
                 value={newExpense.description}
                 onChange={(e) =>
                   setNewExpense({ ...newExpense, description: e.target.value })

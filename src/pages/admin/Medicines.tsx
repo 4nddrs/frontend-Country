@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'http://localhost:8000/medicines/';
 const MEDICATION_TYPE_OPTIONS = [
@@ -225,6 +226,13 @@ const MedicinesManagement = () => {
   };
 
   const deleteMedicine = async (id: number) => {
+    const confirmed = await confirmDialog({
+      title: '¿Eliminar medicamento?',
+      description: 'Esta acción eliminará el medicamento del inventario permanentemente.',
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Error al eliminar medicamento');

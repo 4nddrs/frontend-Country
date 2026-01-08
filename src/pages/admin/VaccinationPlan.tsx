@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'http://localhost:8000/vaccination_plan/';
 const MEDICINES_URL = 'http://localhost:8000/medicines/';
@@ -127,7 +128,13 @@ const VaccinationPlanManagement = () => {
   };
 
   const deletePlan = async (id: number) => {
-    if (!window.confirm('¿Estás seguro de que quieres eliminar este plan?')) return;
+    const confirmed = await confirmDialog({
+      title: '¿Eliminar plan de vacunación?',
+      description: 'Esta acción eliminará el plan de vacunación permanentemente.',
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Error al eliminar plan');

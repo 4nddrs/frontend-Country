@@ -6,6 +6,7 @@ import jsPDF from 'jspdf';
 import autoTable, { type CellInput } from 'jspdf-autotable';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X, Download ,ChevronUp,ChevronDown,} from 'lucide-react';
+import { confirmDialog } from '../../utils/confirmDialog';
 
 
 const API_URL = 'http://localhost:8000/owner_report_month/';
@@ -891,6 +892,13 @@ const OwnerReportMonthManagement = () => {
   };
 
   const deleteReport = async (id: number) => {
+    const confirmed = await confirmDialog({
+      title: '¿Eliminar reporte?',
+      description: 'Esta acción eliminará el reporte mensual del propietario permanentemente.',
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Error al eliminar reporte');

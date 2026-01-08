@@ -206,7 +206,7 @@ export default function AuthForm() {
       hasDigits.test(trimmed.firstName) ||
       (trimmed.secondName && hasDigits.test(trimmed.secondName))
     ) {
-      setError("Los nombres no pueden contener numeros.");
+      setError("Los nombres no pueden contener números.");
       return;
     }
     if (
@@ -219,7 +219,7 @@ export default function AuthForm() {
     }
     const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*(),.?":{}|<>])(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
     if (!passwordRegex.test(trimmed.password)) {
-      setError("La contraseña debe iniciar con mayuscula, incluir letras, numeros y un caracter especial.");
+      setError("La contraseña debe iniciar con mayúscula, incluir letras, números y un carácter especial.");
       return;
     }
     if (trimmed.password !== trimmed.confirmPassword) {
@@ -231,7 +231,7 @@ export default function AuthForm() {
       return;
     }
     if (!digitsOnly.test(trimmed.ci) || !digitsOnly.test(trimmed.phoneNumber)) {
-      setError("CI y telefono deben contener solo numeros.");
+      setError("CI y teléfono deben contener solo números.");
       return;
     }
     if (trimmed.ci.length !== 8 || trimmed.phoneNumber.length !== 8) {
@@ -242,7 +242,7 @@ export default function AuthForm() {
     const ciValue = Number(trimmed.ci);
     const phoneValue = Number(trimmed.phoneNumber);
     if (!Number.isSafeInteger(ciValue) || !Number.isSafeInteger(phoneValue)) {
-      setError("CI y telefono deben ser numeros validos.");
+      setError("CI y teléfono deben ser números válidos.");
       return;
     }
 
@@ -593,7 +593,7 @@ export default function AuthForm() {
                         minLength={8}
                         maxLength={8}
                         className="w-full pl-10 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
-                        placeholder="Numero de documento"
+                        placeholder="Número de documento"
                       />
                     </div>
                   </div>

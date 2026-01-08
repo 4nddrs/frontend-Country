@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'http://localhost:8000/task-categories/';
 
@@ -67,6 +68,13 @@ const TaskCategoriesManagement = () => {
   };
 
   const deleteCategory = async (id: number) => {
+    const confirmed = await confirmDialog({
+      title: '¿Eliminar categoría?',
+      description: 'Esta acción eliminará la categoría de tareas permanentemente.',
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Error al eliminar categoría');

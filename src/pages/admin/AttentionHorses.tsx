@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import type { ChangeEvent } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X, FileDown, ChevronUp, ChevronDown } from 'lucide-react';
+import { confirmDialog } from '../../utils/confirmDialog';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
@@ -288,7 +289,7 @@ const AttentionHorsesManagement = () => {
       return false;
     }
     if (!form.description.trim()) {
-      toast.error('La descripcion es obligatoria.');
+      toast.error('La descripción es obligatoria.');
       return false;
     }
     if (!form.cost.trim()) {
@@ -360,14 +361,14 @@ const AttentionHorsesManagement = () => {
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        throw new Error(isEditing ? 'Error al actualizar atencion' : 'Error al crear atencion');
+        throw new Error(isEditing ? 'Error al actualizar atención' : 'Error al crear atención');
       }
-      toast.success(isEditing ? 'Atencion actualizada!' : 'Atencion creada!');
+      toast.success(isEditing ? 'Atención actualizada!' : 'Atención creada!');
       resetForm();
       fetchAttentions();
     } catch {
       toast.error(
-        isEditing ? 'No se pudo actualizar atencion.' : 'No se pudo crear atencion.',
+        isEditing ? 'No se pudo actualizar atención.' : 'No se pudo crear atención.',
       );
     }
   };
@@ -489,15 +490,22 @@ const AttentionHorsesManagement = () => {
   };
 
   const deleteAttention = async (id: number) => {
+    const confirmed = await confirmDialog({
+      title: '¿Eliminar atención?',
+      description: 'Esta acción eliminará el registro de atención al caballo permanentemente.',
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
       if (!res.ok) {
-        throw new Error('Error al eliminar atencion');
+        throw new Error('Error al eliminar atención');
       }
-      toast.success('Atencion eliminada!');
+      toast.success('Atención eliminada!');
       fetchAttentions();
     } catch {
-      toast.error('No se pudo eliminar atencion.');
+      toast.error('No se pudo eliminar atención.');
     }
   };
 
@@ -527,7 +535,7 @@ const AttentionHorsesManagement = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Atenciones a Caballos</h1>
       
       <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Atencion</h2>
+        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Atención</h2>
         <div className="flex gap-4 flex-wrap">
           <div className="flex-1 min-w-[200px]">
             <label htmlFor="date" className="block mb-1">
@@ -574,12 +582,12 @@ const AttentionHorsesManagement = () => {
           </div>
           <div className="flex-1 min-w-[200px]">
             <label htmlFor="description" className="block mb-1">
-              Descripcion <span className="text-red-400">*</span>
+              Descripción <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
               name="description"
-              placeholder="Descripcion"
+              placeholder="Descripción"
               value={newAttention.description}
               onChange={e => setNewAttention({ ...newAttention, description: e.target.value })}
               className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"

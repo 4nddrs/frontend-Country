@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, X } from 'lucide-react';
-import { decodeBackendImage, encodeImageForBackend } from '../../utils/imageHelpers'; // CAMBIO: Importamos la funcion encodeImageForBackend
+import { decodeBackendImage, encodeImageForBackend } from '../../utils/imageHelpers'; // CAMBIO: Importamos la función encodeImageForBackend
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
+import { confirmDialog } from '../../utils/confirmDialog';
 
 // URL de tu API backend
 const API_URL = 'http://localhost:8000/horses/'; 
@@ -295,7 +296,13 @@ const HorsesManagement = () => {
 
 
   const deleteHorse = async (id: number) => {
-    if (!window.confirm('Seguro quieres eliminar este caballo?')) return;
+    const confirmed = await confirmDialog({
+      title: '¿Eliminar caballo?',
+      description: 'Esta acción eliminará al caballo y todos sus registros asociados permanentemente.',
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Error al eliminar el caballo');
@@ -434,7 +441,7 @@ const HorsesManagement = () => {
   // --- RENDER ---
   return (
     <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
-      <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestion de Caballos</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Caballos</h1>
       
       <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
         <div className="flex items-center justify-between mb-4">
@@ -493,7 +500,7 @@ const HorsesManagement = () => {
       </div>
 
       <div>
-        <label className="block mb-1">Descripcion General</label>
+        <label className="block mb-1">Descripción General</label>
         <input
           type="text"
           value={newHorse.generalDescription}
@@ -503,7 +510,7 @@ const HorsesManagement = () => {
       </div>
 
       <div>
-        <label className="block mb-1">Numero de Pasaporte</label>
+        <label className="block mb-1">Número de Pasaporte</label>
         <input
           type="number"
           value={newHorse.passportNumber}

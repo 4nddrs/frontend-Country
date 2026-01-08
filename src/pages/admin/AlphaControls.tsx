@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { Plus, Save, Trash2, Loader, X, Edit, FileText } from "lucide-react";
+import { confirmDialog } from '../../utils/confirmDialog';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dayjs from "dayjs";
@@ -299,6 +300,13 @@ const AlphaControlsManagement: React.FC = () => {
   };
 
   const deleteControl = async (id: number) => {
+    const confirmed = await confirmDialog({
+      title: '¿Eliminar control de alfalfa?',
+      description: 'Esta acción eliminará el registro de control de alfalfa permanentemente.',
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${API_URL}${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();

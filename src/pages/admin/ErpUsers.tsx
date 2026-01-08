@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'http://localhost:8000/erp_users/';
 
@@ -102,6 +103,13 @@ const ErpUsersManagement = () => {
   };
 
   const deleteUser = async (uid: string) => {
+    const confirmed = await confirmDialog({
+      title: '¿Eliminar usuario?',
+      description: 'Esta acción eliminará el usuario del sistema permanentemente.',
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${API_URL}${uid}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Error al eliminar usuario');

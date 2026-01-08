@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { handleSignOut } from "../utils/auth";
+import { useCurrentUser, useErpUser } from "../hooks/useUserData";
 import {
   ClipboardList,
   LogOut,
@@ -31,6 +32,8 @@ export default function SidebarCaballerizo() {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const location = useLocation();
+  const { data: user } = useCurrentUser();
+  const { data: erpUser } = useErpUser(user?.id);
 
   const filteredMenuItems = useMemo(() => {
     if (!searchTerm) return menuItems;
@@ -71,6 +74,16 @@ export default function SidebarCaballerizo() {
           <h2 className="text-xl text-white tracking-wide font-semibold">
             Area Caballerizo
           </h2>
+        </div>
+
+        {/* ROL BADGE */}
+        <div className="px-4 pt-4 pb-2 flex items-center justify-center">
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-widest
+                        bg-gradient-to-r from-emerald-500/20 to-green-500/20 border border-emerald-400/30 
+                        text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.3)] backdrop-blur-sm">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Caballerizo
+          </span>
         </div>
 
         {/* Buscador */}
@@ -114,11 +127,6 @@ export default function SidebarCaballerizo() {
 
         {/* Footer */}
         <div className="p-4 border-t border-slate-800/50">
-          <div className="mb-4 p-4 rounded-xl bg-slate-800/30 border border-slate-700/50">
-            <p className="text-xs text-slate-500 mb-1">Country Club</p>
-            <p className="text-sm text-slate-300">Caballerizo</p>
-          </div>
-
           <Button
             onClick={handleSignOut}
             className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg shadow-emerald-500/20"

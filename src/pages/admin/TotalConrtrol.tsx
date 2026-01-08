@@ -5,6 +5,7 @@ import { Plus, Edit, Save, Trash2, Loader, X, ChevronUp, ChevronDown } from 'luc
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
+import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'http://localhost:8000/total_control/';
 const BOX_CHARGE = 100;
@@ -649,6 +650,13 @@ const TotalControlManagement = () => {
 
 
   const deleteControl = async (id: number) => {
+    const confirmed = await confirmDialog({
+      title: '¿Eliminar control?',
+      description: 'Esta acción eliminará el control de forma permanente.',
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Error al eliminar control');

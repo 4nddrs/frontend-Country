@@ -11,6 +11,7 @@ import {
   Loader,
   X,
 } from 'lucide-react';
+import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'http://localhost:8000';
 
@@ -290,6 +291,13 @@ const Employees = () => {
 
   // Eliminar empleado
   const handleDelete = async (id: number) => {
+    const confirmed = await confirmDialog({
+      title: '¿Eliminar empleado?',
+      description: 'Esta acción eliminará al empleado y todos sus datos asociados permanentemente.',
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+    });
+    if (!confirmed) return;
     try {
       const response = await fetch(`${API_URL}/employees/${id}`, { method: 'DELETE' });
       if (!response.ok) {

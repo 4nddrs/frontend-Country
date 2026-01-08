@@ -72,7 +72,7 @@ export function TareasCaballerizo({
     <div className="min-h-screen p-4 md:p-6 lg:p-8">
       <div className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
         <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">
-          Gestion de Tareas
+          Gestión de Tareas
         </h1>
 
         <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
@@ -114,7 +114,7 @@ export function TareasCaballerizo({
                   <div className="space-y-3 md:hidden">
                     {tasks.map((task) => {
                       const categoryLabel =
-                        categories[task.fk_idTaskCategory ?? 0] ?? "Sin categoria";
+                        categories[task.fk_idTaskCategory ?? 0] ?? "Sin categoría";
                       const isUpdating = updatingTaskId === task.idTask;
                       return (
                         <div
@@ -167,7 +167,7 @@ export function TareasCaballerizo({
                       <TableHeader>
                         <TableRow className="border-slate-800/60">
                           <TableHead className="text-slate-400">Tarea</TableHead>
-                          <TableHead className="text-slate-400">Categoria</TableHead>
+                          <TableHead className="text-slate-400">Categoría</TableHead>
                           <TableHead className="text-slate-400">Asignada</TableHead>
                           <TableHead className="text-slate-400">Entrega</TableHead>
                           <TableHead className="text-slate-400 text-center">
@@ -183,7 +183,7 @@ export function TareasCaballerizo({
                         {tasks.map((task) => {
                           const categoryLabel =
                             categories[task.fk_idTaskCategory ?? 0] ??
-                            "Sin categoria";
+                            "Sin categoría";
                           return (
                             <TableRow
                               key={task.idTask}

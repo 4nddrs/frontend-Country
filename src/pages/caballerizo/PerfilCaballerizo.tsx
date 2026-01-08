@@ -60,7 +60,7 @@ export function PerfilCaballerizo({
           ) : (
             <Card className="max-w-3xl mx-auto p-6 bg-slate-900/60 border border-slate-800/60 text-center">
               <p className="text-sm text-slate-300">
-                No se encontro informacion del perfil.
+                No se encontró información del perfil.
               </p>
             </Card>
           )}

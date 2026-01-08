@@ -11,12 +11,35 @@ import {
   type OwnerReport
 } from '../services/userService';
 
+interface ErpUser {
+  uid: string;
+  username: string;
+  email: string;
+  isapproved: boolean;
+  fk_idUserRole: number;
+}
+
 export const useCurrentUser = () => {
   return useQuery<User | null>({
     queryKey: ['currentUser'],
     queryFn: getCurrentUser,
     staleTime: 10 * 60 * 1000, // 10 minutos
     gcTime: 30 * 60 * 1000, // 30 minutos (antes cacheTime)
+  });
+};
+
+export const useErpUser = (uid?: string) => {
+  return useQuery<ErpUser | null>({
+    queryKey: ['erpUser', uid],
+    queryFn: async () => {
+      if (!uid) return null;
+      const response = await fetch(`http://localhost:8000/erp_users/${uid}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!uid,
+    staleTime: 10 * 60 * 1000, // 10 minutos
+    gcTime: 30 * 60 * 1000, // 30 minutos
   });
 };
 

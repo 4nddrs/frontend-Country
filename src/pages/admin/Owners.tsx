@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
   import { Toaster, toast } from 'react-hot-toast';
   import { Plus, Edit, Save, Trash2, X } from 'lucide-react';
   import { decodeBackendImage } from '../../utils/imageHelpers';
+  import { confirmDialog } from '../../utils/confirmDialog';
 
 
   const API_URL = 'http://localhost:8000/owner/';
@@ -106,7 +107,13 @@ import React, { useState, useEffect, useRef } from 'react';
     };
 
     const deleteOwner = async (id: number) => {
-      if (!window.confirm('Estas seguro de que quieres eliminar este propietario?')) return;
+      const confirmed = await confirmDialog({
+        title: '¿Eliminar propietario?',
+        description: 'Esta acción eliminará al propietario y toda su información asociada.',
+        confirmText: 'Sí, eliminar',
+        cancelText: 'Cancelar',
+      });
+      if (!confirmed) return;
       try {
         const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
         if (!res.ok) throw new Error('Error al eliminar propietario');
@@ -150,7 +157,7 @@ import React, { useState, useEffect, useRef } from 'react';
     return (
       <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
         <Toaster position="top-right" toastOptions={{ style: { background: '#334155', color: 'white' } }} />
-        <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestion de Propietarios</h1>
+        <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Propietarios</h1>
         
         <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
           <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Propietario</h2>

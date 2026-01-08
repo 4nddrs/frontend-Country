@@ -252,26 +252,7 @@ export function UserPayments(_: PagosEstadoProps) {
           </div>
         </Card>
 
-        {/* Payment Methods */}
-        <Card className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm">
-          <div className="p-4 md:p-6">
-            <h3 className="text-sm text-slate-400 mb-4">Métodos de pago aceptados</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3 rounded-lg bg-slate-800/50 text-center">
-                <p className="text-xs text-slate-300">Tarjeta de crédito</p>
-              </div>
-              <div className="p-3 rounded-lg bg-slate-800/50 text-center">
-                <p className="text-xs text-slate-300">Transferencia</p>
-              </div>
-              <div className="p-3 rounded-lg bg-slate-800/50 text-center">
-                <p className="text-xs text-slate-300">Efectivo</p>
-              </div>
-              <div className="p-3 rounded-lg bg-slate-800/50 text-center">
-                <p className="text-xs text-slate-300">Cheque</p>
-              </div>
-            </div>
-          </div>
-        </Card>
+       
         </div>
       </div>
     </div>

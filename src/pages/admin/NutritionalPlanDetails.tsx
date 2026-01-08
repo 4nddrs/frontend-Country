@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'http://localhost:8000/nutritional-plan-details/';
 
@@ -130,6 +131,13 @@ const NutritionalPlanDetailsManagement = () => {
   };
 
   const deleteDetail = async (id: number) => {
+    const confirmed = await confirmDialog({
+      title: '¿Eliminar detalle?',
+      description: 'Esta acción eliminará el detalle del plan nutricional permanentemente.',
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Error al eliminar detalle');

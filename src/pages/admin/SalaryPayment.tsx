@@ -4,6 +4,7 @@ import { Edit, Plus, Save, Trash2, X } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dayjs from "dayjs";
+import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = "http://localhost:8000/salary_payments/";
 const EMPLOYEES_URL = "http://localhost:8000/employees/";
@@ -249,6 +250,13 @@ const SalaryPayments: React.FC = () => {
   }
 
   async function deleteItem(id: number) {
+    const confirmed = await confirmDialog({
+      title: '¿Eliminar pago?',
+      description: 'Esta acción eliminará el registro de pago de salario permanentemente.',
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${API_URL}${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error(`DELETE ${res.status}`);

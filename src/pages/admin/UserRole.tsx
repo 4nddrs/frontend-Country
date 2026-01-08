@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
+import { confirmDialog } from '../../utils/confirmDialog';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
 
 const API_URL = 'http://localhost:8000/user_roles/';
@@ -69,6 +70,13 @@ const UserRolesManagement = () => {
   };
 
   const deleteRole = async (id: number) => {
+    const confirmed = await confirmDialog({
+      title: '¿Eliminar rol?',
+      description: 'Esta acción eliminará el rol de usuario permanentemente.',
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Error al eliminar rol');
