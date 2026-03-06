@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { LineChart, Line, PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
-import { TrendingUp, Users, DollarSign, ClipboardList, AlertCircle, Activity } from 'lucide-react';
+import { TrendingUp, Users, DollarSign, ClipboardList, AlertCircle, Activity, Coins } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useDashboard from '../../hooks/useDashboard';
 
@@ -230,7 +230,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-xl font-semibold flex items-center gap-2">
-                  <DollarSign className="w-5 h-5" />
+                  <Coins className="w-5 h-5" />
                   Finanzas del Mes
                 </h2>
                 <p className="text-gray-400 text-sm mt-1">

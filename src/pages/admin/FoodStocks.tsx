@@ -29,7 +29,7 @@ const FoodStocksManagement = () => {
   const [newStock, setNewStock] = useState<FoodStock>({
     foodName: '',
     stock: 0,
-    unitMeasurement: 0,
+    unitMeasurement: 1,
     minStock: 0,
     maxStock: 0,
     fk_idFoodProvider: 1,
@@ -78,7 +78,7 @@ const FoodStocksManagement = () => {
       });
       if (!res.ok) throw new Error('Error al crear stock');
       toast.success('Stock creado!');
-      setNewStock({ foodName: '', stock: 0, unitMeasurement: 0, minStock: 0, maxStock: 0, fk_idFoodProvider: 1 });
+      setNewStock({ foodName: '', stock: 0, unitMeasurement: 1, minStock: 0, maxStock: 0, fk_idFoodProvider: 1 });
       fetchStocks();
     } catch (err) {
       console.error('❌ Error al registrar stock:', err);
@@ -151,14 +151,16 @@ const FoodStocksManagement = () => {
         </div>
         <div>
           <label className="block mb-1 text-sm font-medium">Unidad de medida</label>
-          <input
-            type="number"
+          <select
             name="unitMeasurement"
-            placeholder="Ej: 1 (Kg), 2 (Lts)..."
             value={newStock.unitMeasurement}
             onChange={e => setNewStock({ ...newStock, unitMeasurement: Number(e.target.value) })}
             className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
-          />
+          >
+            <option value={1}>Kilo</option>
+            <option value={2}>Cubo</option>
+            <option value={3}>Fardo</option>
+          </select>
         </div>
         <div>
           <label className="block mb-1 text-sm font-medium">Stock mínimo permitido</label>
@@ -244,12 +246,15 @@ const FoodStocksManagement = () => {
                     </div>
                     <div>
                       <label className="block mb-1 text-sm font-medium">Unidad de medida</label>
-                      <input
-                        type="number"
+                      <select
                         defaultValue={stock.unitMeasurement}
                         onChange={e => setNewStock({ ...newStock, unitMeasurement: Number(e.target.value) })}
                         className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
-                      />
+                      >
+                        <option value={1}>Kilo</option>
+                        <option value={2}>Cubo</option>
+                        <option value={3}>Fardo</option>
+                      </select>
                     </div>
                     <div>
                       <label className="block mb-1 text-sm font-medium">Stock mínimo permitido</label>
