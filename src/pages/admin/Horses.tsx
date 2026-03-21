@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, X } from 'lucide-react';
-import { decodeBackendImage, encodeImageForBackend } from '../../utils/imageHelpers'; // CAMBIO: Importamos la función encodeImageForBackend
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
 import { confirmDialog } from '../../utils/confirmDialog';
+import noPhoto from '../../assets/noPhoto.png';
+
 
 // URL de tu API backend
 const API_URL = 'http://localhost:8000/horses/'; 
@@ -27,7 +28,7 @@ const urlToDataUrl = (url: string) =>
 interface Horse {
   idHorse?: number;
   horseName: string;
-  horsePhoto?: string | null;
+  image_url?: string | null;
   birthdate: string; // ISO string (YYYY-DD-MM)
   sex: string;
   color: string;
@@ -45,7 +46,6 @@ interface Horse {
 
 const initialHorse: Omit<Horse, 'idHorse'> = {
   horseName: '',
-  horsePhoto: null,
   birthdate: '',
   sex: '',
   color: '',
@@ -60,6 +60,8 @@ const initialHorse: Omit<Horse, 'idHorse'> = {
   state: 'Activo',
   stateSchool: false,
 };
+
+const PLACEHOLDER = noPhoto;
 
 // --- COMPONENTE ---
 const HorsesManagement = () => {
@@ -143,30 +145,9 @@ const HorsesManagement = () => {
     }
   };
 
-  const toBase64 = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
-    });
-
-  const handlePhotoChange = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    mode: 'create' | 'edit' = 'create'
-  ) => {
-    if (e.target.files?.[0]) {
-      const file = e.target.files[0];
-      setSelectedPhotoFile(file); // CAMBIO: Guardamos el archivo en el nuevo estado
-      if (mode === 'create') {
-        // En modo 'create' tambien podemos mostrar una vista previa si lo deseamos.
-        const base64 = await toBase64(file);
-        setNewHorse(prev => ({ ...prev, horsePhoto: base64 }));
-      } else {
-        const base64 = await toBase64(file);
-        editingHorseData && setEditingHorseData({ ...editingHorseData, horsePhoto: base64 });
-      }
-    }
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setSelectedPhotoFile(file);
   };
 
   const createHorse = async () => {
@@ -178,21 +159,14 @@ const HorsesManagement = () => {
       toast.error('Selecciona el estado.');
       return;
     }
-    if (typeof newHorse.stateSchool !== 'boolean') { 
-      toast.error('Indica si pertenece a escuela.'); return; 
+    if (typeof newHorse.stateSchool !== 'boolean') {
+      toast.error('Indica si pertenece a escuela.');
+      return;
     }
 
     try {
-      // CAMBIO: Preparamos la foto para el backend
-      let photoForBackend: string | null = null;
-      if (selectedPhotoFile) {
-        const base64Full = await toBase64(selectedPhotoFile);
-        photoForBackend = encodeImageForBackend(base64Full);
-      }
-
       const horseData = {
         horseName: newHorse.horseName,
-        horsePhoto: photoForBackend, // CAMBIO: Usamos el formato binario
         birthdate: newHorse.birthdate,
         sex: newHorse.sex,
         color: newHorse.color,
@@ -208,74 +182,60 @@ const HorsesManagement = () => {
         stateSchool: newHorse.stateSchool,
       };
 
-      console.log('Enviando nuevo caballo (con formato binario):', horseData);
-
-      const res = await fetch("http://localhost:8000/horses/", {
+      const res = await fetch(API_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(horseData),
       });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Error del servidor: ${errorText}`);
-      }
-
+      if (!res.ok) throw new Error(await res.text());
       const createdHorse = await res.json();
-      toast.success('Caballo creado exitosamente!');
 
-      // Reset form
-      setNewHorse({ ...initialHorse });
-      setSelectedPhotoFile(null); // CAMBIO: Resetear el estado del archivo
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+      if (selectedPhotoFile) {
+        const formData = new FormData();
+        formData.append('image', selectedPhotoFile);
+        await fetch(`${API_URL}${createdHorse.idHorse}/image`, {
+          method: 'POST',
+          body: formData,
+        });
+        await fetchHorses(1);
+      } else {
+        setHorses(prev => [createdHorse, ...prev]);
+        setHorsePage(1);
       }
 
-      setHorses((prev) => [createdHorse, ...prev]);
-      setHorsePage(1);
+      toast.success('Caballo creado exitosamente!');
+      setNewHorse({ ...initialHorse });
+      setSelectedPhotoFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+
     } catch (error: any) {
-      console.error('Error al crear caballo:', error);
       toast.error(`Error al crear caballo: ${error.message}`);
     }
   };
 
-
   const updateHorse = async (id: number) => {
     if (!editingHorseData) return;
-    console.log('Actualizando caballo con ID:', id);
-    console.log('Datos actualizados:', editingHorseData);
     if (!editingHorseData.state) {
       toast.error('Selecciona el estado.');
       return;
     }
-    if (!editingHorseData.stateSchool) {
-      toast.error('Selecciona el estado de escuela.');
-      return;
-    }
-    try {
-      // CAMBIO: Preparamos la foto para el backend si se selecciono una nueva
-      let photoForBackend: string | null | undefined = undefined; // undefined para no actualizar si no hay cambio
-      if (selectedPhotoFile) {
-        const base64Full = await toBase64(selectedPhotoFile);
-        photoForBackend = encodeImageForBackend(base64Full);
-      } else if (editingHorseData.horsePhoto === null) {
-        photoForBackend = null; // Si el usuario borro la foto
-      }
 
+    try {
       const horseDataToUpdate = {
-        ...editingHorseData,
-        fk_idOwner: Number(editingHorseData.fk_idOwner),
-        fk_idRace: Number(editingHorseData.fk_idRace),
-        fl_idNutritionalPlan: Number(editingHorseData.fl_idNutritionalPlan),
+        horseName: editingHorseData.horseName,
+        birthdate: editingHorseData.birthdate,
+        sex: editingHorseData.sex,
+        color: editingHorseData.color,
+        generalDescription: editingHorseData.generalDescription,
         passportNumber: Number(editingHorseData.passportNumber),
         box: Boolean(editingHorseData.box),
         section: Boolean(editingHorseData.section),
         basket: Boolean(editingHorseData.basket),
+        fk_idRace: Number(editingHorseData.fk_idRace),
+        fk_idOwner: Number(editingHorseData.fk_idOwner),
+        fl_idNutritionalPlan: Number(editingHorseData.fl_idNutritionalPlan),
         state: editingHorseData.state,
         stateSchool: Boolean(editingHorseData.stateSchool),
-        ...(photoForBackend !== undefined && { horsePhoto: photoForBackend }) // CAMBIO: Solo incluye horsePhoto si hay un cambio
       };
 
       const res = await fetch(`${API_URL}${id}`, {
@@ -283,17 +243,25 @@ const HorsesManagement = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(horseDataToUpdate),
       });
-      if (!res.ok) throw new Error('Error al actualizar el caballo');
+      if (!res.ok) throw new Error();
+
+      if (selectedPhotoFile) {
+        const formData = new FormData();
+        formData.append('image', selectedPhotoFile);
+        await fetch(`${API_URL}${id}/image`, { method: 'POST', body: formData });
+      }
+
       toast.success('Caballo actualizado');
       setEditingId(null);
       setEditingHorseData(null);
-      setSelectedPhotoFile(null); // CAMBIO: Resetear el estado del archivo
+      setSelectedPhotoFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       fetchHorses(horsePage);
-    } catch (error) {
+
+    } catch {
       toast.error('No se pudo actualizar el caballo.');
     }
   };
-
 
   const deleteHorse = async (id: number) => {
     const confirmed = await confirmDialog({
@@ -314,9 +282,10 @@ const HorsesManagement = () => {
   };
 
   const handleEditClick = (horse: Horse) => {
-    console.log('Entrando en modo edicion con caballo:', horse);
     setEditingId(horse.idHorse!);
     setEditingHorseData({ ...horse });
+    setSelectedPhotoFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleCancelEdit = () => {
@@ -606,7 +575,7 @@ const HorsesManagement = () => {
           type="file"
           accept="image/*"
           ref={fileInputRef}
-          onChange={(e) => handlePhotoChange(e, "create")}
+          onChange={handlePhotoChange}
           className="w-full p-1.5 rounded-md bg-gray-700 file:mr-4 file:py-2 file:px-4 
                     file:rounded-full file:border-0 file:text-sm file:font-semibold 
                     file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
@@ -760,10 +729,15 @@ const HorsesManagement = () => {
                         type="file"
                         accept="image/*"
                         ref={fileInputRef}
-                        onChange={(e) => handlePhotoChange(e, "edit")}
+                        onChange={handlePhotoChange}
                         className="w-full p-1.5 rounded-md bg-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
                       />
-
+                      {editingHorseData?.image_url && !selectedPhotoFile && (
+                        <img src={editingHorseData.image_url} alt="Foto actual" className="w-full h-32 rounded-md object-cover" />
+                      )}
+                      {selectedPhotoFile && (
+                        <img src={URL.createObjectURL(selectedPhotoFile)} alt="Nueva foto" className="w-full h-32 rounded-md object-cover border-2 border-teal-400" />
+                      )}
                       <div>
                         <label className="block mb-1">Estado</label>
                         <select
@@ -806,7 +780,7 @@ const HorsesManagement = () => {
                 ) : (
                   <>
                     <div className="flex-grow mb-4">
-                      <img src={decodeBackendImage(horse.horsePhoto) || 'https://placehold.co/100x100/4a5568/ffffff?text=Sin+Foto'} alt={`Foto de ${horse.horseName}`} className="w-full h-40 rounded-md object-cover mb-4 bg-gray-600" />
+                      <img src={horse.image_url ?? PLACEHOLDER} alt={`Foto de ${horse.horseName}`} className="w-full h-40 rounded-md object-cover mb-4 bg-gray-600" />
                       <h3 className="text-xl font-bold">{horse.horseName}</h3>
                       <p className="text-sm text-gray-300">Nacimiento: {new Date(horse.birthdate).toLocaleDateString()}</p>
                       <p className="text-sm text-gray-300">Sexo: {horse.sex}</p>
