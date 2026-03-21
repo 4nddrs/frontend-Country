@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { decodeBackendImage, encodeImageForBackend } from '../../utils/imageHelpers';
 import { toast } from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -12,8 +11,11 @@ import {
   X,
 } from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
+import noPhoto from '../../assets/noPhoto.png';
+
 
 const API_URL = 'http://localhost:8000';
+const PLACEHOLDER = noPhoto;
 
 // ====== LOGO (según tu indicación) ======
 const LOGO_URL = `${import.meta.env.BASE_URL}image/LogoHipica.png`;
@@ -43,7 +45,7 @@ interface Employee {
   status: boolean;
   fk_idPositionEmployee: number;
   uid?: string | null; // UUID de Supabase (cambiado de fk_idAuthUser a uid)
-  employeePhoto?: string | null;
+  image_url?: string | null;
 }
 
 interface Position {
@@ -67,16 +69,6 @@ const formatTimeForInput = (isoDateString: string): string => {
   return `${hours}:${minutes}`;
 };
 
-// convertir imagen a base64 con prefijo
-function toBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = error => reject(error);
-  });
-}
-
 // moneda BOB
 const formatCurrency = (n: number) =>
   new Intl.NumberFormat('es-BO', { style: 'currency', currency: 'BOB', maximumFractionDigits: 2 })
@@ -97,7 +89,7 @@ const Employees = () => {
     status: true,
     fk_idPositionEmployee: 1,
     uid: null,
-    employeePhoto: null,
+    image_url: null,
   });
   const [userAccount, setUserAccount] = useState<UserAccountData>({
     email: '',
@@ -126,7 +118,7 @@ const Employees = () => {
     status: true,
     fk_idPositionEmployee: positions.length > 0 ? positions[0].idPositionEmployee : 0,
     uid: null,
-    employeePhoto: null,
+    image_url: null,
   });
 
   const fetchData = async () => {
@@ -214,12 +206,7 @@ const Employees = () => {
         }
       }
 
-      // 2. Crear/actualizar empleado con la foto
-      let employeePhoto: string | null = null;
-      if (selectedPhoto) {
-        const base64Full = await toBase64(selectedPhoto);
-        employeePhoto = encodeImageForBackend(base64Full);
-      }
+      
 
       const employeeData = {
         ...newEmployee,
@@ -232,7 +219,7 @@ const Employees = () => {
           ? `${newEmployee.endContractDate}T${newEmployee.exitTime || '17:00'}:00`
           : '',
         uid: authUserId || newEmployee.uid, // Vincular con la cuenta creada (cambiado a uid)
-        ...(employeePhoto !== null && { employeePhoto }),
+        image_url: null, // Inicialmente null, se actualizará si se selecciona una foto
       };
 
       if (!newEmployee.fk_idPositionEmployee) {
@@ -261,7 +248,17 @@ const Employees = () => {
         throw new Error(`Error: ${response.status} - ${errorText}`);
       }
       
-      await response.json();
+      const savedEmployee = await response.json();
+
+      if (selectedPhoto) {
+        const id = editingId ?? savedEmployee.idEmployee;
+        const formData = new FormData();
+        formData.append('image', selectedPhoto);
+        await fetch(`${API_URL}/employees/${id}/image`, {
+          method: 'POST',
+          body: formData,
+        });
+      }
       
       const successMessage = editingId 
         ? 'Empleado actualizado con éxito!' 
@@ -317,7 +314,6 @@ const Employees = () => {
       ...employee,
       startTime: formatTimeForInput(employee.startTime),
       exitTime: formatTimeForInput(employee.exitTime),
-      employeePhoto: null
     });
     setSelectedPhoto(null);
     setEditingId(employee.idEmployee!);
@@ -533,6 +529,12 @@ const Employees = () => {
           <div>
             <label htmlFor="employeePhoto">Foto del Empleado</label>
             <input type="file" id="employeePhoto" name="employeePhoto" accept="image/*" onChange={handlePhotoChange} className="w-full p-2 text-white placeholder-slate-400" />
+            {newEmployee.image_url && !selectedPhoto && (
+              <img src={newEmployee.image_url} alt="Foto actual" className="w-16 h-16 rounded-full object-cover mt-2" />
+            )}
+            {selectedPhoto && (
+              <img src={URL.createObjectURL(selectedPhoto)} alt="Nueva foto" className="w-16 h-16 rounded-full object-cover mt-2 border-2 border-teal-400" />
+            )}
           </div>
         </div>
 
@@ -682,13 +684,11 @@ const Employees = () => {
                 return (
                   <tr key={employee.idEmployee} className="hover:bg-slate-700 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {employee.employeePhoto && (
-                        <img
-                          src={decodeBackendImage(employee.employeePhoto)}
-                          alt={`Foto de ${employee.fullName}`}
-                          className="w-12 h-12 rounded-full object-cover"
-                        />
-                      )}
+                      <img
+                        src={employee.image_url ?? PLACEHOLDER}
+                        alt={`Foto de ${employee.fullName}`}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{employee.fullName}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{employee.ci}</td>
