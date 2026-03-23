@@ -109,7 +109,7 @@ const NutritionalPlansManagement = () => {
               name="name"
               value={newPlan.name}
               onChange={e => setNewPlan({ ...newPlan, name: e.target.value })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
 
@@ -120,7 +120,7 @@ const NutritionalPlansManagement = () => {
               name="assignmentDate"
               value={newPlan.assignmentDate}
               onChange={e => setNewPlan({ ...newPlan, assignmentDate: e.target.value })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
 
@@ -131,7 +131,7 @@ const NutritionalPlansManagement = () => {
               name="endDate"
               value={newPlan.endDate}
               onChange={e => setNewPlan({ ...newPlan, endDate: e.target.value })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
 
@@ -142,7 +142,7 @@ const NutritionalPlansManagement = () => {
               name="state"
               value={newPlan.state}
               onChange={e => setNewPlan({ ...newPlan, state: e.target.value })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
 
@@ -153,7 +153,7 @@ const NutritionalPlansManagement = () => {
               name="description"
               value={newPlan.description}
               onChange={e => setNewPlan({ ...newPlan, description: e.target.value })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
 
@@ -187,33 +187,33 @@ const NutritionalPlansManagement = () => {
                         type="text"
                         defaultValue={plan.name}
                         onChange={e => setNewPlan({ ...newPlan, name: e.target.value })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       />
                       <input
                         type="date"
                         defaultValue={plan.assignmentDate?.slice(0, 10)}
                         onChange={e => setNewPlan({ ...newPlan, assignmentDate: e.target.value })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       />
                       <input
                         type="date"
                         defaultValue={plan.endDate?.slice(0, 10)}
                         onChange={e => setNewPlan({ ...newPlan, endDate: e.target.value })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       />
                       <input
                         type="text"
                         defaultValue={plan.state}
                         onChange={e => setNewPlan({ ...newPlan, state: e.target.value })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       />
                       <input
                         type="text"
                         defaultValue={plan.description}
                         onChange={e => setNewPlan({ ...newPlan, description: e.target.value })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       />
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-center gap-3 px-6 pb-4 mt-3">
                         <button
                           onClick={() => updatePlan(plan.idNutritionalPlan!, {
                             name: newPlan.name || plan.name,
@@ -228,7 +228,7 @@ const NutritionalPlansManagement = () => {
                         </button>
                         <button
                           onClick={() => setEditingId(null)}
-                          className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
+                          className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
                         >
                           <X size={16} /> Cancelar
                         </button>
@@ -296,3 +296,7 @@ const NutritionalPlansManagement = () => {
 };
 
 export default NutritionalPlansManagement;
+
+
+
+

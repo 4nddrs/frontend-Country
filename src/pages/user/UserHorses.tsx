@@ -131,7 +131,7 @@ export function UserHorses(_: MiCaballoProps) {
         {horsesList.length > 1 && (
           <Card className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm p-4">
             <select 
-              className="w-full p-2 rounded-md bg-slate-700 text-white border border-slate-600"
+              className="select-field w-full border border-slate-600"
               value={selectedHorse?.idHorse}
               onChange={(e) => {
                 const horse = horsesList.find((h: Horse) => h.idHorse === Number(e.target.value));
@@ -255,3 +255,6 @@ export function UserHorses(_: MiCaballoProps) {
     </div>
   );
 }
+
+
+

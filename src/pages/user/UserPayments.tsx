@@ -108,7 +108,7 @@ export function UserPayments(_: PagosEstadoProps) {
                 <DollarSign className="w-6 h-6 md:w-5 md:h-5 text-amber-400" />
               </div>
               <p className="text-xs text-slate-400 mb-2">Balance pendiente</p>
-              <p className="text-3xl md:text-2xl text-white font-bold mb-1">${totalPending.toLocaleString()}</p>
+              <p className="text-3xl md:text-2xl text-white font-bold mb-1">Bs {totalPending.toLocaleString()}</p>
               <p className="text-xs text-amber-400 font-medium">{totalPending === 0 ? 'Al día ✓' : 'Por pagar'}</p>
             </div>
           </Card>
@@ -120,7 +120,7 @@ export function UserPayments(_: PagosEstadoProps) {
                 <TrendingUp className="w-6 h-6 md:w-5 md:h-5 text-emerald-400" />
               </div>
               <p className="text-xs text-slate-400 mb-2">Total pagado</p>
-              <p className="text-3xl md:text-2xl text-white font-bold mb-1">${totalPaid.toLocaleString()}</p>
+              <p className="text-3xl md:text-2xl text-white font-bold mb-1">Bs {totalPaid.toLocaleString()}</p>
               <p className="text-xs text-slate-400 font-medium">Histórico</p>
             </div>
           </Card>
@@ -173,7 +173,7 @@ export function UserPayments(_: PagosEstadoProps) {
                           </p>
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <p className="text-lg text-white font-bold mb-2 whitespace-nowrap">${total.toFixed(2)}</p>
+                          <p className="text-lg text-white font-bold mb-2 whitespace-nowrap">Bs {total.toFixed(2)}</p>
                           <span
                             className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap ${
                               report.state === 'Pagado'
@@ -223,7 +223,7 @@ export function UserPayments(_: PagosEstadoProps) {
                           </TableCell>
                           <TableCell className="text-white">{horsesCount} caballo(s)</TableCell>
                           <TableCell className="text-slate-300">{new Date(report.paymentDate).toLocaleDateString('es-ES')}</TableCell>
-                          <TableCell className="text-cyan-400">${total.toFixed(2)}</TableCell>
+                          <TableCell className="text-cyan-400">Bs {total.toFixed(2)}</TableCell>
                           <TableCell>
                             <span
                               className={`inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-full ${
@@ -258,3 +258,6 @@ export function UserPayments(_: PagosEstadoProps) {
     </div>
   );
 }
+
+
+

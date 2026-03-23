@@ -124,7 +124,7 @@ const ShiftEmployedsManagement = () => {
             placeholder="Inicio"
             value={newShift.startDateTime}
             onChange={e => setNewShift({ ...newShift, startDateTime: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="select-field flex-1 placeholder-gray-400"
           />
           </div>
           <div>
@@ -135,7 +135,7 @@ const ShiftEmployedsManagement = () => {
             placeholder="Fin"
             value={newShift.endDateTime}
             onChange={e => setNewShift({ ...newShift, endDateTime: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="select-field flex-1 placeholder-gray-400"
           />
           </div>
           <div>
@@ -144,7 +144,7 @@ const ShiftEmployedsManagement = () => {
             name="fk_idShiftType"
             value={newShift.fk_idShiftType}
             onChange={e => setNewShift({ ...newShift, fk_idShiftType: Number(e.target.value) })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+            className="select-field flex-1"
           >
             <option value="">-- Selecciona tipo de turno --</option>
             {shiftTypes.map(type => (
@@ -176,7 +176,7 @@ const ShiftEmployedsManagement = () => {
                       type="datetime-local"
                       defaultValue={shift.startDateTime?.slice(0, 16)}
                       onChange={e => setNewShift({ ...newShift, startDateTime: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                      className="select-field mb-2"
                     />
                     </div>
                     <div>
@@ -185,7 +185,7 @@ const ShiftEmployedsManagement = () => {
                         type="datetime-local"
                         defaultValue={shift.endDateTime?.slice(0, 16)}
                         onChange={e => setNewShift({ ...newShift, endDateTime: e.target.value })}
-                        className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field mb-2"
                       />
                     </div>
                     <div>
@@ -194,7 +194,7 @@ const ShiftEmployedsManagement = () => {
                         type="datetime-local"
                         defaultValue={shift.endDateTime?.slice(0, 16)}
                         onChange={e => setNewShift({ ...newShift, endDateTime: e.target.value })}
-                        className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       />
                     </div>
                     <div>
@@ -202,7 +202,7 @@ const ShiftEmployedsManagement = () => {
                       <select
                         value={newShift.fk_idShiftType}
                         onChange={e => setNewShift({ ...newShift, fk_idShiftType: Number(e.target.value) })}
-                        className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       >
                       {shiftTypes.map(type => (
                         <option key={type.idShiftType} value={type.idShiftType}>
@@ -211,7 +211,7 @@ const ShiftEmployedsManagement = () => {
                       ))}
                     </select>
                     </div>
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-center gap-3 px-6 pb-4 mt-2">
                       <button
                         onClick={() => updateShift(shift.idShiftEmployed!, {
                           startDateTime: newShift.startDateTime || shift.startDateTime,
@@ -224,7 +224,7 @@ const ShiftEmployedsManagement = () => {
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
+                        className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
                       >
                         <X size={16} /> Cancelar
                       </button>
@@ -286,3 +286,7 @@ const ShiftEmployedsManagement = () => {
 };
 
 export default ShiftEmployedsManagement;
+
+
+
+

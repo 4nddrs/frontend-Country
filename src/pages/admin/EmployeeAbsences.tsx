@@ -121,15 +121,6 @@ const EmployeeAbsencesManagement = () => {
 
   return (
     <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
-      <style>
-        {`
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-          body {
-            font-family: 'Inter', sans-serif;
-            background-color: #1a202c;
-          }
-        `}
-      </style>
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Ausencias de Empleados</h1>
       
       <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
@@ -143,7 +134,7 @@ const EmployeeAbsencesManagement = () => {
               name="startDate"
               value={newAbsence.startDate}
               onChange={e => setNewAbsence({ ...newAbsence, startDate: e.target.value })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"
+              className="w-full"
             />
           </div>
           {/* Fecha de Fin */}
@@ -154,7 +145,7 @@ const EmployeeAbsencesManagement = () => {
               name="endDate"
               value={newAbsence.endDate}
               onChange={e => setNewAbsence({ ...newAbsence, endDate: e.target.value })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"
+              className="w-full"
             />
           </div>
           {/* Tipo de Ausencia */}
@@ -190,7 +181,7 @@ const EmployeeAbsencesManagement = () => {
               placeholder="Observación"
               value={newAbsence.observation}
               onChange={e => setNewAbsence({ ...newAbsence, observation: e.target.value })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"
+              className="w-full"
             />
           </div>
           {/* Empleado */}
@@ -200,7 +191,7 @@ const EmployeeAbsencesManagement = () => {
               name="fk_idEmployee"
               value={newAbsence.fk_idEmployee}
               onChange={e => setNewAbsence({ ...newAbsence, fk_idEmployee: Number(e.target.value) })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none"
+              className="w-full"
             >
               <option value="">-- Selecciona empleado --</option>
               {employees.map(emp => (
@@ -238,14 +229,14 @@ const EmployeeAbsencesManagement = () => {
                       type="date"
                       defaultValue={abs.startDate?.slice(0, 10)}
                       onChange={e => setNewAbsence({ ...newAbsence, startDate: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white border border-gray-500 focus:border-blue-500 focus:outline-none"
+                      className="select-field border border-gray-500 focus:border-blue-500 focus:outline-none"
                     />
                     <label className="block text-sm font-medium mb-1 mt-2 text-gray-400">Fecha de Fin</label>
                     <input
                       type="date"
                       defaultValue={abs.endDate?.slice(0, 10)}
                       onChange={e => setNewAbsence({ ...newAbsence, endDate: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white border border-gray-500 focus:border-blue-500 focus:outline-none"
+                      className="select-field border border-gray-500 focus:border-blue-500 focus:outline-none"
                     />
                     <label className="block text-sm font-medium mb-1 mt-2 text-gray-400">Tipo de Ausencia</label>
                     <div className="flex gap-4 p-2 rounded-md bg-gray-600 border border-gray-500 items-center">
@@ -273,13 +264,13 @@ const EmployeeAbsencesManagement = () => {
                       type="text"
                       defaultValue={abs.observation}
                       onChange={e => setNewAbsence({ ...newAbsence, observation: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white border border-gray-500 focus:border-blue-500 focus:outline-none"
+                      className="select-field border border-gray-500 focus:border-blue-500 focus:outline-none"
                     />
                     <label className="block text-sm font-medium mb-1 mt-2 text-gray-400">Empleado</label>
                     <select
                       value={newAbsence.fk_idEmployee}
                       onChange={e => setNewAbsence({ ...newAbsence, fk_idEmployee: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white border border-gray-500 focus:border-blue-500 focus:outline-none"
+                      className="select-field border border-gray-500 focus:border-blue-500 focus:outline-none"
                     >
                       {employees.map(emp => (
                         <option key={emp.idEmployee} value={emp.idEmployee}>
@@ -287,7 +278,7 @@ const EmployeeAbsencesManagement = () => {
                         </option>
                       ))}
                     </select>
-                    <div className="flex justify-end gap-2 mt-4">
+                    <div className="flex justify-center gap-3 px-6 pb-6 mt-4">
                       <button
                         onClick={() => updateAbsence(abs.idEmployeeAbsence!, {
                           startDate: newAbsence.startDate || abs.startDate,
@@ -303,7 +294,7 @@ const EmployeeAbsencesManagement = () => {
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1 transition-colors duration-200"
+                        className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
                       >
                         <X size={16} /> Cancelar
                       </button>
@@ -395,3 +386,7 @@ const EmployeeAbsencesManagement = () => {
 };
 
 export default EmployeeAbsencesManagement;
+
+
+
+

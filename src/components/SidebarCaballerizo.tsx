@@ -6,7 +6,6 @@ import {
   ClipboardList,
   LogOut,
   Menu,
-  Search,
   Trophy,
   User,
   X,
@@ -49,7 +48,7 @@ export default function SidebarCaballerizo() {
       <div className="lg:hidden fixed top-4 right-4 z-60">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/20 transition-all hover:from-emerald-600 hover:to-emerald-700"
+          className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/15 transition-all hover:from-emerald-600 hover:to-emerald-700"
         >
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -65,7 +64,7 @@ export default function SidebarCaballerizo() {
 
       {/* Sidebar principal */}
       <aside
-        className={`fixed top-0 left-0 h-full w-80 bg-gradient-to-b from-slate-900/95 to-slate-950/95 backdrop-blur-xl border-r border-slate-800/50 z-40 transition-transform duration-300 flex flex-col ${
+        className={`fixed top-0 left-0 h-full w-80 bg-gradient-to-b from-slate-900/95 to-slate-950/95 backdrop-blur-xl border-r border-slate-800/50 z-40 transition-transform duration-300 flex flex-col shadow-[0_0_24px_rgba(16,185,129,0.12)] ${
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
@@ -89,10 +88,9 @@ export default function SidebarCaballerizo() {
         {/* Buscador */}
         <div className="p-4 border-b border-slate-800/50">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <Input
               placeholder="Buscar seccion..."
-              className="pl-10 bg-slate-800/40 border-slate-700/40 text-white placeholder:text-slate-500 focus-visible:ring-emerald-500/40"
+              className="pl-4 bg-slate-800/40 border-slate-700/40 text-white placeholder:text-slate-500 focus-visible:ring-emerald-500/40"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
             />
@@ -113,8 +111,8 @@ export default function SidebarCaballerizo() {
                   onClick={closeSidebar}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                     isActive
-                      ? "bg-gradient-to-r from-emerald-500/20 to-emerald-600/20 text-emerald-400 border border-emerald-500/30 shadow-inner"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/40"
+                      ? "bg-gradient-to-r from-emerald-500/16 to-emerald-600/16 text-emerald-300 border border-emerald-500/25"
+                      : "text-slate-400 hover:text-white hover:bg-slate-800/35"
                   }`}
                 >
                   <Icon className="w-5 h-5" />
@@ -129,7 +127,7 @@ export default function SidebarCaballerizo() {
         <div className="p-4 border-t border-slate-800/50">
           <Button
             onClick={handleSignOut}
-            className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg shadow-emerald-500/20"
+            className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-md shadow-emerald-500/15"
           >
             <LogOut className="w-4 h-4 mr-2" />
             Cerrar sesión
@@ -139,3 +137,6 @@ export default function SidebarCaballerizo() {
     </>
   );
 }
+
+
+

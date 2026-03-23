@@ -949,7 +949,7 @@ const TotalControlManagement = () => {
               setHorses([]);
             }
           }}
-          className="p-2 rounded-md bg-gray-700 text-white text-sm w-full"
+          className="select-field text-sm w-full"
         >
           <option value="">-- Selecciona propietario --</option>
           {owners.map((o) => (
@@ -976,7 +976,7 @@ const TotalControlManagement = () => {
                   period: value,
                 }));
               }}
-              className="p-2 rounded-md bg-gray-700 text-white w-full"
+              className="w-full"
               required
             />
           </div>
@@ -1029,7 +1029,7 @@ const TotalControlManagement = () => {
                 });
               }}
               disabled={!selectedOwner}
-              className="p-2 rounded-md bg-gray-700 text-white disabled:opacity-50 w-full"
+              className="select-field disabled:opacity-50 w-full"
             >
               <option value="">-- Selecciona caballo --</option>
               {horses.map((h) => (
@@ -1053,7 +1053,7 @@ const TotalControlManagement = () => {
               value={formValues.box ?? ""}
               onChange={handleNumericInputChange("box")}
               onBlur={handleNumericInputBlur("box")}
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full"
+              className="select-field placeholder-gray-400 w-full"
             />
           </div>
 
@@ -1067,7 +1067,7 @@ const TotalControlManagement = () => {
               value={formValues.section ?? ""}
               onChange={handleNumericInputChange("section")}
               onBlur={handleNumericInputBlur("section")}
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full"
+              className="select-field placeholder-gray-400 w-full"
             />
           </div>
 
@@ -1081,7 +1081,7 @@ const TotalControlManagement = () => {
               value={formValues.basket ?? ""}
               onChange={handleNumericInputChange("basket")}
               onBlur={handleNumericInputBlur("basket")}
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full"
+              className="select-field placeholder-gray-400 w-full"
             />
           </div>
 
@@ -1095,7 +1095,7 @@ const TotalControlManagement = () => {
               value={formValues.toCaballerizo ?? ""}
               onChange={handleNumericInputChange("toCaballerizo")}
               onBlur={handleNumericInputBlur("toCaballerizo")}
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full"
+              className="select-field placeholder-gray-400 w-full"
             />
           </div>
 
@@ -1109,7 +1109,7 @@ const TotalControlManagement = () => {
               value={formValues.vaccines ?? ""}
               onChange={handleNumericInputChange("vaccines")}
               onBlur={handleNumericInputBlur("vaccines")}
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full"
+              className="select-field placeholder-gray-400 w-full"
             />
           </div>
 
@@ -1123,7 +1123,7 @@ const TotalControlManagement = () => {
               value={formValues.anemia ?? ""}
               onChange={handleNumericInputChange("anemia")}
               onBlur={handleNumericInputBlur("anemia")}
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full"
+              className="select-field placeholder-gray-400 w-full"
             />
           </div>
 
@@ -1137,7 +1137,7 @@ const TotalControlManagement = () => {
               value={formValues.deworming ?? ""}
               onChange={handleNumericInputChange("deworming")}
               onBlur={handleNumericInputBlur("deworming")}
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full"
+              className="select-field placeholder-gray-400 w-full"
             />
           </div>
 
@@ -1157,7 +1157,7 @@ const TotalControlManagement = () => {
               value={formValues.consumptionAlfaDiaKlg ?? ""}
               onChange={handleNumericInputChange("consumptionAlfaDiaKlg")}
               onBlur={handleNumericInputBlur("consumptionAlfaDiaKlg")}
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full"
+              className="select-field placeholder-gray-400 w-full"
             />
           </div>
 
@@ -1171,7 +1171,7 @@ const TotalControlManagement = () => {
               value={formValues.costAlfaBs ?? ""}
               onChange={handleNumericInputChange("costAlfaBs")}
               onBlur={handleNumericInputBlur("costAlfaBs")}
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full"
+              className="select-field placeholder-gray-400 w-full"
             />
           </div>
 
@@ -1185,7 +1185,7 @@ const TotalControlManagement = () => {
               value={formValues.daysConsumptionMonth ?? ""}
               onChange={handleNumericInputChange("daysConsumptionMonth")}
               onBlur={handleNumericInputBlur("daysConsumptionMonth")}
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full"
+              className="select-field placeholder-gray-400 w-full"
             />
           </div>
 
@@ -1198,7 +1198,7 @@ const TotalControlManagement = () => {
               placeholder="0,00"
               value={formValues.consumptionAlphaMonthKlg ?? ""}
               readOnly
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full"
+              className="select-field placeholder-gray-400 w-full"
             />
           </div>
 
@@ -1211,7 +1211,7 @@ const TotalControlManagement = () => {
               placeholder="0,00"
               value={formValues.costTotalAlphaBs ?? ""}
               readOnly
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full"
+              className="select-field placeholder-gray-400 w-full"
             />
           </div>
 
@@ -1231,7 +1231,7 @@ const TotalControlManagement = () => {
               value={formValues.cubeChala ?? ""}
               onChange={handleNumericInputChange("cubeChala")}
               onBlur={handleNumericInputBlur("cubeChala")}
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full"
+              className="select-field placeholder-gray-400 w-full"
             />
           </div>
 
@@ -1245,7 +1245,7 @@ const TotalControlManagement = () => {
               value={formValues.UnitCostChalaBs ?? ""}
               onChange={handleNumericInputChange("UnitCostChalaBs")}
               onBlur={handleNumericInputBlur("UnitCostChalaBs")}
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full"
+              className="select-field placeholder-gray-400 w-full"
             />
           </div>
 
@@ -1258,7 +1258,7 @@ const TotalControlManagement = () => {
               placeholder="0,00"
               value={formValues.costTotalChalaBs ?? ""}
               readOnly
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full"
+              className="select-field placeholder-gray-400 w-full"
             />
           </div>
 
@@ -1271,11 +1271,11 @@ const TotalControlManagement = () => {
               placeholder="0,00"
               value={formValues.totalCharge ?? ""}
               readOnly
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full"
+              className="select-field placeholder-gray-400 w-full"
             />
           </div>
         </div>
-        <div className="mt-4 flex justify-end gap-2">
+        <div className="mt-6 flex justify-center gap-3 px-6 pb-6">
           <button
             onClick={createControl}
             className={`${isEditing ? "bg-blue-600 hover:bg-blue-700" : "bg-green-600 hover:bg-green-700"} text-white p-2 rounded-md font-semibold flex items-center gap-2`}
@@ -1287,7 +1287,7 @@ const TotalControlManagement = () => {
           {isEditing && (
             <button
               onClick={resetForm}
-              className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md font-semibold flex items-center gap-2"
+              className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-2"
             >
               <X size={20} /> Cancelar
             </button>
@@ -1312,7 +1312,7 @@ const TotalControlManagement = () => {
                   setFilterYear("");
                 }
               }}
-              className="p-2 rounded-md bg-gray-700 text-white w-full md:w-56"
+              className="select-field w-full md:w-56"
             />
           </div>
           <div className="w-full md:w-auto">
@@ -1330,7 +1330,7 @@ const TotalControlManagement = () => {
                   setFilterMonth("");
                 }
               }}
-              className="p-2 rounded-md bg-gray-700 text-white w-full md:w-48"
+              className="select-field w-full md:w-48"
             >
               <option value="">-- Todos los años --</option>
               {availableYears.map((year) => (
@@ -1487,3 +1487,7 @@ const TotalControlManagement = () => {
 };
 
 export default TotalControlManagement;
+
+
+
+

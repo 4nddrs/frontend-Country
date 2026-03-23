@@ -159,7 +159,7 @@ const EmployeesShiftemManagement = () => {
             name="fk_idEmployee"
             value={newEmp.fk_idEmployee || ""}
             onChange={e => setNewEmp({ ...newEmp, fk_idEmployee: e.target.value ? Number(e.target.value) : undefined })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+            className="select-field flex-1"
           >
             <option value="">-- Selecciona empleado --</option>
             {employees.map(emp => (
@@ -172,7 +172,7 @@ const EmployeesShiftemManagement = () => {
             name="fk_idShiftEmployees"
             value={newEmp.fk_idShiftEmployees || ""}
             onChange={e => setNewEmp({ ...newEmp, fk_idShiftEmployees: e.target.value ? Number(e.target.value) : undefined })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+            className="select-field flex-1"
           >
             <option value="">-- Selecciona turno empleado --</option>
             {shiftEmployees.map(se => (
@@ -199,13 +199,13 @@ const EmployeesShiftemManagement = () => {
                 className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-fuchsia-500/10 via-slate-900/60 to-slate-900/90 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-fuchsia-500/20"
               >
                 {editingId === emp.idEmployeesShiftem ? (
-                  <div className="p-6">
+                  <div className="p-6 space-y-3">
                     <div>
                       <label className="block mb-1 text-sm font-medium">Empleado</label>
                       <select
                       value={newEmp.fk_idEmployee || ""}
                       onChange={e => setNewEmp({ ...newEmp, fk_idEmployee: e.target.value ? Number(e.target.value) : undefined })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                      className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full"
                     >
                       {employees.map(emp2 => (
                         <option key={emp2.idEmployee} value={emp2.idEmployee}>
@@ -219,7 +219,7 @@ const EmployeesShiftemManagement = () => {
                       <select
                       value={newEmp.fk_idShiftEmployees || ""}
                       onChange={e => setNewEmp({ ...newEmp, fk_idShiftEmployees: e.target.value ? Number(e.target.value) : undefined })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                      className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full"
                     >
                       {shiftEmployees.map(se => (
                         <option key={se.idShiftEmployed} value={se.idShiftEmployed}>
@@ -228,7 +228,7 @@ const EmployeesShiftemManagement = () => {
                       ))}
                     </select>
                     </div>
-                    <div className="flex justify-end gap-2 mt-2">
+                    <div className="flex justify-center gap-3 px-6 pb-2 mt-4 -mx-6 -mb-3">
                       <button
                         onClick={() => updateEmp(emp.idEmployeesShiftem!, {
                           fk_idEmployee: newEmp.fk_idEmployee ?? emp.fk_idEmployee,
@@ -240,7 +240,7 @@ const EmployeesShiftemManagement = () => {
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
+                        className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
                       >
                         <X size={16} /> Cancelar
                       </button>
@@ -306,3 +306,7 @@ const EmployeesShiftemManagement = () => {
 };
 
 export default EmployeesShiftemManagement;
+
+
+
+

@@ -128,7 +128,7 @@ const NutritionalPlanHorsesManagement = () => {
             placeholder="Fecha de asignación"
             value={newAssignment.assignmentDate}
             onChange={e => setNewAssignment({ ...newAssignment, assignmentDate: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="select-field flex-1 placeholder-gray-400"
           />
         <select
           name="fk_idNutritionalPlan"
@@ -137,7 +137,7 @@ const NutritionalPlanHorsesManagement = () => {
             setNewAssignment({ ...newAssignment, fk_idNutritionalPlan: Number(e.target.value) })
           }
           onClick={fetchNutritionalPlans}
-          className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+          className="select-field flex-1"
         >
           <option value="">
             -- Selecciona un plan nutricional --
@@ -154,7 +154,7 @@ const NutritionalPlanHorsesManagement = () => {
             value={newAssignment.fk_idHorse || ""}
             onChange={e => setNewAssignment({ ...newAssignment, fk_idHorse: Number(e.target.value) })}
             onClick={fetchHorses}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+            className="select-field flex-1"
           >
             <option value="">-- Selecciona un caballo --</option>
             {horses.map(horse => (
@@ -183,12 +183,12 @@ const NutritionalPlanHorsesManagement = () => {
                       type="date"
                       defaultValue={assign.assignmentDate?.slice(0,10)}
                       onChange={e => setNewAssignment({ ...newAssignment, assignmentDate: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                      className="select-field mb-2"
                     />
                     <select
                       value={newAssignment.fk_idNutritionalPlan}
                       onChange={e => setNewAssignment({ ...newAssignment, fk_idNutritionalPlan: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                      className="select-field mb-2"
                     >
                       {nutritionalPlans.map(plan => (
                         <option key={plan.idNutritionalPlan} value={plan.idNutritionalPlan}>
@@ -199,7 +199,7 @@ const NutritionalPlanHorsesManagement = () => {
                    <select
                       value={newAssignment.fk_idHorse}
                       onChange={e => setNewAssignment({ ...newAssignment, fk_idHorse: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                      className="select-field mb-2"
                     >
                       {horses.map(horse => (
                         <option key={horse.idHorse} value={horse.idHorse}>
@@ -221,7 +221,7 @@ const NutritionalPlanHorsesManagement = () => {
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
+                        className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
                       >
                         <X size={16} /> Cancelar
                       </button>
@@ -231,7 +231,7 @@ const NutritionalPlanHorsesManagement = () => {
                   <>
                     <h3 className="text-lg font-semibold">Plan #{assign.fk_idNutritionalPlan} - Caballo #{assign.fk_idHorse}</h3>
                     <p>Fecha de asignación: {assign.assignmentDate?.slice(0,10)}</p>
-                    <div className="flex justify-end gap-2 mt-2">
+                    <div className="flex justify-center gap-3 px-6 pb-6 mt-2">
                       <button
                         onClick={() => { setEditingId(assign.idNutritionalPlan_horse!); setNewAssignment(assign); }}
                         className="bg-yellow-600 hover:bg-yellow-700 text-white p-2 rounded-md flex items-center gap-1"
@@ -257,3 +257,7 @@ const NutritionalPlanHorsesManagement = () => {
 };
 
 export default NutritionalPlanHorsesManagement;
+
+
+
+

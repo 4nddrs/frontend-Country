@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import type { ChangeEvent } from 'react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/es';
@@ -1007,7 +1007,7 @@ const OwnerReportMonthManagement = () => {
             <select
               value={newReport.fk_idOwner}
               onChange={handleReportChange('fk_idOwner')}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             >
               <option value={0}>Selecciona propietario</option>
               {owners.map((owner) => (
@@ -1031,7 +1031,7 @@ const OwnerReportMonthManagement = () => {
                   period: event.target.value,
                 }))
               }
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
           <div>
@@ -1044,7 +1044,7 @@ const OwnerReportMonthManagement = () => {
               placeholder="0"
               value={numericDisplays.priceAlpha}
               onChange={handleReportChange('priceAlpha')}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
           <div>
@@ -1057,7 +1057,7 @@ const OwnerReportMonthManagement = () => {
               placeholder="0"
               value={numericDisplays.box}
               onChange={handleReportChange('box')}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
           <div>
@@ -1070,7 +1070,7 @@ const OwnerReportMonthManagement = () => {
               placeholder="0"
               value={numericDisplays.section}
               onChange={handleReportChange('section')}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
           <div>
@@ -1083,7 +1083,7 @@ const OwnerReportMonthManagement = () => {
               placeholder="0"
               value={numericDisplays.aBasket}
               onChange={handleReportChange('aBasket')}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
           <div>
@@ -1096,7 +1096,7 @@ const OwnerReportMonthManagement = () => {
               placeholder="0"
               value={numericDisplays.contributionCabFlyer}
               onChange={handleReportChange('contributionCabFlyer')}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
           <div>
@@ -1109,7 +1109,7 @@ const OwnerReportMonthManagement = () => {
               placeholder="0"
               value={numericDisplays.VaccineApplication}
               onChange={handleReportChange('VaccineApplication')}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
           <div>
@@ -1122,7 +1122,7 @@ const OwnerReportMonthManagement = () => {
               placeholder="0"
               value={numericDisplays.deworming}
               onChange={handleReportChange('deworming')}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
           <div>
@@ -1135,7 +1135,7 @@ const OwnerReportMonthManagement = () => {
               placeholder="0"
               value={numericDisplays.AmeniaExam}
               onChange={handleReportChange('AmeniaExam')}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
           <div>
@@ -1148,7 +1148,7 @@ const OwnerReportMonthManagement = () => {
               placeholder="0"
               value={numericDisplays.externalTeacher}
               onChange={handleReportChange('externalTeacher')}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
           <div>
@@ -1161,7 +1161,7 @@ const OwnerReportMonthManagement = () => {
               placeholder="0"
               value={numericDisplays.fine}
               onChange={handleReportChange('fine')}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
           <div>
@@ -1174,7 +1174,7 @@ const OwnerReportMonthManagement = () => {
               placeholder="0"
               value={numericDisplays.saleChala}
               onChange={handleReportChange('saleChala')}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
           <div>
@@ -1187,7 +1187,7 @@ const OwnerReportMonthManagement = () => {
               placeholder="0"
               value={numericDisplays.costPerBucket}
               onChange={handleReportChange('costPerBucket')}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
           <div>
@@ -1200,7 +1200,7 @@ const OwnerReportMonthManagement = () => {
               placeholder="0"
               value={numericDisplays.healthCardPayment}
               onChange={handleReportChange('healthCardPayment')}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
           <div>
@@ -1213,7 +1213,7 @@ const OwnerReportMonthManagement = () => {
               placeholder="0"
               value={numericDisplays.other}
               onChange={handleReportChange('other')}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
           <div>
@@ -1227,7 +1227,7 @@ const OwnerReportMonthManagement = () => {
                   paymentDate: event.target.value,
                 }))
               }
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
           <div>
@@ -1237,7 +1237,7 @@ const OwnerReportMonthManagement = () => {
             <select
               value={newReport.state}
               onChange={handleReportChange('state')}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             >
               <option value="Pendiente">Pendiente</option>
               <option value="Pagado">Pagado</option>
@@ -1291,7 +1291,7 @@ const OwnerReportMonthManagement = () => {
                       placeholder="0"
                       value={horse.daysDisplay ?? ''}
                       onChange={(event) => updateHorseRow(index, 'days', event.target.value)}
-                      className="w-full p-2 rounded-md bg-gray-700 text-white"
+                      className="w-full"
                     />
                   </div>
                   <div>
@@ -1304,7 +1304,7 @@ const OwnerReportMonthManagement = () => {
                       placeholder="0"
                       value={horse.alphaKgDisplay ?? ''}
                       onChange={(event) => updateHorseRow(index, 'alphaKg', event.target.value)}
-                      className="w-full p-2 rounded-md bg-gray-700 text-white"
+                      className="w-full"
                     />
                   </div>
                 </div>
@@ -1326,7 +1326,7 @@ const OwnerReportMonthManagement = () => {
           {isEditing && (
             <button
               onClick={resetForm}
-              className="flex items-center gap-2 px-4 py-2 rounded-md font-semibold bg-gray-600 hover:bg-gray-500 text-white"
+              className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-2"
             >
               <X size={18} /> Cancelar
             </button>
@@ -1350,7 +1350,7 @@ const OwnerReportMonthManagement = () => {
                 type="month"
                 value={filterStart}
                 onChange={(event) => setFilterStart(event.target.value)}
-                className="bg-gray-700 text-white rounded-md px-3 py-2 border border-slate-600"
+                className="select-field rounded-md px-3 py-2 border border-slate-600"
               />
             </div>
             <div className="flex flex-col">
@@ -1359,7 +1359,7 @@ const OwnerReportMonthManagement = () => {
                 type="month"
                 value={filterEnd}
                 onChange={(event) => setFilterEnd(event.target.value)}
-                className="bg-gray-700 text-white rounded-md px-3 py-2 border border-slate-600"
+                className="select-field rounded-md px-3 py-2 border border-slate-600"
               />
             </div>
             <div className="flex items-end gap-2">
@@ -1371,7 +1371,7 @@ const OwnerReportMonthManagement = () => {
               </button>
               <button
                 onClick={handleResetFilters}
-                className="flex items-center gap-2 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-md px-4 py-2"
+                className="w-full"
               >
                 Limpiar
               </button>
@@ -1549,3 +1549,7 @@ const OwnerReportMonthManagement = () => {
 };
 
 export default OwnerReportMonthManagement;
+
+
+
+

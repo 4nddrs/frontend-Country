@@ -3,6 +3,46 @@ import { supabase } from '../supabaseClient';
 
 // Variable para prevenir múltiples ejecuciones simultáneas
 let isSigningOut = false;
+const SIGN_OUT_TIMEOUT_MS = 6000;
+
+const SUPABASE_AUTH_KEY_PATTERNS = [
+  /^sb-.*-auth-token$/,
+  /^sb-auth-token$/,
+  /^supabase\.auth\.token$/,
+];
+
+const isSupabaseAuthKey = (key: string) =>
+  SUPABASE_AUTH_KEY_PATTERNS.some((pattern) => pattern.test(key));
+
+const clearSupabaseAuthStorage = () => {
+  Object.keys(localStorage).forEach((key) => {
+    if (isSupabaseAuthKey(key)) {
+      localStorage.removeItem(key);
+      console.log('🗑️ Eliminado del localStorage:', key);
+    }
+  });
+
+  Object.keys(sessionStorage).forEach((key) => {
+    if (isSupabaseAuthKey(key)) {
+      sessionStorage.removeItem(key);
+      console.log('🗑️ Eliminado del sessionStorage:', key);
+    }
+  });
+};
+
+const signOutWithTimeout = async () => {
+  const timeoutPromise = new Promise<{ error: Error }>((resolve) => {
+    setTimeout(() => {
+      resolve({
+        error: new Error(`Timeout al cerrar sesión (${SIGN_OUT_TIMEOUT_MS}ms)`),
+      });
+    }, SIGN_OUT_TIMEOUT_MS);
+  });
+
+  const signOutPromise = supabase.auth.signOut({ scope: 'local' });
+  const result = await Promise.race([signOutPromise, timeoutPromise]);
+  return result;
+};
 
 /**
  * Cierra la sesión del usuario y limpia completamente el cache de Supabase
@@ -36,39 +76,30 @@ export const handleSignOut = async () => {
 
   isSigningOut = true;
   console.log('🚪 Cerrando sesión y limpiando cache...');
+  const baseUrl = import.meta.env.BASE_URL || '/';
   
   try {
     // 1. Cerrar sesión en Supabase
-    const { error } = await supabase.auth.signOut();
+    // Si Supabase tarda demasiado, continuamos con logout local para no bloquear la UI.
+    const { error } = await signOutWithTimeout();
     if (error) {
-      console.error('❌ Error al cerrar sesión en Supabase:', error);
+      console.warn('⚠️ No se confirmó signOut remoto, continuando con logout local:', error.message);
     }
     
-    // 2. Limpiar TODOS los tokens de Supabase del localStorage
-    Object.keys(localStorage).forEach(key => {
-      if (key.includes('supabase') || key.includes('sb-')) {
-        localStorage.removeItem(key);
-        console.log('🗑️ Eliminado del cache:', key);
-      }
-    });
-    
-    // 3. Limpiar sessionStorage también (por si acaso)
-    Object.keys(sessionStorage).forEach(key => {
-      if (key.includes('supabase') || key.includes('sb-')) {
-        sessionStorage.removeItem(key);
-      }
-    });
+    // 2. Limpiar tokens de autenticación en local/session storage
+    clearSupabaseAuthStorage();
     
     console.log('✅ Cache limpiado completamente');
     
-    // 4. Forzar redirección a la página principal
+    // 3. Forzar redirección a la base configurada de la app
     // Usamos replace para que no se pueda volver atrás con el botón del navegador
-    window.location.replace('/');
+    window.location.replace(baseUrl);
     
   } catch (error) {
     console.error('❌ Error inesperado al cerrar sesión:', error);
     // Incluso si hay error, limpiar y redirigir
-    window.location.replace('/');
+    clearSupabaseAuthStorage();
+    window.location.replace(baseUrl);
   } finally {
     // Resetear el flag después de un breve delay
     setTimeout(() => {

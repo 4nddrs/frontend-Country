@@ -547,7 +547,7 @@ const AttentionHorsesManagement = () => {
               placeholder="Fecha"
               value={newAttention.date}
               onChange={e => setNewAttention({ ...newAttention, date: e.target.value })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+              className="w-full"
               required
             />
           </div>
@@ -561,7 +561,7 @@ const AttentionHorsesManagement = () => {
               placeholder="Dosis"
               value={newAttention.dose}
               onChange={e => setNewAttention({ ...newAttention, dose: e.target.value })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+              className="w-full"
               required
             />
           </div>
@@ -575,7 +575,7 @@ const AttentionHorsesManagement = () => {
               placeholder="0"
               value={newAttention.cost}
               onChange={handleCostChange}
-              className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+              className="w-full"
               inputMode="decimal"
               required
             />
@@ -590,7 +590,7 @@ const AttentionHorsesManagement = () => {
               placeholder="Descripción"
               value={newAttention.description}
               onChange={e => setNewAttention({ ...newAttention, description: e.target.value })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+              className="w-full"
               required
             />
           </div>
@@ -602,7 +602,7 @@ const AttentionHorsesManagement = () => {
               name="fk_idHorse"
               value={newAttention.fk_idHorse}
               onChange={e => setNewAttention({ ...newAttention, fk_idHorse: Number(e.target.value) })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
               required
             >
               <option value={0}>-- Selecciona caballo --</option>
@@ -626,7 +626,7 @@ const AttentionHorsesManagement = () => {
                   fk_idMedicine: e.target.value ? Number(e.target.value) : '',
                 })
               }
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             >
               <option value="">-- Sin medicina --</option>
               {medicines.map(med => (
@@ -646,7 +646,7 @@ const AttentionHorsesManagement = () => {
               onChange={e =>
                 setNewAttention({ ...newAttention, fk_idEmployee: Number(e.target.value) })
               }
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
               required
             >
               <option value={0}>-- Selecciona empleado --</option>
@@ -677,7 +677,7 @@ const AttentionHorsesManagement = () => {
               <button
                 type="button"
                 onClick={handleCancelEdit}
-                className="bg-gray-600 hover:bg-gray-700 text-white p-2 rounded-md font-semibold flex items-center gap-2"
+                className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-2"
               >
                 <X size={20} /> Cancelar
               </button>
@@ -696,7 +696,7 @@ const AttentionHorsesManagement = () => {
               id="filterHorse"
               value={filterHorse}
               onChange={e => setFilterHorse(Number(e.target.value))}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             >
               <option value={0}>Todos</option>
               {horses.map(horse => (
@@ -715,7 +715,7 @@ const AttentionHorsesManagement = () => {
               type="date"
               value={filterStartDate}
               onChange={e => setFilterStartDate(e.target.value)}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
           <div className="min-w-[180px]">
@@ -727,7 +727,7 @@ const AttentionHorsesManagement = () => {
               type="date"
               value={filterEndDate}
               onChange={e => setFilterEndDate(e.target.value)}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
           <div className="flex gap-2">
@@ -744,7 +744,7 @@ const AttentionHorsesManagement = () => {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="bg-slate-600 hover:bg-slate-700 text-white p-2 rounded-md font-semibold flex items-center gap-2"
+                className="w-full"
               >
                 <X size={18} /> Limpiar
               </button>
@@ -866,3 +866,7 @@ const AttentionHorsesManagement = () => {
 };
 
 export default AttentionHorsesManagement;
+
+
+
+

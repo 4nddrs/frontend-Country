@@ -203,7 +203,7 @@ export default function PendingUsers() {
                     <button
                       onClick={() => approveUser(u)}
                       disabled={isProcessing}
-                      className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 text-white font-semibold rounded-md shadow-md active:scale-95 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="w-full"
                     >
                       {isProcessing ? (
                         <Loader2 className="w-5 h-5 animate-spin" />
@@ -216,7 +216,7 @@ export default function PendingUsers() {
                     <button
                       onClick={() => rejectUser(u)}
                       disabled={isProcessing}
-                      className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-6 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-gray-700 text-white font-semibold rounded-md shadow-md active:scale-95 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="w-full"
                     >
                       {isProcessing ? (
                         <Loader2 className="w-5 h-5 animate-spin" />
@@ -235,3 +235,7 @@ export default function PendingUsers() {
     </div>
   );
 }
+
+
+
+

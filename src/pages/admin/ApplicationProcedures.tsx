@@ -141,7 +141,7 @@ const ApplicationProceduresManagement = () => {
               name="executionDate"
               value={newProcedure.executionDate}
               onChange={e => setNewProcedure({ ...newProcedure, executionDate: e.target.value })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+              className="w-full"
             />
           </div>
 
@@ -153,7 +153,7 @@ const ApplicationProceduresManagement = () => {
               name="observations"
               value={newProcedure.observations}
               onChange={e => setNewProcedure({ ...newProcedure, observations: e.target.value })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+              className="w-full"
               placeholder="Ej: El caballo reaccionó bien"
             />
           </div>
@@ -166,7 +166,7 @@ const ApplicationProceduresManagement = () => {
               name="fk_idScheduledProcedure"
               value={newProcedure.fk_idScheduledProcedure}
               onChange={e => setNewProcedure({ ...newProcedure, fk_idScheduledProcedure: Number(e.target.value) })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             >
               <option value="">-- Selecciona procedimiento programado --</option>
               {scheduledProcedures.map(proc => (
@@ -184,7 +184,7 @@ const ApplicationProceduresManagement = () => {
               name="fk_idHorse"
               value={newProcedure.fk_idHorse}
               onChange={e => setNewProcedure({ ...newProcedure, fk_idHorse: Number(e.target.value) })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             >
               <option value="">-- Selecciona caballo --</option>
               {horses.map(horse => (
@@ -217,18 +217,18 @@ const ApplicationProceduresManagement = () => {
                       type="date"
                       defaultValue={proc.executionDate?.slice(0, 10)}
                       onChange={e => setNewProcedure({ ...newProcedure, executionDate: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                      className="select-field mb-2"
                     />
                     <input
                       type="text"
                       defaultValue={proc.observations}
                       onChange={e => setNewProcedure({ ...newProcedure, observations: e.target.value })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                      className="select-field mb-2"
                     />
                     <select
                       value={newProcedure.fk_idScheduledProcedure}
                       onChange={e => setNewProcedure({ ...newProcedure, fk_idScheduledProcedure: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                      className="select-field mb-2"
                     >
                       {scheduledProcedures.map(proc2 => (
                         <option key={proc2.idScheduledProcedure} value={proc2.idScheduledProcedure}>
@@ -239,7 +239,7 @@ const ApplicationProceduresManagement = () => {
                     <select
                       value={newProcedure.fk_idHorse}
                       onChange={e => setNewProcedure({ ...newProcedure, fk_idHorse: Number(e.target.value) })}
-                      className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                      className="select-field mb-2"
                     >
                       {horses.map(horse => (
                         <option key={horse.idHorse} value={horse.idHorse}>
@@ -247,7 +247,7 @@ const ApplicationProceduresManagement = () => {
                         </option>
                       ))}
                     </select>
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-center gap-3 px-6 pb-4">
                       <button
                         onClick={() => updateProcedure(proc.idApplicationProcedure!, {
                           executionDate: newProcedure.executionDate || proc.executionDate,
@@ -261,7 +261,7 @@ const ApplicationProceduresManagement = () => {
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
+                        className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
                       >
                         <X size={16} /> Cancelar
                       </button>
@@ -324,3 +324,7 @@ const ApplicationProceduresManagement = () => {
 };
 
 export default ApplicationProceduresManagement;
+
+
+
+

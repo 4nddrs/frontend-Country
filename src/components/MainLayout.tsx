@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Sidebar from '../components/Sidebar';
 import Dashboard from '../pages/admin/Dashboard';
@@ -29,7 +29,6 @@ import Income from '../pages/admin/Income';
 import OwnerReportMonth from '../pages/admin/OwnerReportMonth';
 import TotalControl from '../pages/admin/TotalConrtrol';
 import VaccinationPlan from '../pages/admin/VaccinationPlan';
-import VaccinationPlanApplication from '../pages/admin/VaccinationPlanApplication';
 import AlphaConsumptionControl from '../pages/admin/AlphaConsumptionControl';
 import SalaryPayments from '../pages/admin/SalaryPayment';
 import TipPayment from '../pages/admin/TipPayment';
@@ -41,10 +40,13 @@ type MainLayoutProps = {
 };
 
 const MainLayout = ({ userRole }: MainLayoutProps) => {
+  const location = useLocation();
+  const isDashboardRoute = location.pathname === '/';
+
   return (
-     <div className="bg-black text-white font-sans flex h-screen overflow-hidden text-base leading-normal">
+     <div className="app-shell bg-black text-white font-sans flex h-screen overflow-hidden text-base leading-normal">
       <Sidebar userRole={userRole} />
-      <main className="flex-1 p-4 lg:p-8 overflow-y-auto lg:ml-80">
+      <main className={`flex-1 p-4 lg:p-8 overflow-y-auto lg:ml-80 ${isDashboardRoute ? '' : 'app-content'}`}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/employee" element={<Employees />} />
@@ -74,7 +76,6 @@ const MainLayout = ({ userRole }: MainLayoutProps) => {
           <Route path="/OwnerReportMonth" element={<OwnerReportMonth />} />
           <Route path="/TotalControl" element={<TotalControl />} />
           <Route path="/VaccinationPlan" element={<VaccinationPlan />} />
-          <Route path="/VaccinationPlanApplication" element={<VaccinationPlanApplication />} />
           <Route path="/AlphaConsumptionControl" element={<AlphaConsumptionControl />} />
           <Route path="/SalaryPayments" element={<SalaryPayments />} />
           <Route path="/TipPayment" element={<TipPayment />} />
@@ -88,3 +89,6 @@ const MainLayout = ({ userRole }: MainLayoutProps) => {
 };
 
 export default MainLayout;
+
+
+

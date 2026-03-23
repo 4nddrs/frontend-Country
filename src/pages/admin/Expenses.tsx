@@ -317,7 +317,7 @@ const ExpensesManagement = () => {
                 onChange={(e) =>
                   setNewExpense({ ...newExpense, date: e.target.value })
                 }
-                className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+                className="select-field flex-1"
               />
             </div>
 
@@ -333,7 +333,7 @@ const ExpensesManagement = () => {
                 onChange={(e) =>
                   setNewExpense({ ...newExpense, description: e.target.value })
                 }
-                className="flex-1 min-w-[20rem] lg:min-w-[24rem] p-2 rounded-md bg-gray-700 text-white"
+                className="w-full"
               />
             </div>
 
@@ -352,7 +352,7 @@ const ExpensesManagement = () => {
                     AmountBsCaptureType: e.target.value as any,
                   })
                 }
-                className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+                className="select-field flex-1"
               />
             </div>
 
@@ -367,7 +367,7 @@ const ExpensesManagement = () => {
                 onChange={(e) =>
                   setNewExpense({ ...newExpense, period: e.target.value })
                 }
-                className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+                className="select-field flex-1"
               />
             </div>
           </div>
@@ -395,7 +395,7 @@ const ExpensesManagement = () => {
                     period: "",
                   });
                 }}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-md font-semibold flex items-center justify-center gap-1 text-sm h-[36px]"
+                className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-2"
               >
                 <X size={16} /> Cancelar
               </button>
@@ -418,7 +418,7 @@ const ExpensesManagement = () => {
               type="month"
               value={filterMonth}
               onChange={(e) => setFilterMonth(e.target.value)}
-              className="bg-gray-700 text-white rounded-md p-2"
+              className="select-field rounded-md p-2"
             />
           </div>
 
@@ -512,3 +512,7 @@ const ExpensesManagement = () => {
 };
 
 export default ExpensesManagement;
+
+
+
+

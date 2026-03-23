@@ -53,7 +53,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         </AlertDialogHeader>
         <AlertDialogFooter className="mt-6">
           <AlertDialogCancel 
-            className="bg-gray-700/50 hover:bg-gray-600/70 text-white border-gray-600 transition-all duration-200"
+            className="w-full"
           >
             {cancelText}
           </AlertDialogCancel>
@@ -113,3 +113,7 @@ export const useConfirmDialog = () => {
 
   return { confirm, ConfirmDialog: ConfirmDialogComponent };
 };
+
+
+
+

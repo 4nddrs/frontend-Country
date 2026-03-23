@@ -135,7 +135,7 @@ const FoodStocksManagement = () => {
             placeholder="Ej: Arroz"
             value={newStock.foodName}
             onChange={e => setNewStock({ ...newStock, foodName: e.target.value })}
-            className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="w-full"
           />
         </div>
         <div>
@@ -146,7 +146,7 @@ const FoodStocksManagement = () => {
             placeholder="Ej: 100"
             value={newStock.stock}
             onChange={e => setNewStock({ ...newStock, stock: Number(e.target.value) })}
-            className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="w-full"
           />
         </div>
         <div>
@@ -155,7 +155,7 @@ const FoodStocksManagement = () => {
             name="unitMeasurement"
             value={newStock.unitMeasurement}
             onChange={e => setNewStock({ ...newStock, unitMeasurement: Number(e.target.value) })}
-            className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="w-full"
           >
             <option value={1}>Kilo</option>
             <option value={2}>Cubo</option>
@@ -170,7 +170,7 @@ const FoodStocksManagement = () => {
             placeholder="Ej: 10"
             value={newStock.minStock}
             onChange={e => setNewStock({ ...newStock, minStock: Number(e.target.value) })}
-            className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="w-full"
           />
         </div>
         <div>
@@ -181,7 +181,7 @@ const FoodStocksManagement = () => {
             placeholder="Ej: 500"
             value={newStock.maxStock}
             onChange={e => setNewStock({ ...newStock, maxStock: Number(e.target.value) })}
-            className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="w-full"
           />
         </div>
         <div>
@@ -190,7 +190,7 @@ const FoodStocksManagement = () => {
             name="fk_idFoodProvider"
             value={newStock.fk_idFoodProvider}
             onChange={e => setNewStock({ ...newStock, fk_idFoodProvider: Number(e.target.value) })}
-            className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="w-full"
           >
             {foodProviders.map(provider => (
               <option key={provider.idFoodProvider} value={provider.idFoodProvider}>
@@ -232,7 +232,7 @@ const FoodStocksManagement = () => {
                         type="text"
                         defaultValue={stock.foodName}
                         onChange={e => setNewStock({ ...newStock, foodName: e.target.value })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="w-full"
                       />
                     </div>
                     <div>
@@ -241,7 +241,7 @@ const FoodStocksManagement = () => {
                         type="number"
                         defaultValue={stock.stock}
                         onChange={e => setNewStock({ ...newStock, stock: Number(e.target.value) })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="w-full"
                       />
                     </div>
                     <div>
@@ -249,7 +249,7 @@ const FoodStocksManagement = () => {
                       <select
                         defaultValue={stock.unitMeasurement}
                         onChange={e => setNewStock({ ...newStock, unitMeasurement: Number(e.target.value) })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="w-full"
                       >
                         <option value={1}>Kilo</option>
                         <option value={2}>Cubo</option>
@@ -262,7 +262,7 @@ const FoodStocksManagement = () => {
                         type="number"
                         defaultValue={stock.minStock}
                         onChange={e => setNewStock({ ...newStock, minStock: Number(e.target.value) })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="w-full"
                       />
                     </div>
                     <div>
@@ -271,7 +271,7 @@ const FoodStocksManagement = () => {
                         type="number"
                         defaultValue={stock.maxStock}
                         onChange={e => setNewStock({ ...newStock, maxStock: Number(e.target.value) })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="w-full"
                       />
                     </div>
                     <div>
@@ -279,7 +279,7 @@ const FoodStocksManagement = () => {
                       <select
                         defaultValue={stock.fk_idFoodProvider}
                         onChange={e => setNewStock({ ...newStock, fk_idFoodProvider: Number(e.target.value) })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="w-full"
                       >
                         {foodProviders.map(provider => (
                           <option key={provider.idFoodProvider} value={provider.idFoodProvider}>
@@ -289,7 +289,7 @@ const FoodStocksManagement = () => {
                       </select>
                     </div>
 
-                    <div className="flex justify-end gap-2 mt-2">
+                    <div className="flex justify-center gap-3 px-6 pb-6 mt-2">
                       <button
                         onClick={() =>
                           updateStock(stock.idFood!, {
@@ -307,7 +307,7 @@ const FoodStocksManagement = () => {
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
+                        className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
                       >
                         <X size={16} /> Cancelar
                       </button>
@@ -403,3 +403,7 @@ const FoodStocksManagement = () => {
 };
 
 export default FoodStocksManagement;
+
+
+
+

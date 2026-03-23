@@ -150,7 +150,7 @@ const fetchEmployees = async () => {
               name="taskName"
               value={newTask.taskName}
               onChange={e => setNewTask({ ...newTask, taskName: e.target.value })}
-              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+              className="select-field flex-1 placeholder-gray-400"
             />
           </div>
 
@@ -161,7 +161,7 @@ const fetchEmployees = async () => {
               name="description"
               value={newTask.description}
               onChange={e => setNewTask({ ...newTask, description: e.target.value })}
-              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+              className="select-field flex-1 placeholder-gray-400"
             />
           </div>
 
@@ -172,7 +172,7 @@ const fetchEmployees = async () => {
               name="assignmentDate"
               value={newTask.assignmentDate}
               onChange={e => setNewTask({ ...newTask, assignmentDate: e.target.value })}
-              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+              className="select-field flex-1 placeholder-gray-400"
             />
           </div>
 
@@ -183,7 +183,7 @@ const fetchEmployees = async () => {
               name="completionDate"
               value={newTask.completionDate}
               onChange={e => setNewTask({ ...newTask, completionDate: e.target.value })}
-              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+              className="select-field flex-1 placeholder-gray-400"
             />
           </div>
 
@@ -194,14 +194,14 @@ const fetchEmployees = async () => {
               name="taskStatus"
               value={newTask.taskStatus}
               onChange={e => setNewTask({ ...newTask, taskStatus: e.target.value })}
-              className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+              className="select-field flex-1 placeholder-gray-400"
             />
           </div>
 
           <select
             value={newTask.fk_idTaskCategory}
             onChange={e => setNewTask({ ...newTask, fk_idTaskCategory: Number(e.target.value) })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+            className="select-field flex-1"
           >
             <option value="">-- Selecciona una categoría --</option>
             {categories.map(cat => (
@@ -214,7 +214,7 @@ const fetchEmployees = async () => {
           <select
             value={newTask.fk_idEmployee || ''}
             onChange={e => setNewTask({ ...newTask, fk_idEmployee: Number(e.target.value) || undefined })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+            className="select-field flex-1"
           >
             <option value="">-- Selecciona un empleado --</option>
             {employees.map(emp => (
@@ -255,13 +255,13 @@ const fetchEmployees = async () => {
                         type="text"
                         defaultValue={task.taskName}
                         onChange={e => setNewTask({ ...newTask, taskName: e.target.value })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white"
+                        className="w-full"
                       />
                       <input
                         type="text"
                         defaultValue={task.description}
                         onChange={e => setNewTask({ ...newTask, description: e.target.value })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white"
+                        className="w-full"
                       />
                       <div>
                         <label className="block text-sm mb-1">Fecha de asignación</label>
@@ -269,25 +269,25 @@ const fetchEmployees = async () => {
                           type="date"
                           value={newTask.assignmentDate}
                           onChange={e => setNewTask({ ...newTask, assignmentDate: e.target.value })}
-                          className="w-full p-2 rounded-md bg-gray-700 text-white"
+                          className="w-full"
                         />
                       </div>
                       <input
                         type="date"
                         defaultValue={task.completionDate?.slice(0,10)}
                         onChange={e => setNewTask({ ...newTask, completionDate: e.target.value })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white"
+                        className="w-full"
                       />
                       <input
                         type="text"
                         defaultValue={task.taskStatus}
                         onChange={e => setNewTask({ ...newTask, taskStatus: e.target.value })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white"
+                        className="w-full"
                       />
                       <select
                         value={newTask.fk_idTaskCategory}
                         onChange={e => setNewTask({ ...newTask, fk_idTaskCategory: Number(e.target.value) })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white"
+                        className="w-full"
                       >
                         {categories.map(cat => (
                           <option key={cat.idTaskCategory} value={cat.idTaskCategory}>
@@ -298,7 +298,7 @@ const fetchEmployees = async () => {
                       <select
                         value={newTask.fk_idEmployee || ''}
                         onChange={e => setNewTask({ ...newTask, fk_idEmployee: Number(e.target.value) || undefined })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white"
+                        className="w-full"
                       >
                         <option value="">-- Selecciona un empleado --</option>
                         {employees.map(emp => (
@@ -307,7 +307,7 @@ const fetchEmployees = async () => {
                           </option>
                         ))}
                       </select>
-                      <div className="flex justify-end gap-2 pt-2">
+                      <div className="flex justify-center gap-3 px-6 pb-4 mt-3">
                         <button
                           onClick={() => updateTask(task.idTask!, {
                             ...task,
@@ -319,7 +319,7 @@ const fetchEmployees = async () => {
                         </button>
                         <button
                           onClick={() => setEditingId(null)}
-                          className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
+                          className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
                         >
                           <X size={16} /> Cancelar
                         </button>
@@ -411,3 +411,7 @@ const fetchEmployees = async () => {
 };
 
 export default TasksManagement;
+
+
+
+

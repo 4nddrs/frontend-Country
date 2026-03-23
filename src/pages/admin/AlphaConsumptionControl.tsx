@@ -298,7 +298,7 @@ const AlphaConsumptionControl: React.FC = () => {
           <div className="flex flex-col">
             <label className="block mb-1">Alimento</label>
             <select
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
               value={foodId ?? ""}
               onChange={(e) => {
                 const v = e.target.value;
@@ -317,7 +317,7 @@ const AlphaConsumptionControl: React.FC = () => {
           <div className="flex flex-col">
             <label className="block mb-1">Mes</label>
             <select
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
               disabled={loadingPeriods}
@@ -435,3 +435,6 @@ const AlphaConsumptionControl: React.FC = () => {
 };
 
 export default AlphaConsumptionControl;
+
+
+

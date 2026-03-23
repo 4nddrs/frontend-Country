@@ -140,7 +140,7 @@ const Dashboard = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#bdab62] mx-auto"></div>
           <p className="mt-4 text-[#F8F4E3]">Cargando dashboard...</p>
-          <p className="mt-2 text-sm text-gray-400">Esto puede tardar un momento con mucha informaciÇün</p>
+          <p className="mt-2 text-sm text-gray-400">Esto puede tardar un momento</p>
         </div>
       </div>
     );
@@ -409,3 +409,6 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+
+

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { Lock, Eye, EyeOff, CheckCircle, AlertCircle, Mail } from 'lucide-react';
+import { Lock, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AUTH_REDIRECT_URLS } from '../config/app';
 
@@ -269,13 +269,12 @@ const ResetPassword = () => {
             <div>
               <label className="block text-sm text-gray-300 mb-2">Correo Electrónico</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                 <input
                   type="email"
                   value={resendEmail}
                   onChange={(e) => setResendEmail(e.target.value)}
                   placeholder="tu@correo.com"
-                  className="w-full pl-10 pr-4 py-3 bg-[#111c24] border border-[#1f3747] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#6c8fdf] placeholder-gray-500"
+                  className="w-full pl-4 pr-4 py-3 bg-[#111c24] border border-[#1f3747] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#6c8fdf] placeholder-gray-500"
                   onKeyPress={(e) => e.key === 'Enter' && handleResendLink()}
                 />
               </div>
@@ -335,13 +334,12 @@ const ResetPassword = () => {
           <div>
             <label className="block text-sm text-gray-300 mb-2">Nueva Contraseña</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
-                className="w-full pl-10 pr-12 py-3 bg-[#111c24] border border-[#1f3747] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#6c8fdf] placeholder-gray-500"
+                className="w-full pl-4 pr-12 py-3 bg-[#111c24] border border-[#1f3747] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#6c8fdf] placeholder-gray-500"
                 placeholder="Mínimo 6 caracteres"
               />
               <button
@@ -358,13 +356,12 @@ const ResetPassword = () => {
           <div>
             <label className="block text-sm text-gray-300 mb-2">Confirmar Contraseña</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="w-full pl-10 pr-12 py-3 bg-[#111c24] border border-[#1f3747] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#6c8fdf] placeholder-gray-500"
+                className="w-full pl-4 pr-12 py-3 bg-[#111c24] border border-[#1f3747] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#6c8fdf] placeholder-gray-500"
                 placeholder="Repite tu contraseña"
               />
               <button
@@ -416,3 +413,6 @@ const ResetPassword = () => {
 };
 
 export default ResetPassword;
+
+
+

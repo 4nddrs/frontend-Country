@@ -371,7 +371,7 @@ const HorseAssignmentsManagement = () => {
               onChange={(e) =>
                 setForm({ ...form, fk_idEmployee: e.target.value })
               }
-              className="p-2 rounded-md bg-gray-700 text-white w-full"
+              className="w-full"
             >
               <option value="">Seleccionar Empleado</option>
               {employees.map((emp) => (
@@ -394,7 +394,7 @@ const HorseAssignmentsManagement = () => {
               onChange={(e) =>
                 setForm({ ...form, fk_idHorse: e.target.value })
               }
-              className="p-2 rounded-md bg-gray-700 text-white w-full"
+              className="w-full"
             >
               <option value="">Seleccionar Caballo</option>
               {horses.map((h) => (
@@ -415,7 +415,7 @@ const HorseAssignmentsManagement = () => {
               onChange={(e) =>
                 setForm({ ...form, assignmentDate: e.target.value })
               }
-              className="p-2 rounded-md bg-gray-700 text-white w-full"
+              className="w-full"
             />
           </div>
 
@@ -427,7 +427,7 @@ const HorseAssignmentsManagement = () => {
               type="date"
               value={form.endDate}
               onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-              className="p-2 rounded-md bg-gray-700 text-white w-full"
+              className="w-full"
             />
           </div>
         </div>
@@ -443,7 +443,7 @@ const HorseAssignmentsManagement = () => {
               </button>
               <button
                 onClick={cancelEdit}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2"
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2"
               >
                 <X size={18} /> Cancelar
               </button>
@@ -465,7 +465,7 @@ const HorseAssignmentsManagement = () => {
           type="month"
           value={filterMonth}
           onChange={(e) => setFilterMonth(e.target.value)}
-          className="p-2 rounded-md bg-gray-700 text-white"
+          className="select-field"
         />
         <button
           onClick={exportPDF}
@@ -566,3 +566,7 @@ const HorseAssignmentsManagement = () => {
 };
 
 export default HorseAssignmentsManagement;
+
+
+
+

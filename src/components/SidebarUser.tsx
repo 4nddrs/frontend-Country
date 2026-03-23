@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { handleSignOut } from "../utils/auth";
 import { useCurrentUser, useOwnerData } from "../hooks/useUserData";
 import { decodeBackendImage } from "../utils/imageHelpers";
+import { getOwnerImageUrl } from "../utils/supabaseStorageHelpers";
 import {
   Home,
   Menu,
@@ -11,7 +12,6 @@ import {
   Flag,
   DollarSign,
   User,
-  Search,
   LogOut,
 } from "lucide-react";
 
@@ -73,7 +73,7 @@ export default function SidebarUser() {
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="relative flex h-full flex-col overflow-hidden rounded-3xl bg-sidebar-gradient text-white shadow-sidebar-inner ring-1 ring-white/5 shadow-[0_0_60px_rgba(48,217,151,0.25),0_0_90px_rgba(31,165,255,0.25)]">
+        <div className="relative flex h-full flex-col overflow-hidden rounded-3xl bg-sidebar-gradient text-white shadow-sidebar-inner ring-1 ring-white/5 shadow-[0_0_24px_rgba(48,217,151,0.12),0_0_36px_rgba(31,165,255,0.12)]">
           <div className="pointer-events-none absolute inset-[-32px] opacity-95">
             <div className="h-full w-full bg-sidebar-glow" />
           </div>
@@ -104,11 +104,7 @@ export default function SidebarUser() {
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="Buscar opcion..."
-                className="w-full rounded-[18px] border border-white/15 bg-white/5 py-3 pl-12 pr-5 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] outline-none transition placeholder:text-white/50 focus:border-[#3CC9F6] focus:bg-white/10 focus:shadow-[0_0_20px_rgba(60,201,246,0.45)]"
-              />
-              <Search
-                size={18}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-sidebar-muted transition group-focus-within:text-sidebar-active"
+                className="w-full rounded-[18px] border border-white/15 bg-white/5 py-3 pl-5 pr-5 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] outline-none transition placeholder:text-white/50 focus:border-[#3CC9F6] focus:bg-white/10 focus:shadow-[0_0_20px_rgba(60,201,246,0.45)]"
               />
             </div>
           </div>
@@ -120,12 +116,12 @@ export default function SidebarUser() {
                   {filteredMenuItems.map((item) => {
                     const isActive = location.pathname === item.path;
                     return (
-                      <li key={item.path} className="group flex items-center">
+                      <li key={item.path} className="group flex items-center px-1">
                         <span
-                          className={`relative z-10 flex h-11 w-11 shrink-0 -translate-x-1 items-center justify-center rounded-full border transition-all duration-300 ${
+                          className={`relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
                             isActive
-                              ? "border-[#3CC9F6] bg-[#3CC9F6]/15 text-[#3CC9F6] shadow-[0_0_20px_#3CC9F6]"
-                              : "border-white/12 bg-sidebar-pill/60 text-sidebar-icon group-hover:-translate-x-0.5 group-hover:border-sidebar-active-green/80 group-hover:bg-sidebar-active-green/10 group-hover:text-sidebar-active-green group-hover:shadow-sidebar-pill"
+                              ? "border-[#3CC9F6]/70 bg-[#3CC9F6]/12 text-[#3CC9F6] shadow-[0_0_10px_rgba(60,201,246,0.45)]"
+                              : "border-white/12 bg-sidebar-pill/60 text-sidebar-icon group-hover:border-sidebar-active-green/60 group-hover:bg-sidebar-active-green/8 group-hover:text-sidebar-active-green"
                           }`}
                         >
                           {item.icon}
@@ -133,10 +129,10 @@ export default function SidebarUser() {
                         <Link
                           to={item.path}
                           onClick={closeSidebar}
-                          className={`group relative ml-[-0.2rem] flex-1 rounded-[23px] border pl-3 pr-4 py-3 transition-all duration-300 ${
+                          className={`group relative ml-2 flex-1 rounded-[23px] border pl-3 pr-4 py-2.5 transition-all duration-300 ${
                             isActive
-                              ? "border-[#3CC9F6] bg-[#3CC9F6]/10 text-[#3CC9F6] shadow-[0_0_25px_#3CC9F6] ring-1 ring-[#3CC9F6]/40"
-                              : "border-transparent bg-sidebar-surface/70 text-sidebar-muted transition-transform hover:scale-[1.05] hover:border-[#08f2ff]/80 hover:bg-sidebar-surface/80"
+                              ? "border-[#3CC9F6]/70 bg-[#3CC9F6]/8 text-[#3CC9F6] shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20"
+                              : "border-transparent bg-sidebar-surface/70 text-sidebar-muted transition-transform hover:scale-[1.02] hover:border-[#08f2ff]/50 hover:bg-sidebar-surface/80"
                           }`}
                         >
                           <span
@@ -160,7 +156,7 @@ export default function SidebarUser() {
               <div className="mb-4 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur-sm shadow-inner shadow-black/20">
                 {ownerData.ownerPhoto ? (
                   <img
-                    src={decodeBackendImage(ownerData.ownerPhoto)}
+                    src={getOwnerImageUrl(ownerData.ownerPhoto) || decodeBackendImage(ownerData.ownerPhoto)}
                     alt={ownerData.name || ownerData.FirstName || "Owner"}
                     className="h-12 w-12 rounded-full object-cover border-2 border-cyan-400/40 shadow-lg"
                   />
@@ -182,8 +178,8 @@ export default function SidebarUser() {
               onClick={handleSignOut}
               className="flex w-full items-center justify-center gap-3 rounded-2xl 
                         border border-[#167C79] bg-transparent px-4 py-3 text-sm font-semibold 
-                        text-[#EFFFFF] shadow-[0_0_16px_#167C79,0_0_28px_rgba(22,124,121,0.7)] 
-                        transition-all duration-500 hover:scale-[1.05] hover:shadow-[0_0_22px_#167C79,0_0_38px_rgba(22,124,121,0.85)]"
+                        text-[#EFFFFF] shadow-[0_0_8px_rgba(22,124,121,0.45)] 
+                        transition-all duration-500 hover:scale-[1.02] hover:shadow-[0_0_12px_rgba(22,124,121,0.55)]"
             >
               <LogOut size={18} />
               Cerrar sesion
@@ -194,3 +190,6 @@ export default function SidebarUser() {
     </>
   );
 }
+
+
+

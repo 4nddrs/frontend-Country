@@ -87,3 +87,6 @@ export function HorseCard({ assignment, horse }: HorseCardProps) {
     </Card>
   );
 }
+
+
+

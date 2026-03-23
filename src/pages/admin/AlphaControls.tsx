@@ -540,7 +540,7 @@ const AlphaControlsManagement: React.FC = () => {
             id="yearSelect"
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="bg-gray-700 text-white rounded-md px-3 py-1 border border-gray-600"
+            className="select-field rounded-md px-3 py-1 border border-gray-600"
           >
             {availableYears.map((year) => (
               <option key={year} value={year}>{year}</option>
@@ -574,7 +574,7 @@ const AlphaControlsManagement: React.FC = () => {
               onChange={(e) =>
                 setNewControl({ ...newControl, date: e.target.value })
               }
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
+              className="w-full"
             />
           </div>
 
@@ -676,7 +676,7 @@ const AlphaControlsManagement: React.FC = () => {
               {editingId && (
                 <button
                   onClick={resetForm}
-                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2"
+                  className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-2"
                 >
                   <X size={20} /> Cancelar
                 </button>
@@ -794,3 +794,7 @@ const AlphaControlsManagement: React.FC = () => {
 };
 
 export default AlphaControlsManagement;
+
+
+
+

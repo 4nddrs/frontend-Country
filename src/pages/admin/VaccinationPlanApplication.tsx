@@ -177,7 +177,7 @@ const VaccinationPlanApplicationManagement = () => {
               name="applicationDate"
               value={newApplication.applicationDate}
               onChange={(e) => handleFormChange(e, 'new')}
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="select-field placeholder-gray-400 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div className="flex flex-col">
@@ -189,7 +189,7 @@ const VaccinationPlanApplicationManagement = () => {
               placeholder="Observación (Opcional)"
               value={newApplication.observation}
               onChange={(e) => handleFormChange(e, 'new')}
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="select-field placeholder-gray-400 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div className="flex flex-col">
@@ -199,7 +199,7 @@ const VaccinationPlanApplicationManagement = () => {
               name="fk_idVaccinationPlan"
               value={newApplication.fk_idVaccinationPlan}
               onChange={(e) => handleFormChange(e, 'new')}
-              className="p-2 rounded-md bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="select-field border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">-- Selecciona un Plan --</option>
               {plans.map(p => (<option key={p.idVaccinationPlan} value={p.idVaccinationPlan}>{p.planName}</option>))}
@@ -212,7 +212,7 @@ const VaccinationPlanApplicationManagement = () => {
               name="fk_idHorse"
               value={newApplication.fk_idHorse}
               onChange={(e) => handleFormChange(e, 'new')}
-              className="p-2 rounded-md bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="select-field border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">-- Selecciona un Caballo --</option>
               {horses.map(h => (<option key={h.idHorse} value={h.idHorse}>{h.horseName}</option>))}
@@ -225,7 +225,7 @@ const VaccinationPlanApplicationManagement = () => {
               name="fk_idEmployee"
               value={newApplication.fk_idEmployee}
               onChange={(e) => handleFormChange(e, 'new')}
-              className="p-2 rounded-md bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="select-field border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">-- Selecciona un Empleado --</option>
               {employees.map(e => (<option key={e.idEmployee} value={e.idEmployee}>{e.fullName}</option>))}
@@ -265,7 +265,7 @@ const VaccinationPlanApplicationManagement = () => {
                             name="applicationDate"
                             value={editedApplication ? editedApplication.applicationDate?.slice(0, 10) || '' : ''}
                             onChange={(e) => handleFormChange(e, 'edit')}
-                            className="w-full p-2 rounded-md bg-gray-600 text-white border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="select-field w-full border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                         </label>
                         <label className="block">
@@ -275,7 +275,7 @@ const VaccinationPlanApplicationManagement = () => {
                             name="observation"
                             value={editedApplication?.observation || ''}
                             onChange={(e) => handleFormChange(e, 'edit')}
-                            className="w-full p-2 rounded-md bg-gray-600 text-white border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="select-field w-full border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                         </label>
                         <label className="block">
@@ -284,7 +284,7 @@ const VaccinationPlanApplicationManagement = () => {
                             name="fk_idVaccinationPlan"
                             value={editedApplication?.fk_idVaccinationPlan ?? ''}
                             onChange={(e) => handleFormChange(e, 'edit')}
-                            className="w-full p-2 rounded-md bg-gray-600 text-white border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="select-field w-full border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
                             {plans.map(p => (<option key={p.idVaccinationPlan} value={p.idVaccinationPlan}>{p.planName}</option>))}
                           </select>
@@ -295,7 +295,7 @@ const VaccinationPlanApplicationManagement = () => {
                             name="fk_idHorse"
                             value={editedApplication?.fk_idHorse ?? ''}
                             onChange={(e) => handleFormChange(e, 'edit')}
-                            className="w-full p-2 rounded-md bg-gray-600 text-white border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="select-field w-full border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
                             {horses.map(h => (<option key={h.idHorse} value={h.idHorse}>{h.horseName}</option>))}
                           </select>
@@ -306,13 +306,13 @@ const VaccinationPlanApplicationManagement = () => {
                             name="fk_idEmployee"
                             value={editedApplication?.fk_idEmployee ?? ''}
                             onChange={(e) => handleFormChange(e, 'edit')}
-                            className="w-full p-2 rounded-md bg-gray-600 text-white border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="select-field w-full border border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
                             {employees.map(e => (<option key={e.idEmployee} value={e.idEmployee}>{e.fullName}</option>))}
                           </select>
                         </label>
                       </div>
-                      <div className="flex justify-end gap-2 mt-2">
+                      <div className="flex justify-center gap-3 px-6 pb-6 mt-2">
                         <button
                           onClick={() => updateApplication(app.idVaccinationPlanApplication!)}
                           className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center gap-1 transition duration-300"
@@ -321,7 +321,7 @@ const VaccinationPlanApplicationManagement = () => {
                         </button>
                         <button
                           onClick={() => setEditedApplication(null)}
-                          className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1 transition duration-300"
+                          className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
                         >
                           <X size={16} /> Cancelar
                         </button>
@@ -401,3 +401,7 @@ const App = () => {
 };
 
 export default App;
+
+
+
+

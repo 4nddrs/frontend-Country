@@ -154,7 +154,7 @@ const ScheduledProceduresManagement = () => {
               name="year"
               value={newProcedure.year}
               onChange={e => setNewProcedure({ ...newProcedure, year: e.target.value })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full"
             />
           </div>
 
@@ -166,7 +166,7 @@ const ScheduledProceduresManagement = () => {
               name="name"
               value={newProcedure.name}
               onChange={e => setNewProcedure({ ...newProcedure, name: e.target.value })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full"
               placeholder="Ej: Desparasitación"
             />
           </div>
@@ -179,7 +179,7 @@ const ScheduledProceduresManagement = () => {
               name="description"
               value={newProcedure.description}
               onChange={e => setNewProcedure({ ...newProcedure, description: e.target.value })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full"
               placeholder="Detalles sobre el procedimiento"
             />
           </div>
@@ -211,7 +211,7 @@ const ScheduledProceduresManagement = () => {
               name="alertLabel"
               value={newProcedure.alertLabel}
               onChange={e => setNewProcedure({ ...newProcedure, alertLabel: e.target.value })}
-              className="w-full p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full"
               placeholder="Ej: 'Prioridad alta'"
             />
           </div>
@@ -234,68 +234,68 @@ const ScheduledProceduresManagement = () => {
             {procedures.map(proc => (
               <div key={proc.idScheduledProcedure} className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-purple-500/10 via-slate-900/60 to-slate-900/90 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-purple-500/20">
                 {editingId === proc.idScheduledProcedure ? (
-                  <>
-                    <div className="flex flex-col mb-2">
-                    <label className="block mb-1">Año de vigencia</label>
+                  <div className="p-6 space-y-4">
+                    <div className="flex flex-col">
+                      <label className="block mb-2 font-medium text-gray-200">Año de vigencia</label>
                       <input
                         id={`edit-year-${proc.idScheduledProcedure}`}
                         type="date"
                         defaultValue={proc.year?.slice(0, 10)}
                         onChange={e => setNewProcedure({ ...newProcedure, year: e.target.value })}
-                        className="p-2 rounded-md bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full"
                       />
                     </div>
-                    <div className="flex flex-col mb-2">
-                      <label className="block mb-1">Nombre del procedimiento</label>
+                    <div className="flex flex-col">
+                      <label className="block mb-2 font-medium text-gray-200">Nombre del procedimiento</label>
                       <input
                         id={`edit-name-${proc.idScheduledProcedure}`}
                         type="text"
                         defaultValue={proc.name}
                         onChange={e => setNewProcedure({ ...newProcedure, name: e.target.value })}
-                        className="p-2 rounded-md bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full"
                       />
                     </div>
-                    <div className="flex flex-col mb-2">
-                      <label className="block mb-1">Descripción</label>
+                    <div className="flex flex-col">
+                      <label className="block mb-2 font-medium text-gray-200">Descripción</label>
                       <input
                         id={`edit-description-${proc.idScheduledProcedure}`}
                         type="text"
                         defaultValue={proc.description}
                         onChange={e => setNewProcedure({ ...newProcedure, description: e.target.value })}
-                        className="p-2 rounded-md bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full"
                       />
                     </div>
                     {/* Campo de edición: Meses de aplicación (con checkboxes) */}
-                    <div className="flex flex-col mb-2">
-                      <label className="block mb-1">Meses de aplicación</label>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                    <div className="flex flex-col">
+                      <label className="block mb-3 font-medium text-gray-200">Meses de aplicación</label>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-3 bg-gray-800/30 rounded-md border border-gray-700">
                         {months.map(month => (
-                          <div key={month.value} className="flex items-center">
+                          <div key={month.value} className="flex items-center gap-2">
                             <input
                               id={`edit-month-${proc.idScheduledProcedure}-${month.value}`}
                               type="checkbox"
                               value={month.value}
                               checked={JSON.parse(newProcedure.scheduledMonths || '[]').includes(month.value)}
                               onChange={handleEditMonthChange}
-                              className="h-4 w-4 text-blue-600 bg-gray-700 rounded border-gray-600 focus:ring-blue-500"
+                              className="h-4 w-4 text-blue-600 bg-gray-700 rounded border-gray-600 focus:ring-2 focus:ring-blue-500 cursor-pointer"
                             />
-                            <label htmlFor={`edit-month-${proc.idScheduledProcedure}-${month.value}`} className="ml-2 text-sm text-gray-300">{month.label}</label>
+                            <label htmlFor={`edit-month-${proc.idScheduledProcedure}-${month.value}`} className="text-sm text-gray-300 cursor-pointer">{month.label}</label>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    <div className="flex flex-col mb-2">
-                      <label htmlFor={`edit-alert-${proc.idScheduledProcedure}`} className="block mb-1">Etiqueta de alerta</label>
+                    <div className="flex flex-col">
+                      <label htmlFor={`edit-alert-${proc.idScheduledProcedure}`} className="block mb-2 font-medium text-gray-200">Etiqueta de alerta</label>
                       <input
                         id={`edit-alert-${proc.idScheduledProcedure}`}
                         type="text"
                         defaultValue={proc.alertLabel}
                         onChange={e => setNewProcedure({ ...newProcedure, alertLabel: e.target.value })}
-                        className="p-2 rounded-md bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full"
                       />
                     </div>
-                    <div className="flex justify-end gap-2 mt-2">
+                    <div className="flex justify-center gap-3 px-6 pb-2 mt-4 -mx-6 -mb-4">
                       <button
                         onClick={() => updateProcedure(proc.idScheduledProcedure!, {
                           ...proc,
@@ -308,12 +308,12 @@ const ScheduledProceduresManagement = () => {
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
+                        className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
                       >
                         <X size={16} /> Cancelar
                       </button>
                     </div>
-                  </>
+                  </div>
                 ) : (
                   <>
                     <div className="flex flex-col items-center gap-2 py-5">
@@ -381,3 +381,7 @@ const ScheduledProceduresManagement = () => {
 };
 
 export default ScheduledProceduresManagement;
+
+
+
+

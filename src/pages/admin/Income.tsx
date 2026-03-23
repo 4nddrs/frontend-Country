@@ -313,7 +313,7 @@ const IncomeManagement = () => {
                 name="date"
                 value={newIncome.date}
                 onChange={(e) => setNewIncome({ ...newIncome, date: e.target.value })}
-                className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+                className="select-field flex-1"
               />
             </div>
             <div>
@@ -326,7 +326,7 @@ const IncomeManagement = () => {
                 placeholder="Descripción"
                 value={newIncome.description}
                 onChange={(e) => setNewIncome({ ...newIncome, description: e.target.value })}
-                className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+                className="select-field flex-1"
               />
             </div>
             <div>
@@ -344,7 +344,7 @@ const IncomeManagement = () => {
                     amountBsCaptureType: e.target.value as any,
                   })
                 }
-                className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+                className="select-field flex-1"
               />
             </div>
             <div>
@@ -356,7 +356,7 @@ const IncomeManagement = () => {
                 name="period"
                 value={newIncome.period}
                 onChange={(e) => setNewIncome({ ...newIncome, period: e.target.value })}
-                className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+                className="select-field flex-1"
               />
             </div>
           </div>
@@ -384,7 +384,7 @@ const IncomeManagement = () => {
                     period: "",
                   });
                 }}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-md font-semibold flex items-center justify-center gap-1 text-sm h-[36px]"
+                className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-2"
               >
                 <X size={16} /> Cancelar
               </button>
@@ -407,7 +407,7 @@ const IncomeManagement = () => {
               type="month"
               value={filterMonth}
               onChange={(e) => setFilterMonth(e.target.value)}
-              className="bg-gray-700 text-white rounded-md p-2"
+              className="select-field rounded-md p-2"
             />
           </div>
 
@@ -448,7 +448,7 @@ const IncomeManagement = () => {
 
                   <div className="space-y-2 text-center">
                     <p><span className="font-medium text-slate-400">Fecha:</span> {income.date?.slice(0, 10)}</p>
-                    <p><span className="font-medium text-slate-400">Monto:</span> <span className="text-indigo-300">{income.amountBsCaptureType}</span></p>
+                    <p><span className="font-medium text-slate-400">Monto:</span> <span className="text-indigo-300">Bs {income.amountBsCaptureType}</span></p>
                     <p><span className="font-medium text-slate-400">Periodo:</span> {income.period?.slice(0, 10)}</p>
                   </div>
 
@@ -502,3 +502,7 @@ const IncomeManagement = () => {
 };
 
 export default IncomeManagement;
+
+
+
+

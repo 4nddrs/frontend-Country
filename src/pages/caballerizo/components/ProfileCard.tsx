@@ -5,6 +5,7 @@ import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import { decodeBackendImage } from "../../../utils/imageHelpers";
+import { getEmployeeImageUrl } from "../../../utils/supabaseStorageHelpers";
 
 interface ProfileCardProps {
   employee: CaballerizoEmployee;
@@ -33,7 +34,7 @@ export function ProfileCard({
   isUpdatingPhoto,
 }: ProfileCardProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const photo = decodeBackendImage(employee.employeePhoto ?? "");
+  const photo = getEmployeeImageUrl(employee.employeePhoto ?? null) || decodeBackendImage(employee.employeePhoto ?? "");
   const statusLabel = employee.status === false ? "Inactivo" : "Activo";
 
   const triggerFilePicker = () => {
@@ -176,3 +177,6 @@ export function ProfileCard({
     </Card>
   );
 }
+
+
+

@@ -166,9 +166,9 @@ const CaballerizoDashboard = () => {
   };
 
   return (
-    <div className="bg-black text-white font-sans flex h-screen overflow-hidden text-base leading-normal">
+    <div className="app-shell bg-black text-white font-sans flex h-screen overflow-hidden text-base leading-normal">
       <Sidebar userRole={9} />
-      <div className="flex-1 min-h-screen p-4 lg:p-8 overflow-y-auto lg:ml-80">
+      <div className="app-content flex-1 min-h-screen p-4 lg:p-8 overflow-y-auto lg:ml-80">
         <Routes>
           <Route
             path="/caballerizo"
@@ -228,3 +228,6 @@ const CaballerizoDashboard = () => {
 };
 
 export default CaballerizoDashboard;
+
+
+

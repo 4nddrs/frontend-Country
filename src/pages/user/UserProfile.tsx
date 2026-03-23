@@ -8,6 +8,7 @@ import { useCurrentUser, useOwnerData, useOwnerHorses } from '../../hooks/useUse
 import { updateOwner, type Horse } from '../../services/userService';
 import { toast } from 'react-hot-toast';
 import { decodeBackendImage } from '../../utils/imageHelpers';
+import { getOwnerImageUrl } from '../../utils/supabaseStorageHelpers';
 
 interface PerfilProps {}
 
@@ -109,8 +110,8 @@ export function UserProfile(_: PerfilProps) {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
               <div className="flex items-center gap-4">
                 {ownerData?.ownerPhoto ? (
-                  <img 
-                    src={decodeBackendImage(ownerData.ownerPhoto)} 
+                  <img
+                    src={getOwnerImageUrl(ownerData.ownerPhoto) || decodeBackendImage(ownerData.ownerPhoto)}
                     alt={owner.name || owner.FirstName || 'Owner'} 
                     className="w-20 h-20 rounded-2xl object-cover shadow-lg shadow-cyan-500/20 border-2 border-cyan-400/30"
                   />
@@ -179,19 +180,19 @@ export function UserProfile(_: PerfilProps) {
                           placeholder="Nombre"
                           value={editForm.name}
                           onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                          className="bg-slate-700 border-slate-600 text-white"
+                          className="w-full"
                         />
                         <Input 
                           placeholder="Primer Apellido"
                           value={editForm.FirstName}
                           onChange={(e) => setEditForm({ ...editForm, FirstName: e.target.value })}
-                          className="bg-slate-700 border-slate-600 text-white"
+                          className="w-full"
                         />
                         <Input 
                           placeholder="Segundo Apellido"
                           value={editForm.SecondName}
                           onChange={(e) => setEditForm({ ...editForm, SecondName: e.target.value })}
-                          className="bg-slate-700 border-slate-600 text-white"
+                          className="w-full"
                         />
                       </div>
                     ) : (
@@ -212,7 +213,7 @@ export function UserProfile(_: PerfilProps) {
                       <Input 
                         value={editForm.ci}
                         onChange={(e) => setEditForm({ ...editForm, ci: e.target.value })}
-                        className="bg-slate-700 border-slate-600 text-white"
+                        className="w-full"
                       />
                     ) : (
                       <p className="text-sm text-white">{owner.ci || 'No especificado'}</p>
@@ -231,7 +232,7 @@ export function UserProfile(_: PerfilProps) {
                         type="email"
                         value={editForm.email}
                         onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                        className="bg-slate-700 border-slate-600 text-white"
+                        className="w-full"
                       />
                     ) : (
                       <p className="text-sm text-white break-all">{user?.email || owner.email || 'No especificado'}</p>
@@ -251,7 +252,7 @@ export function UserProfile(_: PerfilProps) {
                       <Input 
                         value={editForm.phoneNumber}
                         onChange={(e) => setEditForm({ ...editForm, phoneNumber: e.target.value })}
-                        className="bg-slate-700 border-slate-600 text-white"
+                        className="w-full"
                       />
                     ) : (
                       <p className="text-sm text-white">{owner.phoneNumber || 'No especificado'}</p>
@@ -309,3 +310,7 @@ export function UserProfile(_: PerfilProps) {
     </div>
   );
 }
+
+
+
+

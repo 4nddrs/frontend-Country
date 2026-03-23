@@ -1,6 +1,6 @@
 // src/App.tsx
-import { useEffect, useState } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import MainLayout from './components/MainLayout';
 import AuthForm from './components/AuthForm';
@@ -91,10 +91,12 @@ const fetchUserRole = async (userId: string) => {
 
 
 export default function App() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<any | null>(null);
   const [role, setRole] = useState<number | null>(null);
   const [authStatus, setAuthStatus] = useState<'ok' | 'pending' | 'no-record' | 'error'>('ok');
+  const hasRedirectedRef = useRef(false);
 
  useEffect(() => {
     let isSubscribed = true;
@@ -169,6 +171,8 @@ export default function App() {
           console.log('❌ No hay sesión activa');
           setRole(null);
           setAuthStatus('ok');
+          // Resetear el flag de redirección
+          hasRedirectedRef.current = false;
         }
       } catch (e) {
         console.error("❌ Error inesperado en checkInitialSession:", e);
@@ -227,6 +231,8 @@ export default function App() {
         setRole(null);
         setAuthStatus('ok');
         setLoading(false);
+        // Resetear el flag de redirección para el próximo login
+        hasRedirectedRef.current = false;
         // Notificar a otras pestañas que se cerró sesión
         tabSyncChannel.postMessage({ type: 'SIGN_OUT' });
       } else if (event === 'TOKEN_REFRESHED') {
@@ -245,6 +251,32 @@ export default function App() {
       tabSyncChannel.close(); // Cerrar el canal de sincronización
     };
   }, []);
+
+  // Efecto para redirigir automáticamente después del login según el rol
+  useEffect(() => {
+    // Solo ejecutar si:
+    // 1. Ya no está cargando
+    // 2. Hay sesión activa
+    // 3. Hay un rol válido
+    // 4. El estado de autenticación es OK
+    if (!loading && session && role && authStatus === 'ok' && !hasRedirectedRef.current) {
+      hasRedirectedRef.current = true;
+      
+      console.log(`✅ Login detectado - Redirigiendo al home del rol ${role}`);
+      
+      // Redirigir según el rol
+      if (role === 6 || role === 8) {
+        // Admin o Staff -> Dashboard administrativo
+        navigate('/', { replace: true });
+      } else if (role === 7) {
+        // Usuario Propietario -> Home de usuario
+        navigate('/user/home', { replace: true });
+      } else if (role === 9) {
+        // Caballerizo -> Perfil del caballerizo
+        navigate('/caballerizo/perfil', { replace: true });
+      }
+    }
+  }, [loading, session, role, authStatus, navigate]);
 
   // UI de Carga
   if (loading) {
@@ -320,3 +352,6 @@ export default function App() {
     </Routes>
   );
 }
+
+
+

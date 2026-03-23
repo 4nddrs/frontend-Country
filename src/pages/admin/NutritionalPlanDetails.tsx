@@ -163,7 +163,7 @@ const NutritionalPlanDetailsManagement = () => {
           name="consumptionKlg"
           value={newDetail.consumptionKlg}
           onChange={e => setNewDetail({ ...newDetail, consumptionKlg: Number(e.target.value) })}
-          className="w-full p-2 rounded-md bg-gray-700 text-white"
+          className="w-full"
         />
       </div>
 
@@ -174,7 +174,7 @@ const NutritionalPlanDetailsManagement = () => {
           name="daysConsumptionMonth"
           value={newDetail.daysConsumptionMonth}
           onChange={e => setNewDetail({ ...newDetail, daysConsumptionMonth: Number(e.target.value) })}
-          className="w-full p-2 rounded-md bg-gray-700 text-white"
+          className="w-full"
         />
       </div>
 
@@ -185,7 +185,7 @@ const NutritionalPlanDetailsManagement = () => {
           name="totalConsumption"
           value={newDetail.totalConsumption}
           onChange={e => setNewDetail({ ...newDetail, totalConsumption: Number(e.target.value) })}
-          className="w-full p-2 rounded-md bg-gray-700 text-white"
+          className="w-full"
         />
       </div>
 
@@ -196,7 +196,7 @@ const NutritionalPlanDetailsManagement = () => {
           name="period"
           value={newDetail.period}
           onChange={e => setNewDetail({ ...newDetail, period: e.target.value })}
-          className="w-full p-2 rounded-md bg-gray-700 text-white"
+          className="w-full"
         />
       </div>
 
@@ -206,7 +206,7 @@ const NutritionalPlanDetailsManagement = () => {
           name="fk_idFood"
           value={newDetail.fk_idFood}
           onChange={e => setNewDetail({ ...newDetail, fk_idFood: Number(e.target.value) })}
-          className="w-full p-2 rounded-md bg-gray-700 text-white"
+          className="w-full"
         >
           <option value="">-- Selecciona una comida --</option>
           {foods.map(food => (
@@ -223,7 +223,7 @@ const NutritionalPlanDetailsManagement = () => {
           name="fk_idNutritionalPlan"
           value={newDetail.fk_idNutritionalPlan}
           onChange={e => setNewDetail({ ...newDetail, fk_idNutritionalPlan: Number(e.target.value) })}
-          className="w-full p-2 rounded-md bg-gray-700 text-white"
+          className="w-full"
         >
           <option value="">-- Selecciona un plan nutricional --</option>
           {nutritionalPlans.map(plan => (
@@ -266,30 +266,30 @@ const NutritionalPlanDetailsManagement = () => {
                         type="number"
                         defaultValue={detail.consumptionKlg}
                         onChange={e => setNewDetail({ ...newDetail, consumptionKlg: Number(e.target.value) })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       />
                       <input
                         type="number"
                         defaultValue={detail.daysConsumptionMonth}
                         onChange={e => setNewDetail({ ...newDetail, daysConsumptionMonth: Number(e.target.value) })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       />
                       <input
                         type="number"
                         defaultValue={detail.totalConsumption}
                         onChange={e => setNewDetail({ ...newDetail, totalConsumption: Number(e.target.value) })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       />
                       <input
                         type="date"
                         defaultValue={detail.period?.slice(0, 10)}
                         onChange={e => setNewDetail({ ...newDetail, period: e.target.value })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       />
                       <select
                         value={newDetail.fk_idFood}
                         onChange={e => setNewDetail({ ...newDetail, fk_idFood: Number(e.target.value) })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       >
                         {foods.map(food => (
                           <option key={food.idFood} value={food.idFood}>
@@ -300,7 +300,7 @@ const NutritionalPlanDetailsManagement = () => {
                       <select
                         value={newDetail.fk_idNutritionalPlan}
                         onChange={e => setNewDetail({ ...newDetail, fk_idNutritionalPlan: Number(e.target.value) })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       >
                         {nutritionalPlans.map(plan => (
                           <option key={plan.idNutritionalPlan} value={plan.idNutritionalPlan}>
@@ -308,7 +308,7 @@ const NutritionalPlanDetailsManagement = () => {
                           </option>
                         ))}
                       </select>
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-center gap-3 px-6 pb-4 mt-3">
                         <button
                           onClick={() => updateDetail(detail.idDetail!, {
                             consumptionKlg: newDetail.consumptionKlg || detail.consumptionKlg,
@@ -324,7 +324,7 @@ const NutritionalPlanDetailsManagement = () => {
                         </button>
                         <button
                           onClick={() => setEditingId(null)}
-                          className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
+                          className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
                         >
                           <X size={16} /> Cancelar
                         </button>
@@ -418,3 +418,7 @@ const NutritionalPlanDetailsManagement = () => {
 };
 
 export default NutritionalPlanDetailsManagement;
+
+
+
+

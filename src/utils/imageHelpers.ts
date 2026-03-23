@@ -4,11 +4,18 @@ export function decodeBackendImage(photoData: string | any): string {
   if (!photoData) return placeholder;
 
   try {
-
-       if (typeof photoData === 'string') {
-    if (photoData.startsWith('data:image')) return photoData;
-    if (/^[A-Za-z0-9+/=]+$/.test(photoData)) return `data:image/png;base64,${photoData}`;
-  }
+    if (typeof photoData === 'string') {
+      // Si es una URL de Supabase Storage, devolverla directamente
+      if (photoData.startsWith('https://') && photoData.includes('supabase.co')) {
+        return photoData;
+      }
+      
+      // Si es un data URL, devolverlo directamente
+      if (photoData.startsWith('data:image')) return photoData;
+      
+      // Si es base64 puro, convertirlo
+      if (/^[A-Za-z0-9+/=]+$/.test(photoData)) return `data:image/png;base64,${photoData}`;
+    }
   
     // Caso 1: Hexadecimal (con prefijo \x en todo el string)
     if (typeof photoData === "string" && photoData.startsWith("\\x")) {

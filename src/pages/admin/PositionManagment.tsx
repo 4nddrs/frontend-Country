@@ -94,7 +94,7 @@ const PositionManagement = () => {
             placeholder="Nombre de la posición"
             value={newPosition.namePosition}
             onChange={e => setNewPosition({ namePosition: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="select-field flex-1 placeholder-gray-400"
           />
           <button onClick={createPosition} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
             <Plus size={20} /> Agregar
@@ -119,9 +119,9 @@ const PositionManagement = () => {
                       type="text"
                       defaultValue={pos.namePosition}
                       onChange={e => setNewPosition({ namePosition: e.target.value })}
-                      className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                      className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-4"
                     />
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-center gap-3 px-6 pb-4 mt-2">
                       <button
                         onClick={() => updatePosition(pos.idPositionEmployee!, { namePosition: newPosition.namePosition || pos.namePosition })}
                         className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center gap-1"
@@ -130,7 +130,7 @@ const PositionManagement = () => {
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
+                        className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
                       >
                         <X size={16} /> Cancelar
                       </button>
@@ -186,3 +186,7 @@ const PositionManagement = () => {
   );
 };
 export default PositionManagement;
+
+
+
+

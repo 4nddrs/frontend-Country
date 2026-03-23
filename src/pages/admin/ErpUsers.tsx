@@ -133,7 +133,7 @@ const ErpUsersManagement = () => {
             placeholder="Usuario"
             value={newUser.username}
             onChange={e => setNewUser({ ...newUser, username: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="select-field flex-1 placeholder-gray-400"
           />
           <input
             type="email"
@@ -141,7 +141,7 @@ const ErpUsersManagement = () => {
             placeholder="Correo"
             value={newUser.email}
             onChange={e => setNewUser({ ...newUser, email: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="select-field flex-1 placeholder-gray-400"
           />
           <input
             type="text"
@@ -149,13 +149,13 @@ const ErpUsersManagement = () => {
             placeholder="UID de Supabase (UUID)"
             value={newUser.uid || ""}
             onChange={e => setNewUser({ ...newUser, uid: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="select-field flex-1 placeholder-gray-400"
           />
           <select
             name="fk_idUserRole"
             value={newUser.fk_idUserRole}
             onChange={e => setNewUser({ ...newUser, fk_idUserRole: Number(e.target.value) })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white"
+            className="select-field flex-1"
           >
             <option value="">-- Selecciona rol --</option>
             {userRoles.map(role => (
@@ -170,7 +170,7 @@ const ErpUsersManagement = () => {
             placeholder="Telegram Chat ID (opcional)"
             value={newUser.telegram_chat_id || ""}
             onChange={e => setNewUser({ ...newUser, telegram_chat_id: e.target.value ? Number(e.target.value) : undefined })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="select-field flex-1 placeholder-gray-400"
           />
           <label className="flex items-center gap-2 p-2 bg-gray-700 rounded-md">
             <input
@@ -207,7 +207,7 @@ const ErpUsersManagement = () => {
                         type="text"
                         defaultValue={user.username}
                         onChange={e => setNewUser({ ...newUser, username: e.target.value })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       />
                     </div>
                     <div>
@@ -216,7 +216,7 @@ const ErpUsersManagement = () => {
                         type="email"
                         defaultValue={user.email}
                         onChange={e => setNewUser({ ...newUser, email: e.target.value })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       />
                     </div>
                     <div>
@@ -225,7 +225,7 @@ const ErpUsersManagement = () => {
                         type="text"
                         defaultValue={user.uid || ""}
                         onChange={e => setNewUser({ ...newUser, uid: e.target.value })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                         disabled
                       />
                     </div>
@@ -234,7 +234,7 @@ const ErpUsersManagement = () => {
                       <select
                         value={newUser.fk_idUserRole}
                         onChange={e => setNewUser({ ...newUser, fk_idUserRole: Number(e.target.value) })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       >
                         <option value="">-- Selecciona rol --</option>
                         {userRoles.map(role => (
@@ -250,7 +250,7 @@ const ErpUsersManagement = () => {
                         type="number"
                         defaultValue={user.telegram_chat_id || ""}
                         onChange={e => setNewUser({ ...newUser, telegram_chat_id: e.target.value ? Number(e.target.value) : undefined })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       />
                     </div>
                     <div className="flex items-center gap-2 mb-2">
@@ -261,7 +261,7 @@ const ErpUsersManagement = () => {
                       />
                       <label className="text-sm font-medium">Aprobado</label>
                     </div>
-                    <div className="flex justify-end gap-2 mt-2">
+                    <div className="flex justify-center gap-3 px-6 pb-6 mt-2">
                       <button
                         onClick={() => updateUser(user.uid!, {
                           ...user,
@@ -273,7 +273,7 @@ const ErpUsersManagement = () => {
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
+                        className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
                       >
                         <X size={16} /> Cancelar
                       </button>
@@ -367,3 +367,7 @@ const ErpUsersManagement = () => {
 };
 
 export default ErpUsersManagement;
+
+
+
+

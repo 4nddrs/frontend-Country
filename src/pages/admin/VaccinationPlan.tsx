@@ -177,7 +177,7 @@ const VaccinationPlanManagement = () => {
                 type="text"
                 readOnly
                 value={value}
-                className="flex-grow p-2 rounded-md bg-gray-600 text-white"
+                className="w-full"
               />
               <button
                 onClick={() => setNewPlan((prev) => {
@@ -206,7 +206,7 @@ const VaccinationPlanManagement = () => {
                     }));
                   }
                 }}
-                className="flex-grow p-2 rounded-md bg-gray-600 text-white"
+                className="w-full"
                 value=""
               >
                 <option value="" disabled>Selecciona un mes</option>
@@ -243,7 +243,7 @@ const VaccinationPlanManagement = () => {
                 type="text"
                 readOnly
                 value={key}
-                className="w-1/2 p-2 rounded-md bg-gray-600 text-white"
+                className="w-full"
               />
               <input
                 type="number"
@@ -253,7 +253,7 @@ const VaccinationPlanManagement = () => {
                   ...prev,
                   dosesByMonth: { ...prev.dosesByMonth, [key]: Number(e.target.value) }
                 }))}
-                className="w-1/2 p-2 rounded-md bg-gray-600 text-white"
+                className="w-full"
               />
               <button
                 onClick={() => setNewPlan((prev) => {
@@ -279,7 +279,7 @@ const VaccinationPlanManagement = () => {
                     }));
                   }
                 }}
-                className="w-1/2 p-2 rounded-md bg-gray-600 text-white"
+                className="w-full"
                 value=""
               >
                 <option value="" disabled>Selecciona un mes</option>
@@ -324,7 +324,7 @@ const VaccinationPlanManagement = () => {
                 type="text"
                 readOnly
                 value={value}
-                className="flex-grow p-2 rounded-md bg-gray-600 text-white"
+                className="w-full"
               />
               <button
                 onClick={() => setEditingPlanData((prev: FrontendPlanData | null) => {
@@ -357,7 +357,7 @@ const VaccinationPlanManagement = () => {
                     });
                   }
                 }}
-                className="flex-grow p-2 rounded-md bg-gray-600 text-white"
+                className="w-full"
                 value=""
               >
                 <option value="" disabled>Selecciona un mes</option>
@@ -397,7 +397,7 @@ const VaccinationPlanManagement = () => {
                 type="text"
                 readOnly
                 value={key}
-                className="w-1/2 p-2 rounded-md bg-gray-600 text-white"
+                className="w-full"
               />
               <input
                 type="number"
@@ -410,7 +410,7 @@ const VaccinationPlanManagement = () => {
                     dosesByMonth: { ...prev.dosesByMonth, [key]: Number(e.target.value) }
                   };
                 })}
-                className="w-1/2 p-2 rounded-md bg-gray-600 text-white"
+                className="w-full"
               />
               <button
                 onClick={() => setEditingPlanData((prev: FrontendPlanData | null) => {
@@ -440,7 +440,7 @@ const VaccinationPlanManagement = () => {
                     });
                   }
                 }}
-                className="w-1/2 p-2 rounded-md bg-gray-600 text-white"
+                className="w-full"
                 value=""
               >
                 <option value="" disabled>Selecciona un mes</option>
@@ -495,7 +495,7 @@ const VaccinationPlanManagement = () => {
             placeholder="Nombre del Plan"
             value={newPlan.planName}
             onChange={e => setNewPlan({ ...newPlan, planName: e.target.value })}
-            className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="select-field placeholder-gray-400"
           />
           {renderAddForm()}
           <input
@@ -504,13 +504,13 @@ const VaccinationPlanManagement = () => {
             placeholder="Estado de Alerta"
             value={newPlan.alertStatus}
             onChange={e => setNewPlan({ ...newPlan, alertStatus: e.target.value })}
-            className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="select-field placeholder-gray-400"
           />
           <select
             name="fk_idMedicine"
             value={newPlan.fk_idMedicine}
             onChange={e => setNewPlan({ ...newPlan, fk_idMedicine: Number(e.target.value) })}
-            className="p-2 rounded-md bg-gray-700 text-white"
+            className="select-field"
           >
             <option value={1} disabled>-- Selecciona Medicina --</option>
             {medicines.map(m => (<option key={m.idMedicine} value={m.idMedicine}>{m.name}</option>))}
@@ -541,23 +541,23 @@ const VaccinationPlanManagement = () => {
                         type="text"
                         defaultValue={editingPlanData?.planName}
                         onChange={e => setEditingPlanData((prev) => prev ? { ...prev, planName: e.target.value } : null)}
-                        className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field mb-2"
                       />
                       {renderEditForm()}
                       <input
                         type="text"
                         defaultValue={editingPlanData?.alertStatus}
                         onChange={e => setEditingPlanData((prev) => prev ? { ...prev, alertStatus: e.target.value } : null)}
-                        className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field mb-2"
                       />
                       <select
                         value={editingPlanData?.fk_idMedicine}
                         onChange={e => setEditingPlanData((prev) => prev ? { ...prev, fk_idMedicine: Number(e.target.value) } : null)}
-                        className="p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field mb-2"
                       >
                         {medicines.map(m => (<option key={m.idMedicine} value={m.idMedicine}>{m.name}</option>))}
                       </select>
-                      <div className="flex justify-end gap-2 mt-2">
+                      <div className="flex justify-center gap-3 px-6 pb-6 mt-4">
                         <button
                           onClick={() => updatePlan(plan.idVaccinationPlan!)}
                           className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center gap-1"
@@ -566,7 +566,7 @@ const VaccinationPlanManagement = () => {
                         </button>
                         <button
                           onClick={() => { setEditingId(null); setEditingPlanData(null); }}
-                          className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
+                          className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
                         >
                           <X size={16} /> Cancelar
                         </button>
@@ -653,3 +653,7 @@ const VaccinationPlanManagement = () => {
 };
 
 export default VaccinationPlanManagement; 
+
+
+
+

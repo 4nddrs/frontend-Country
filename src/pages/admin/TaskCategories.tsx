@@ -98,7 +98,7 @@ const TaskCategoriesManagement = () => {
             placeholder="Nombre de la categoría"
             value={newCategory.categoryName}
             onChange={e => setNewCategory({ ...newCategory, categoryName: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="select-field flex-1 placeholder-gray-400"
           />
           <input
             type="text"
@@ -106,7 +106,7 @@ const TaskCategoriesManagement = () => {
             placeholder="Descripción"
             value={newCategory.description}
             onChange={e => setNewCategory({ ...newCategory, description: e.target.value })}
-            className="flex-1 p-2 rounded-md bg-gray-700 text-white placeholder-gray-400"
+            className="select-field flex-1 placeholder-gray-400"
           />
           <button onClick={createCategory} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
             <Plus size={20} /> Agregar
@@ -131,15 +131,15 @@ const TaskCategoriesManagement = () => {
                         type="text"
                         defaultValue={category.categoryName}
                         onChange={e => setNewCategory({ ...newCategory, categoryName: e.target.value })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       />
                       <input
                         type="text"
                         defaultValue={category.description}
                         onChange={e => setNewCategory({ ...newCategory, description: e.target.value })}
-                        className="w-full p-2 rounded-md bg-gray-600 text-white mb-2"
+                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       />
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-center gap-3 px-6 pb-4 mt-3">
                         <button
                           onClick={() => updateCategory(category.idTaskCategory!, {
                             categoryName: newCategory.categoryName || category.categoryName,
@@ -151,7 +151,7 @@ const TaskCategoriesManagement = () => {
                         </button>
                         <button
                           onClick={() => setEditingId(null)}
-                          className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1"
+                          className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
                         >
                           <X size={16} /> Cancelar
                         </button>
@@ -216,3 +216,7 @@ const TaskCategoriesManagement = () => {
 };
 
 export default TaskCategoriesManagement;
+
+
+
+

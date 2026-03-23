@@ -435,7 +435,7 @@ const TipPayment: React.FC = () => {
                     placeholder="0,00"
                     value={amountInput}
                     onChange={(e) => handleAmountChange(e.target.value)}
-                    className="p-2 rounded bg-gray-700 w-full text-white"
+                    className="select-field w-full text-white"
                 />
                 </div>
 
@@ -444,7 +444,7 @@ const TipPayment: React.FC = () => {
                 <select
                     value={form.state}
                     onChange={(e) => onChangeForm("state", e.target.value)}
-                    className="p-2 rounded bg-gray-700 w-full text-white"
+                    className="select-field w-full text-white"
                 >
                     <option value="">Estado…</option>
                     <option value="PAGADO">Pagado</option>
@@ -461,7 +461,7 @@ const TipPayment: React.FC = () => {
                     onChange={(e) =>
                     onChangeForm("paymentDate", e.target.value || null)
                     }
-                    className="p-2 rounded bg-gray-700 w-full text-white"
+                    className="select-field w-full text-white"
                 />
                 </div>
 
@@ -472,7 +472,7 @@ const TipPayment: React.FC = () => {
                     onChange={(e) =>
                     onChangeForm("fk_idEmployee", Number(e.target.value))
                     }
-                    className="p-2 rounded bg-gray-700 w-full text-white"
+                    className="select-field w-full text-white"
                 >
                     <option value={0}>Empleado…</option>
                     {employees.map((emp) => (
@@ -490,7 +490,7 @@ const TipPayment: React.FC = () => {
                     placeholder="Motivo de la propina"
                     value={form.description || ""}
                     onChange={(e) => onChangeForm("description", e.target.value)}
-                    className="p-2 rounded bg-gray-700 w-full text-white"
+                    className="select-field w-full text-white"
                 />
                 </div>
             </div>
@@ -612,7 +612,7 @@ const TipPayment: React.FC = () => {
                 <select
                     value={filterEmployee}
                     onChange={(e) => setFilterEmployee(Number(e.target.value))}
-                    className="p-2 rounded bg-gray-700 w-full text-white"
+                    className="select-field w-full text-white"
                 >
                     <option value={0}>Todos</option>
                     {employees.map((emp) => (
@@ -628,7 +628,7 @@ const TipPayment: React.FC = () => {
                 <select
                     value={filterState}
                     onChange={(e) => setFilterState(e.target.value)}
-                    className="p-2 rounded bg-gray-700 w-full text-white"
+                    className="select-field w-full text-white"
                 >
                     <option value="">Todos</option>
                     <option value="PAGADO">Pagado</option>
@@ -643,7 +643,7 @@ const TipPayment: React.FC = () => {
                     type="month"
                     value={filterMonth}
                     onChange={(e) => setFilterMonth(e.target.value)}
-                    className="p-2 rounded bg-gray-700 w-full text-white"
+                    className="select-field w-full text-white"
                 />
                 </div>
             </div>
@@ -703,3 +703,6 @@ const TipPayment: React.FC = () => {
 };
 
 export default TipPayment;
+
+
+

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X, ChevronUp, ChevronDown } from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
@@ -271,7 +271,7 @@ const MedicinesManagement = () => {
               placeholder="Nombre"
               value={newMedicine.name}
               onChange={e => setNewMedicine({ ...newMedicine, name: e.target.value })}
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full"
+              className="select-field placeholder-gray-400 w-full"
             />
           </div>
           <div>
@@ -283,7 +283,7 @@ const MedicinesManagement = () => {
               placeholder="Descripción"
               value={newMedicine.description}
               onChange={e => setNewMedicine({ ...newMedicine, description: e.target.value })}
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full"
+              className="select-field placeholder-gray-400 w-full"
             />
           </div>
           <div>
@@ -293,7 +293,7 @@ const MedicinesManagement = () => {
               name="medicationType"
               value={newMedicine.medicationType || ''}
               onChange={e => setNewMedicine({ ...newMedicine, medicationType: e.target.value })}
-              className="p-2 rounded-md bg-gray-700 text-white w-full"
+              className="w-full"
             >
               <option value="">-- Selecciona tipo --</option>
               {MEDICATION_TYPE_OPTIONS.map(option => (
@@ -352,7 +352,7 @@ const MedicinesManagement = () => {
               placeholder="Vence caja"
               value={newMedicine.boxExpirationDate}
               onChange={e => setNewMedicine({ ...newMedicine, boxExpirationDate: e.target.value })}
-              className="p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full"
+              className="select-field placeholder-gray-400 w-full"
             />
           </div>
           <div>
@@ -389,7 +389,7 @@ const MedicinesManagement = () => {
                   fk_idHorse: selectedSource === 'Veterinario' ? undefined : prev.fk_idHorse,
                 }));
               }}
-              className="p-2 rounded-md bg-gray-700 text-white w-full"
+              className="w-full"
             >
               <option value="">-- Selecciona origen --</option>
               <option value="Veterinario">Veterinario</option>
@@ -420,7 +420,7 @@ const MedicinesManagement = () => {
               ))}
             </select>
           </div>
-          <div className="w-full flex justify-end gap-2 mt-6">
+          <div className="w-full flex justify-center gap-3 px-6 pb-6 mt-6">
             <button
               type="button"
               onClick={handleSubmit}
@@ -440,7 +440,7 @@ const MedicinesManagement = () => {
               <button
                 type="button"
                 onClick={cancelEdit}
-                className="bg-gray-600 hover:bg-gray-700 text-white p-2 rounded-md font-semibold flex items-center gap-2"
+                className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-2"
               >
                 <X size={20} /> Cancelar
               </button>
@@ -551,4 +551,8 @@ const MedicinesManagement = () => {
 };
 
 export default MedicinesManagement;
+
+
+
+
 

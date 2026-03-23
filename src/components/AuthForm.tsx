@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { supabase, supabaseAdmin } from "../supabaseClient";
-import { Eye, EyeOff, Mail, Lock, User, Phone, Hash, CheckCircle, X } from "lucide-react";
+import { Eye, EyeOff, CheckCircle, X } from "lucide-react";
 import toast from 'react-hot-toast';
 import { AUTH_REDIRECT_URLS } from "../config/app";
 
@@ -460,27 +460,23 @@ export default function AuthForm() {
                 <h3 className="text-2xl font-semibold mb-4">Iniciar sesión</h3>
 
                 <label className="block text-sm text-gray-300 mb-1">Correo electrónico</label>
-                <div className="relative mb-4">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                  <input
+                <div className="relative mb-4">                  <input
                     type="email"
                     value={login.email}
                     onChange={(e) => setLogin((s) => ({ ...s, email: e.target.value }))}
                     required
-                    className="w-full pl-10 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                    className="w-full pl-4 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
                     placeholder="tu@correo.com"
                   />
                 </div>
 
                 <label className="block text-sm text-gray-300 mb-1">Contraseña</label>
-                <div className="relative mb-3">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                  <input
+                <div className="relative mb-3">                  <input
                     type={showPwLogin ? "text" : "password"}
                     value={login.password}
                     onChange={(e) => setLogin((s) => ({ ...s, password: e.target.value }))}
                     required
-                    className="w-full pl-10 pr-12 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                    className="w-full pl-4 pr-12 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
                     placeholder="••••••••"
                   />
                   <button type="button" onClick={() => setShowPwLogin((x) => !x)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#6c8fdf]" aria-label="Mostrar/Ocultar contraseña">
@@ -512,22 +508,18 @@ export default function AuthForm() {
                 <h3 className="text-2xl font-semibold mb-4">Registro</h3>
 
                 <label className="block text-sm text-gray-300 mb-1">Nombre de usuario</label>
-                <div className="relative mb-4">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                  <input
+                <div className="relative mb-4">                  <input
                     type="text"
                     value={reg.username}
                     onChange={(e) => setReg((s) => ({ ...s, username: e.target.value }))}
                     required
-                    className="w-full pl-10 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                    className="w-full pl-4 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
                     placeholder="usuario123"
                   />
                 </div>
 
                 <label className="block text-sm text-gray-300 mb-1">Nombre</label>
-                <div className="relative mb-4">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                  <input
+                <div className="relative mb-4">                  <input
                     type="text"
                     value={reg.name}
                     onChange={(e) => {
@@ -536,7 +528,7 @@ export default function AuthForm() {
                     }}
                     required
                     maxLength={20}
-                    className="w-full pl-10 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                    className="w-full pl-4 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
                     placeholder="Nombre"
                   />
                 </div>
@@ -544,9 +536,7 @@ export default function AuthForm() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="block text-sm text-gray-300 mb-1">Primer apellido</label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                      <input
+                    <div className="relative">                      <input
                         type="text"
                         value={reg.firstName}
                         onChange={(e) => {
@@ -555,16 +545,14 @@ export default function AuthForm() {
                         }}
                         required
                         maxLength={20}
-                        className="w-full pl-10 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                        className="w-full pl-4 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
                         placeholder="Primer apellido"
                       />
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm text-gray-300 mb-1">Segundo apellido (opcional)</label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                      <input
+                    <div className="relative">                      <input
                         type="text"
                         value={reg.secondName}
                         onChange={(e) => {
@@ -572,7 +560,7 @@ export default function AuthForm() {
                           setReg((s) => ({ ...s, secondName: value }));
                         }}
                         maxLength={20}
-                        className="w-full pl-10 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                        className="w-full pl-4 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
                         placeholder="Segundo apellido"
                       />
                     </div>
@@ -582,9 +570,7 @@ export default function AuthForm() {
                 <div className="mb-4 md:mb-5 flex flex-col md:flex-row md:items-start md:space-x-4">
                   <div className="md:w-1/2">
                     <label className="block text-sm text-gray-300 mb-1">CI</label>
-                    <div className="relative mb-4 md:mb-0">
-                      <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                      <input
+                    <div className="relative mb-4 md:mb-0">                      <input
                         type="text"
                         inputMode="numeric"
                         value={reg.ci}
@@ -592,16 +578,14 @@ export default function AuthForm() {
                         required
                         minLength={8}
                         maxLength={8}
-                        className="w-full pl-10 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                        className="w-full pl-4 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
                         placeholder="Número de documento"
                       />
                     </div>
                   </div>
                   <div className="md:w-1/2">
                     <label className="block text-sm text-gray-300 mb-1">Telefono</label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                      <input
+                    <div className="relative">                      <input
                         type="text"
                         inputMode="tel"
                         value={reg.phoneNumber}
@@ -609,7 +593,7 @@ export default function AuthForm() {
                         required
                         minLength={8}
                         maxLength={8}
-                        className="w-full pl-10 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                        className="w-full pl-4 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
                         placeholder="Ej. 70123456"
                       />
                     </div>
@@ -617,14 +601,12 @@ export default function AuthForm() {
                 </div>
 
                 <label className="block text-sm text-gray-300 mb-1">Correo electrónico</label>
-                <div className="relative mb-4">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                  <input
+                <div className="relative mb-4">                  <input
                     type="email"
                     value={reg.email}
                     onChange={(e) => setReg((s) => ({ ...s, email: e.target.value }))}
                     required
-                    className="w-full pl-10 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                    className="w-full pl-4 pr-4 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
                     placeholder="tu@correo.com"
                   />
                 </div>
@@ -632,14 +614,12 @@ export default function AuthForm() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                   <div>
                     <label className="block text-sm text-gray-300 mb-1">Contraseña</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                      <input
+                    <div className="relative">                      <input
                         type={showPwReg ? "text" : "password"}
                         value={reg.password}
                         onChange={(e) => setReg((s) => ({ ...s, password: e.target.value }))}
                         required
-                        className="w-full pl-10 pr-12 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                        className="w-full pl-4 pr-12 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
                         placeholder="********"
                       />
                       <button type="button" onClick={() => setShowPwReg((x) => !x)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#6c8fdf]" aria-label="Mostrar/Ocultar contraseña">
@@ -649,14 +629,12 @@ export default function AuthForm() {
                   </div>
                   <div>
                     <label className="block text-sm text-gray-300 mb-1">Confirmar contraseña</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                      <input
+                    <div className="relative">                      <input
                         type={showPwConfirm ? "text" : "password"}
                         value={reg.confirmPassword}
                         onChange={(e) => setReg((s) => ({ ...s, confirmPassword: e.target.value }))}
                         required
-                        className="w-full pl-10 pr-12 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
+                        className="w-full pl-4 pr-12 py-2 bg-[#111c24] border border-[#1f3747] rounded-full text-white text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(108,143,223,0.65)] placeholder-gray-500"
                         placeholder="Repite tu contraseña"
                       />
                       <button type="button" onClick={() => setShowPwConfirm((x) => !x)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#6c8fdf]" aria-label="Mostrar/Ocultar confirmación de contraseña">
@@ -769,10 +747,7 @@ export default function AuthForm() {
  
               <>
  
-                <div className="relative mb-6">
- 
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
- 
+                <div className="relative mb-6"> 
                   <input
  
                     type="email"
@@ -783,7 +758,7 @@ export default function AuthForm() {
  
                     placeholder="tu@correo.com"
  
-                    className="w-full pl-10 pr-4 py-3 bg-[#111c24] border border-[#1f3747] rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6c8fdf] placeholder-gray-500"
+                    className="w-full pl-4 pr-4 py-3 bg-[#111c24] border border-[#1f3747] rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6c8fdf] placeholder-gray-500"
  
                     onKeyPress={(e) => e.key === 'Enter' && handlePasswordReset()}
  
@@ -796,21 +771,13 @@ export default function AuthForm() {
                 <div className="flex gap-3">
  
                   <button
- 
                     onClick={() => {
- 
                       setShowResetModal(false);
- 
                       setResetEmail("");
- 
                     }}
- 
-                    className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
- 
+                    className="w-full bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-2 justify-center"
                   >
- 
                     Cancelar
- 
                   </button>
  
                   <button
@@ -862,3 +829,8 @@ export default function AuthForm() {
     </div>
   );
 }
+
+
+
+
+
