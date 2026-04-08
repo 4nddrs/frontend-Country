@@ -2,8 +2,6 @@ import { type ReactNode, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { handleSignOut } from "../utils/auth";
 import { useCurrentUser, useOwnerData } from "../hooks/useUserData";
-import { decodeBackendImage } from "../utils/imageHelpers";
-import { getOwnerImageUrl } from "../utils/supabaseStorageHelpers";
 import {
   Home,
   Menu,
@@ -156,8 +154,11 @@ export default function SidebarUser() {
               <div className="mb-4 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur-sm shadow-inner shadow-black/20">
                 {ownerData.ownerPhoto ? (
                   <img
-                    src={getOwnerImageUrl(ownerData.ownerPhoto) || decodeBackendImage(ownerData.ownerPhoto)}
+                    src={ownerData.ownerPhoto || `${import.meta.env.BASE_URL}image/avatar-default.png`}
                     alt={ownerData.name || ownerData.FirstName || "Owner"}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `${import.meta.env.BASE_URL}image/avatar-default.png`;
+                    }}
                     className="h-12 w-12 rounded-full object-cover border-2 border-cyan-400/40 shadow-lg"
                   />
                 ) : (

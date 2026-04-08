@@ -11,8 +11,6 @@ interface PerfilCaballerizoProps {
   onRetry: () => void;
   onNavigateToTasks: () => void;
   onNavigateToHorses: () => void;
-  onUpdatePhoto: (file: File) => void;
-  updatingPhoto: boolean;
 }
 
 export function PerfilCaballerizo({
@@ -22,8 +20,6 @@ export function PerfilCaballerizo({
   onRetry,
   onNavigateToTasks,
   onNavigateToHorses,
-  onUpdatePhoto,
-  updatingPhoto,
 }: PerfilCaballerizoProps) {
   return (
     <div className="min-h-screen p-4 md:p-6 lg:p-8">
@@ -53,8 +49,6 @@ export function PerfilCaballerizo({
                 employee={employee}
                 onViewTasks={onNavigateToTasks}
                 onViewHorses={onNavigateToHorses}
-                onEditPhoto={onUpdatePhoto}
-                isUpdatingPhoto={updatingPhoto}
               />
             </div>
           ) : (

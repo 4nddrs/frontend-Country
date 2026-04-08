@@ -1,18 +1,13 @@
-import { useRef } from "react";
-import { Calendar, IdCard, Loader2, Phone } from "lucide-react";
+import { Calendar, IdCard, Phone } from "lucide-react";
 import type { CaballerizoEmployee } from "../types";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
-import { decodeBackendImage } from "../../../utils/imageHelpers";
-import { getEmployeeImageUrl } from "../../../utils/supabaseStorageHelpers";
 
 interface ProfileCardProps {
   employee: CaballerizoEmployee;
   onViewTasks: () => void;
   onViewHorses: () => void;
-  onEditPhoto: (file: File) => void;
-  isUpdatingPhoto: boolean;
 }
 
 const formatDate = (value?: string | null) => {
@@ -30,26 +25,9 @@ export function ProfileCard({
   employee,
   onViewTasks,
   onViewHorses,
-  onEditPhoto,
-  isUpdatingPhoto,
 }: ProfileCardProps) {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const photo = getEmployeeImageUrl(employee.employeePhoto ?? null) || decodeBackendImage(employee.employeePhoto ?? "");
+  const photo = employee.employeePhoto ?? null;
   const statusLabel = employee.status === false ? "Inactivo" : "Activo";
-
-  const triggerFilePicker = () => {
-    if (isUpdatingPhoto) return;
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      onEditPhoto(file);
-      // reset value to allow selecting same file twice
-      event.target.value = "";
-    }
-  };
 
   return (
     <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 border-slate-700/50 backdrop-blur-sm">
@@ -60,15 +38,13 @@ export function ProfileCard({
           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
             <div className="relative self-center sm:self-auto">
               <img
-                src={photo}
+                src={photo ?? `${import.meta.env.BASE_URL}image/avatar-default.png`}
                 alt={employee.fullName}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = `${import.meta.env.BASE_URL}image/avatar-default.png`;
+                }}
                 className="w-24 h-24 md:w-28 md:h-28 rounded-2xl object-cover border border-emerald-500/30 shadow-lg shadow-emerald-500/20"
               />
-              {isUpdatingPhoto ? (
-                <div className="absolute inset-0 rounded-2xl bg-slate-900/70 backdrop-blur-sm flex items-center justify-center">
-                  <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
-                </div>
-              ) : null}
             </div>
 
             <div className="text-center sm:text-left space-y-3">
@@ -82,23 +58,6 @@ export function ProfileCard({
                 <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
                   {statusLabel}
                 </Badge>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <Button
-                  variant="secondary"
-                  className="bg-slate-800/60 hover:bg-slate-800 text-white"
-                  onClick={triggerFilePicker}
-                  disabled={isUpdatingPhoto}
-                >
-                  {isUpdatingPhoto ? "Actualizando..." : "Cambiar foto"}
-                </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
               </div>
             </div>
           </div>

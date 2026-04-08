@@ -7,8 +7,6 @@ import UserHeader from '../../components/UserHeader';
 import { useCurrentUser, useOwnerData, useOwnerHorses } from '../../hooks/useUserData';
 import { updateOwner, type Horse } from '../../services/userService';
 import { toast } from 'react-hot-toast';
-import { decodeBackendImage } from '../../utils/imageHelpers';
-import { getOwnerImageUrl } from '../../utils/supabaseStorageHelpers';
 
 interface PerfilProps {}
 
@@ -111,8 +109,11 @@ export function UserProfile(_: PerfilProps) {
               <div className="flex items-center gap-4">
                 {ownerData?.ownerPhoto ? (
                   <img
-                    src={getOwnerImageUrl(ownerData.ownerPhoto) || decodeBackendImage(ownerData.ownerPhoto)}
-                    alt={owner.name || owner.FirstName || 'Owner'} 
+                    src={ownerData.ownerPhoto || `${import.meta.env.BASE_URL}image/avatar-default.png`}
+                    alt={owner.name || owner.FirstName || 'Owner'}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `${import.meta.env.BASE_URL}image/avatar-default.png`;
+                    }}
                     className="w-20 h-20 rounded-2xl object-cover shadow-lg shadow-cyan-500/20 border-2 border-cyan-400/30"
                   />
                 ) : (

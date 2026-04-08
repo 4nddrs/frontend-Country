@@ -75,6 +75,7 @@ export const handleSignOut = async () => {
   }
 
   isSigningOut = true;
+  window.dispatchEvent(new CustomEvent('signout-start')); 
   console.log('🚪 Cerrando sesión y limpiando cache...');
   const baseUrl = import.meta.env.BASE_URL || '/';
   

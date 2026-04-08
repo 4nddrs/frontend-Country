@@ -8,6 +8,7 @@ import AppUser from './pages/user/AppUser';
 import ResetPassword from './pages/ResetPassword';
 import { handleSignOut } from './utils/auth';
 import CaballerizoDashboard from './pages/caballerizo/CaballerizoDashboard';
+import SignOutModal from './components/SignOutModal';
 
 // Función auxiliar para obtener el rol (reutilizable)
 const fetchUserRole = async (userId: string) => {
@@ -291,67 +292,67 @@ export default function App() {
   }
 
   return (
-    <Routes>
-      {/* Ruta pública para reset password */}
-      <Route path="/reset-password" element={<ResetPassword />} />
-      
-      {/* Rutas protegidas */}
-      <Route
-        path="/*"
-        element={
-          // No hay sesión -> Login
-          !session ? (
-            <AuthForm />
-          ) : (
-            // Si existe sesión pero no está OK (pendiente o sin registro), mostramos mensaje amable
-            authStatus !== 'ok' ? (
-              <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white p-6">
-                <div className="max-w-xl text-center">
-                  {authStatus === 'pending' ? (
-                    <>
-                      <h2 className="text-2xl mb-4">Cuenta pendiente de aprobación</h2>
-                      <p className="text-slate-300 mb-6">Tu cuenta está registrada pero aún debe ser aprobada por un administrador. Por favor, espera la confirmación por correo.</p>
-                    </>
-                  ) : (
-                    <>
-                      <h2 className="text-2xl mb-4">Cuenta no encontrada</h2>
-                      <p className="text-slate-300 mb-6">No pudimos validar tu cuenta en el sistema. Contacta al soporte si crees que esto es un error.</p>
-                    </>
-                  )}
-                  <div className="flex justify-center gap-3">
-                    <button
-                      onClick={handleSignOut}
-                      className="px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-600"
-                    >
-                      Cerrar sesión
-                    </button>
-                  </div>
-                </div>
-              </div>
+    <>
+      <SignOutModal />
+      <Routes>
+        {/* Ruta pública para reset password */}
+        <Route path="/reset-password" element={<ResetPassword />} />
+        
+        {/* Rutas protegidas */}
+        <Route
+          path="/*"
+          element={
+            // No hay sesión -> Login
+            !session ? (
+              <AuthForm />
             ) : (
-              // 2. Si hay sesión y rol -> renderizar según rol
-              role === 6 || role === 8 ? (
-                <MainLayout userRole={role} />
-              ) : role === 7 ? (
-                <AppUser />
-              ) : role === 9 ? (
-                <CaballerizoDashboard />    
-              ) : (
-                // Rol null -> Mostrar loading (evita parpadeo durante validación inicial)
-                <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
-                  <div>
-                    <div className="animate-spin mb-4 border-4 border-t-transparent border-emerald-400 rounded-full w-10 h-10 mx-auto" />
-                    <p className="text-center">Validando acceso...</p>
+              // Si existe sesión pero no está OK (pendiente o sin registro), mostramos mensaje amable
+              authStatus !== 'ok' ? (
+                <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white p-6">
+                  <div className="max-w-xl text-center">
+                    {authStatus === 'pending' ? (
+                      <>
+                        <h2 className="text-2xl mb-4">Cuenta pendiente de aprobación</h2>
+                        <p className="text-slate-300 mb-6">Tu cuenta está registrada pero aún debe ser aprobada por un administrador. Por favor, espera la confirmación por correo.</p>
+                      </>
+                    ) : (
+                      <>
+                        <h2 className="text-2xl mb-4">Cuenta no encontrada</h2>
+                        <p className="text-slate-300 mb-6">No pudimos validar tu cuenta en el sistema. Contacta al soporte si crees que esto es un error.</p>
+                      </>
+                    )}
+                    <div className="flex justify-center gap-3">
+                      <button
+                        onClick={handleSignOut}
+                        className="px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-600"
+                      >
+                        Cerrar sesión
+                      </button>
+                    </div>
                   </div>
                 </div>
+              ) : (
+                // 2. Si hay sesión y rol -> renderizar según rol
+                role === 6 || role === 8 ? (
+                  <MainLayout userRole={role} />
+                ) : role === 7 ? (
+                  <AppUser />
+                ) : role === 9 ? (
+                  <CaballerizoDashboard />    
+                ) : (
+                  // Rol null -> Mostrar loading (evita parpadeo durante validación inicial)
+                  <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
+                    <div>
+                      <div className="animate-spin mb-4 border-4 border-t-transparent border-emerald-400 rounded-full w-10 h-10 mx-auto" />
+                      <p className="text-center">Validando acceso...</p>
+                    </div>
+                  </div>
+                )
               )
             )
-          )
-        }
-      />
-    </Routes>
+          }
+        />
+      </Routes>
+    </>
   );
 }
-
-
-

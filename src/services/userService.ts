@@ -78,38 +78,48 @@ export const getOwnerByUid = async (uid: string): Promise<Owner | null> => {
   try {
     // Intentar con query param
     let ownerRes = await fetch(`${API_URL}/owner/?uid=${uid}`);
-    
+
     if (ownerRes.ok) {
       const result = await ownerRes.json();
       let owner;
-      
+
       if (Array.isArray(result)) {
         owner = result.find((o: any) => o.uid === uid);
       } else {
         owner = result;
       }
-      
+
       if (owner) {
-        ownerCache = { data: owner, timestamp: Date.now() };
-        return owner;
+        // Mapear image_url → ownerPhoto
+        const mapped = {
+          ...owner,
+          ownerPhoto: owner.image_url || owner.ownerPhoto || undefined,
+        };
+        ownerCache = { data: mapped, timestamp: Date.now() };
+        return mapped;
       }
     }
-    
+
     // Fallback: obtener todos y filtrar
     ownerRes = await fetch(`${API_URL}/owner/`);
     if (!ownerRes.ok) {
       throw new Error('No se pudo obtener datos del propietario');
     }
-    
+
     const allOwners = await ownerRes.json();
     const owner = allOwners.find((o: any) => o.uid === uid);
-    
+
     if (!owner) {
       throw new Error('Propietario no encontrado');
     }
-    
-    ownerCache = { data: owner, timestamp: Date.now() };
-    return owner;
+
+    // Mapear image_url → ownerPhoto
+    const mapped = {
+      ...owner,
+      ownerPhoto: owner.image_url || owner.ownerPhoto || undefined,
+    };
+    ownerCache = { data: mapped, timestamp: Date.now() };
+    return mapped;
   } catch (error) {
     console.error('Error fetching owner:', error);
     throw error;

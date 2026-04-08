@@ -1,7 +1,7 @@
 import {
-  useCallback,
   useMemo,
   useState,
+  useCallback,
 } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { toast, Toaster } from "react-hot-toast";
@@ -12,7 +12,6 @@ import { CaballosCaballerizo } from "./CaballosCaballerizo";
 import type {
   CaballerizoHorse,
 } from "./types";
-import { encodeImageForBackend } from "../../utils/imageHelpers";
 import {
   useCurrentSession,
   useEmployeeByUid,
@@ -21,7 +20,6 @@ import {
   useEmployeeHorseAssignments,
   useAllHorses,
   useUpdateTaskStatus,
-  useUpdateEmployeePhoto,
 } from "../../hooks/useCaballerizoData";
 
 
@@ -58,15 +56,6 @@ const buildHorseMap = (
   }, {});
 };
 
-const fileToDataUrl = (file: File) =>
-  new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () =>
-      reject(reader.error ?? new Error("No se pudo leer el archivo."));
-    reader.readAsDataURL(file);
-  });
-
 const CaballerizoDashboard = () => {
   const navigate = useNavigate();
 
@@ -82,7 +71,6 @@ const CaballerizoDashboard = () => {
 
   // Mutations
   const updateTaskStatus = useUpdateTaskStatus();
-  const updateEmployeePhoto = useUpdateEmployeePhoto();
 
   // Local UI state
   const [updatingTaskId, setUpdatingTaskId] = useState<number | null>(null);
@@ -134,32 +122,6 @@ const CaballerizoDashboard = () => {
   const handleNavigateToTasks = () => navigate("/caballerizo/tareas");
   const handleNavigateToHorses = () => navigate("/caballerizo/caballos");
 
-  const handleProfilePhotoUpdate = useCallback(
-    async (file: File) => {
-      if (!employee?.idEmployee) {
-        toast.error("No se encontro el perfil del caballerizo.");
-        return;
-      }
-
-      try {
-        const dataUrl = await fileToDataUrl(file);
-        const encodedPhoto = encodeImageForBackend(dataUrl);
-
-        await updateEmployeePhoto.mutateAsync({
-          employeeId: employee.idEmployee,
-          photoData: encodedPhoto,
-        });
-        toast.success("Foto de perfil actualizada.");
-      } catch (err) {
-        console.error("Error actualizando foto de perfil:", err);
-        toast.error(
-          "No se pudo actualizar la foto. Intenta con otra imagen o más tarde.",
-        );
-      }
-    },
-    [employee, updateEmployeePhoto],
-  );
-
   const handleRetry = () => {
     // React Query refetch is handled automatically
     window.location.reload();
@@ -184,8 +146,6 @@ const CaballerizoDashboard = () => {
                 onRetry={handleRetry}
                 onNavigateToTasks={handleNavigateToTasks}
                 onNavigateToHorses={handleNavigateToHorses}
-                onUpdatePhoto={handleProfilePhotoUpdate}
-                updatingPhoto={updateEmployeePhoto.isPending}
               />
             }
           />

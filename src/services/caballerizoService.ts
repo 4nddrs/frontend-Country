@@ -51,15 +51,19 @@ export const getCurrentSession = async () => {
 export const getEmployeeByUid = async (uid: string): Promise<CaballerizoEmployee> => {
   const response = await fetch(`${API_URL}/employees/`);
   if (!response.ok) throw new Error("No se pudo obtener la información del empleado");
-  
-  const employees: CaballerizoEmployee[] = await response.json();
+
+  const employees: any[] = await response.json();
   const employee = employees.find((emp) => matchesEmployeeByUid(emp, uid));
-  
+
   if (!employee) {
     throw new Error("No se encontró un registro de empleado asociado a esta cuenta");
   }
-  
-  return employee;
+
+  // Mapear image_url → employeePhoto
+  return {
+    ...employee,
+    employeePhoto: employee.image_url || employee.employeePhoto || null,
+  };
 };
 
 export const getTaskCategories = async (): Promise<CaballerizoTaskCategory[]> => {
