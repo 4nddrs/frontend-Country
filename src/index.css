@@ -509,3 +509,7 @@ textarea:disabled {
   opacity: 0.5;
   border-color: #4a5568;
 }
+
+* {
+  outline: none !important;
+}

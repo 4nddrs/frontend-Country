@@ -51,15 +51,13 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             {description}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="mt-6">
-          <AlertDialogCancel 
-            className="w-full"
-          >
+        <AlertDialogFooter className="mt-6 flex flex-row gap-3">
+          <AlertDialogCancel className="flex-1 m-0 !border !border-white/60">
             {cancelText}
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
-            className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg shadow-red-500/30 transition-all duration-200 border-0"
+            className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg shadow-red-500/30 transition-all duration-200 border-0"
           >
             {confirmText}
           </AlertDialogAction>

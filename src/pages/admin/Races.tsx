@@ -87,23 +87,33 @@ const RacesManagement = () => {
   return (
     <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Razas</h1>
-      
       <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Raza</h2>
-        <div className="flex gap-4">
+      <h2 className="text-xl font-semibold mb-4 text-teal-400">
+        Agregar Nueva Raza
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-8 items-end">
+        <div className="md:col-span-3">
+          <label className="block mb-1">Nombre de la Raza</label>
           <input
             type="text"
             name="nameRace"
             placeholder="Nombre de la raza"
             value={newRace.nameRace}
             onChange={e => setNewRace({ nameRace: e.target.value })}
-            className="select-field flex-1 placeholder-gray-400"
+            className="w-full placeholder-gray-400"
           />
-          <button onClick={createRace} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
-            <Plus size={20} /> Agregar
+        </div>
+
+        <div className="md:col-span-1">
+          <button onClick={createRace} className="group relative w-full">
+            <div className="relative z-10 inline-flex w-full h-11 items-center justify-center overflow-hidden rounded-md border border-emerald-500 bg-emerald-600 px-4 font-medium text-white transition-all duration-300 group-hover:-translate-x-6 group-hover:-translate-y-6 group-active:translate-x-0 group-active:translate-y-0 gap-2">
+              <Plus size={15} /> Agregar
+            </div>
+            <div className="absolute inset-0 z-0 h-full w-full rounded-md bg-emerald-700 transition-all duration-300 group-hover:-translate-x-6 group-hover:-translate-y-6 group-hover:[box-shadow:8px_8px_rgba(5,150,105,0.8),16px_16px_rgba(52,211,153,0.5),24px_24px_rgba(110,231,183,0.25)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />          
           </button>
         </div>
       </div>
+    </div>
       <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
