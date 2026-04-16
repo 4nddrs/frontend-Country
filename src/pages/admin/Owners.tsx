@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Toaster, toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, X } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
 import noPhoto from '../../assets/noPhoto.png';
+import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 
 const API_URL = 'http://localhost:8000/owner/';
 
@@ -13,10 +15,9 @@ interface Owner {
   SecondName?: string;
   ci: number;
   phoneNumber: number;
-  image_url?: string | null;   // URL pública de Supabase Storage
+  image_url?: string | null;
 }
 
-// Datos del formulario de creación (sin image_url, se sube aparte)
 interface OwnerFormData {
   name: string;
   FirstName: string;
@@ -41,12 +42,10 @@ const OwnersManagement = () => {
   const [hasNextPage, setHasNextPage] = useState<boolean>(false);
   const pageSize = 9;
 
-  // Formulario de creación
   const [newOwner, setNewOwner] = useState<OwnerFormData>(EMPTY_FORM);
   const [newImageFile, setNewImageFile] = useState<File | null>(null);
   const newFileRef = useRef<HTMLInputElement>(null);
 
-  // Edición
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingOwnerData, setEditingOwnerData] = useState<Owner | null>(null);
   const [editImageFile, setEditImageFile] = useState<File | null>(null);
@@ -54,11 +53,18 @@ const OwnersManagement = () => {
 
   const [loading, setLoading] = useState<boolean>(true);
 
+  const isEditModalOpen = editingId !== null && editingOwnerData !== null;
+
+  useEffect(() => {
+    if (!isEditModalOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') handleCancelEdit(); };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isEditModalOpen]);
+
   useEffect(() => {
     fetchOwners(1);
   }, []);
-
-  // ─── Fetch ────────────────────────────────────────────────────────────────
 
   const fetchOwners = async (page: number) => {
     setLoading(true);
@@ -78,19 +84,12 @@ const OwnersManagement = () => {
     }
   };
 
-  // ─── Subir imagen al Storage ───────────────────────────────────────────────
-
   const uploadImage = async (ownerId: number, file: File): Promise<void> => {
     const formData = new FormData();
     formData.append('image', file);
-    const res = await fetch(`${API_URL}${ownerId}/image`, {
-      method: 'POST',
-      body: formData,
-    });
+    const res = await fetch(`${API_URL}${ownerId}/image`, { method: 'POST', body: formData });
     if (!res.ok) throw new Error('No se pudo subir la imagen.');
   };
-
-  // ─── Crear ────────────────────────────────────────────────────────────────
 
   const createOwner = async () => {
     if (!newOwner.name || !newOwner.FirstName || !newOwner.ci) {
@@ -98,7 +97,6 @@ const OwnersManagement = () => {
       return;
     }
     try {
-      // 1. Crear el propietario (solo datos, sin imagen)
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -106,17 +104,13 @@ const OwnersManagement = () => {
       });
       if (!res.ok) throw new Error();
       const createdOwner: Owner = await res.json();
-
-      // 2. Si hay imagen seleccionada, subirla al Storage
       if (newImageFile) {
         await uploadImage(createdOwner.idOwner!, newImageFile);
-        // Recargar para obtener la image_url actualizada
         await fetchOwners(1);
       } else {
         setOwners((prev) => [createdOwner, ...prev]);
         setCurrentPage(1);
       }
-
       toast.success('Propietario creado!');
       setNewOwner(EMPTY_FORM);
       setNewImageFile(null);
@@ -126,12 +120,9 @@ const OwnersManagement = () => {
     }
   };
 
-  // ─── Actualizar ───────────────────────────────────────────────────────────
-
   const updateOwner = async (id: number) => {
     if (!editingOwnerData) return;
     try {
-      // 1. Actualizar datos del propietario (sin imagen)
       const { image_url, idOwner, ...dataToSend } = editingOwnerData;
       const res = await fetch(`${API_URL}${id}`, {
         method: 'PUT',
@@ -139,13 +130,10 @@ const OwnersManagement = () => {
         body: JSON.stringify(dataToSend),
       });
       if (!res.ok) throw new Error();
-
-      // 2. Si hay imagen nueva, subirla al Storage
       if (editImageFile) {
         await uploadImage(id, editImageFile);
       }
-
-      toast.success('Propietario actualizado!'); // mensaje de éxito
+      toast.success('Propietario actualizado!');
       setEditingId(null);
       setEditingOwnerData(null);
       setEditImageFile(null);
@@ -155,8 +143,6 @@ const OwnersManagement = () => {
       toast.error('No se pudo actualizar el propietario.');
     }
   };
-
-  // ─── Eliminar ─────────────────────────────────────────────────────────────
 
   const deleteOwner = async (id: number) => {
     const confirmed = await confirmDialog({
@@ -176,8 +162,6 @@ const OwnersManagement = () => {
     }
   };
 
-  // ─── Handlers ─────────────────────────────────────────────────────────────
-
   const handleEditClick = (owner: Owner) => {
     setEditingId(owner.idOwner!);
     setEditingOwnerData({ ...owner });
@@ -191,15 +175,13 @@ const OwnersManagement = () => {
     if (editFileRef.current) editFileRef.current.value = '';
   };
 
-  // ─── Render ───────────────────────────────────────────────────────────────
-
   return (
     <div className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <Toaster position="top-right" toastOptions={{ style: { background: '#334155', color: 'white' } }} />
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Propietarios</h1>
 
-      {/* ── Formulario de creación ── */}
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      {/* Formulario de creación */}
+      <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Propietario</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <input type="text" placeholder="Nombre" value={newOwner.name}
@@ -226,15 +208,12 @@ const OwnersManagement = () => {
           />
         </div>
         <div className="mt-4 text-right">
-          <button onClick={createOwner}
-            className="bg-green-600 hover:bg-green-700 text-white p-2 px-4 rounded-md font-semibold flex items-center gap-2 inline-flex">
-            <Plus size={20} /> Agregar
-          </button>
+          <AddButton onClick={createOwner} />
         </div>
-      </div>
+      </AdminSection>
 
-      {/* ── Lista de propietarios ── */}
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      {/* Lista de propietarios */}
+      <AdminSection>
         <div className="flex items-center justify-between mb-4 text-sm text-gray-300">
           <span>Página {currentPage}</span>
           <div className="flex items-center gap-2">
@@ -266,89 +245,118 @@ const OwnersManagement = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {owners.map(owner => (
               <div key={owner.idOwner} className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between">
-
-                {editingId === owner.idOwner && editingOwnerData ? (
-                  // ── Modo edición ──
-                  <>
-                    <div className="flex-grow space-y-2 mb-4">
-                      <input type="text" placeholder="Nombre" value={editingOwnerData.name}
-                        onChange={e => setEditingOwnerData({ ...editingOwnerData, name: e.target.value })}
-                        className="w-full p-2 rounded-md bg-gray-600" />
-                      <input type="text" placeholder="Primer Apellido" value={editingOwnerData.FirstName}
-                        onChange={e => setEditingOwnerData({ ...editingOwnerData, FirstName: e.target.value })}
-                        className="w-full p-2 rounded-md bg-gray-600" />
-                      <input type="number" placeholder="C.I." value={editingOwnerData.ci}
-                        onChange={e => setEditingOwnerData({ ...editingOwnerData, ci: Number(e.target.value) })}
-                        className="w-full p-2 rounded-md bg-gray-600" />
-
-                      {/* Preview de imagen actual */}
-                      {editingOwnerData.image_url && !editImageFile && (
-                        <img src={editingOwnerData.image_url} alt="Foto actual"
-                          className="w-full h-32 rounded-md object-cover" />
-                      )}
-                      {/* Preview de imagen nueva seleccionada */}
-                      {editImageFile && (
-                        <img src={URL.createObjectURL(editImageFile)} alt="Nueva foto"
-                          className="w-full h-32 rounded-md object-cover border-2 border-teal-400" />
-                      )}
-
-                      <input type="file" accept="image/*" ref={editFileRef}
-                        onChange={e => setEditImageFile(e.target.files?.[0] ?? null)}
-                        className="w-full p-1.5 rounded-md bg-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" />
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <button onClick={() => updateOwner(owner.idOwner!)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center gap-1">
-                        <Save size={16} /> Guardar
-                      </button>
-                      <button onClick={handleCancelEdit}
-                        className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-md flex items-center gap-1">
-                        <X size={16} /> Cancelar
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  // ── Modo vista ──
-                  <>
-                    <div>
-                      {/* image_url es una URL directa, sin decodificación */}
-                      <img
-                        src={owner.image_url ?? PLACEHOLDER}
-                        alt={`Foto de ${owner.FirstName}`}
-                        className="w-full h-40 rounded-md object-cover mb-4 bg-gray-600"
-                        onError={e => { e.currentTarget.src = PLACEHOLDER; }}
-                      />
-                      <h3 className="text-lg font-semibold">{owner.name} {owner.FirstName} {owner.SecondName}</h3>
-                      <p>CI: {owner.ci}</p>
-                      <p>Telefono: {owner.phoneNumber}</p>
-                    </div>
-                    <div className="flex items-center justify-end gap-4">
-                      <button onClick={() => handleEditClick(owner)}
-                        className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
-                          bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
-                          shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
-                          hover:scale-[1.1]
-                          active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
-                          transition-all duration-300 ease-in-out">
-                        <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" />
-                      </button>
-                      <button onClick={() => deleteOwner(owner.idOwner!)}
-                        className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
-                          bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
-                          shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
-                          hover:scale-[1.1]
-                          active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
-                          transition-all duration-300 ease-in-out">
-                        <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
-                      </button>
-                    </div>
-                  </>
-                )}
+                <div>
+                  <img
+                    src={owner.image_url ?? PLACEHOLDER}
+                    alt={`Foto de ${owner.FirstName}`}
+                    className="w-full h-40 rounded-md object-cover mb-4 bg-gray-600"
+                    onError={e => { e.currentTarget.src = PLACEHOLDER; }}
+                  />
+                  <h3 className="text-lg font-semibold">{owner.name} {owner.FirstName} {owner.SecondName}</h3>
+                  <p>CI: {owner.ci}</p>
+                  <p>Telefono: {owner.phoneNumber}</p>
+                </div>
+                <div className="flex items-center justify-end gap-4 mt-4">
+                  <button onClick={() => handleEditClick(owner)}
+                    className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
+                      bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                      shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
+                      hover:scale-[1.1]
+                      active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                      transition-all duration-300 ease-in-out">
+                    <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" />
+                  </button>
+                  <button onClick={() => deleteOwner(owner.idOwner!)}
+                    className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
+                      bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                      shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
+                      hover:scale-[1.1]
+                      active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                      transition-all duration-300 ease-in-out">
+                    <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+
+        {editingId !== null && editingOwnerData && createPortal(
+          <div
+            className="fixed inset-0 lg:left-80 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            onClick={handleCancelEdit}
+          >
+            <div
+              className="w-full max-w-2xl max-h-[95vh] overflow-y-auto rounded-2xl border border-[#167C79]/60 bg-[#0f172a] p-6 shadow-[0_25px_80px_rgba(0,0,0,0.6)]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-5 flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold text-[#F8F4E3]">Editar Propietario</h3>
+                  <p className="text-sm text-slate-400">Actualiza los datos.</p>
+                </div>
+                <button onClick={handleCancelEdit} className="rounded-lg border border-slate-500 px-3 py-1.5 text-slate-300 hover:bg-slate-800">
+                  Cerrar
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block mb-1">Nombre</label>
+                  <input type="text" value={editingOwnerData.name}
+                    onChange={e => setEditingOwnerData({ ...editingOwnerData, name: e.target.value })}
+                    className="w-full p-2 rounded-md bg-gray-700" />
+                </div>
+                <div>
+                  <label className="block mb-1">Primer Apellido</label>
+                  <input type="text" value={editingOwnerData.FirstName}
+                    onChange={e => setEditingOwnerData({ ...editingOwnerData, FirstName: e.target.value })}
+                    className="w-full p-2 rounded-md bg-gray-700" />
+                </div>
+                <div>
+                  <label className="block mb-1">Segundo Apellido</label>
+                  <input type="text" value={editingOwnerData.SecondName || ''}
+                    onChange={e => setEditingOwnerData({ ...editingOwnerData, SecondName: e.target.value })}
+                    className="w-full p-2 rounded-md bg-gray-700" />
+                </div>
+                <div>
+                  <label className="block mb-1">C.I.</label>
+                  <input type="number" value={editingOwnerData.ci}
+                    onChange={e => setEditingOwnerData({ ...editingOwnerData, ci: Number(e.target.value) })}
+                    className="w-full p-2 rounded-md bg-gray-700" />
+                </div>
+                <div>
+                  <label className="block mb-1">Teléfono</label>
+                  <input type="number" value={editingOwnerData.phoneNumber}
+                    onChange={e => setEditingOwnerData({ ...editingOwnerData, phoneNumber: Number(e.target.value) })}
+                    className="w-full p-2 rounded-md bg-gray-700" />
+                </div>
+                <div>
+                  <label className="block mb-1">Foto</label>
+                  <input type="file" accept="image/*" ref={editFileRef}
+                    onChange={e => setEditImageFile(e.target.files?.[0] ?? null)}
+                    className="w-full p-1.5 rounded-md bg-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" />
+                </div>
+                {(editingOwnerData.image_url || editImageFile) && (
+                  <div className="md:col-span-2">
+                    <img
+                      src={editImageFile ? URL.createObjectURL(editImageFile) : editingOwnerData.image_url ?? PLACEHOLDER}
+                      alt="Vista previa"
+                      className="w-full h-44 rounded-xl object-cover border border-slate-600"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 flex justify-end gap-3 border-t border-slate-700 pt-4">
+                <CancelButton onClick={handleCancelEdit} />
+                <SaveButton onClick={() => updateOwner(editingId)} children="Guardar cambios" />
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+      </AdminSection>
     </div>
   );
 };

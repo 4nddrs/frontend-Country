@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
-import { AddButton, AdminSection } from '../../components/ui/admin-buttons';
+import { Plus, Edit, Trash2, Loader, X } from 'lucide-react';
+import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'http://localhost:8000/vaccination_plan/';
@@ -47,11 +48,20 @@ const VaccinationPlanManagement = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [medicines, setMedicines] = useState<any[]>([]);
 
+  const isEditModalOpen = editingId !== null && editingPlanData !== null;
+
   // --- EFECTOS Y FETCHING DE DATOS ---
   useEffect(() => {
     fetchPlans();
     fetchMedicines();
   }, []);
+
+  useEffect(() => {
+    if (!isEditModalOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') { setEditingId(null); setEditingPlanData(null); } };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isEditModalOpen]);
 
   const fetchPlans = async () => {
     setLoading(true);
@@ -534,117 +544,133 @@ const VaccinationPlanManagement = () => {
 
               return (
                 <div key={plan.idVaccinationPlan} className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-teal-500/10 via-slate-900/60 to-slate-900/90 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-teal-500/20">
-                  {editingId === plan.idVaccinationPlan ? (
-                    <>
-                      <input
-                        type="text"
-                        defaultValue={editingPlanData?.planName}
-                        onChange={e => setEditingPlanData((prev) => prev ? { ...prev, planName: e.target.value } : null)}
-                        className="select-field mb-2"
-                      />
-                      {renderEditForm()}
-                      <input
-                        type="text"
-                        defaultValue={editingPlanData?.alertStatus}
-                        onChange={e => setEditingPlanData((prev) => prev ? { ...prev, alertStatus: e.target.value } : null)}
-                        className="select-field mb-2"
-                      />
-                      <select
-                        value={editingPlanData?.fk_idMedicine}
-                        onChange={e => setEditingPlanData((prev) => prev ? { ...prev, fk_idMedicine: Number(e.target.value) } : null)}
-                        className="select-field mb-2"
-                      >
-                        {medicines.map(m => (<option key={m.idMedicine} value={m.idMedicine}>{m.name}</option>))}
-                      </select>
-                      <div className="flex justify-center gap-3 px-6 pb-6 mt-4">
-                        <button
-                          onClick={() => updatePlan(plan.idVaccinationPlan!)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center gap-1"
-                        >
-                          <Save size={16} /> Guardar
-                        </button>
-                        <button
-                          onClick={() => { setEditingId(null); setEditingPlanData(null); }}
-                          className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
-                        >
-                          <X size={16} /> Cancelar
-                        </button>
+                  <div className="flex flex-col items-center gap-2 py-5">
+                    <span className="h-4 w-4 rounded-full bg-teal-500 shadow-[0_0_12px_rgba(20,184,166,0.6)]" />
+                    <span className="text-xs uppercase tracking-[0.3em] text-slate-400">Plan</span>
+                  </div>
+
+                  <div className="px-6 pb-6 space-y-4 text-sm text-slate-200">
+                    <div className="text-center space-y-1">
+                      <h3 className="text-lg font-semibold text-teal-300">{plan.planName}</h3>
+                      <p className="text-slate-400">
+                        <span className="font-medium text-slate-200">{medicines.find(m => m.idMedicine === plan.fk_idMedicine)?.name || 'N/A'}</span>
+                      </p>
+                    </div>
+
+                    <div className="space-y-2 text-center text-xs">
+                      <div>
+                        <p className="font-semibold text-teal-300 mb-1">Meses Programados:</p>
+                        <ul className="list-none space-y-1">
+                          {parsedScheduledMonths ?
+                            Object.values(parsedScheduledMonths).map((month: any, index) => (
+                              <li key={index}>{month}</li>
+                            ))
+                            : <li>{plan.scheduledMonths}</li>
+                          }
+                        </ul>
                       </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex flex-col items-center gap-2 py-5">
-                        <span className="h-4 w-4 rounded-full bg-teal-500 shadow-[0_0_12px_rgba(20,184,166,0.6)]" />
-                        <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                          Plan
-                        </span>
+                      <div>
+                        <p className="font-semibold text-teal-300 mb-1">Dosis por Mes:</p>
+                        <ul className="list-none space-y-1">
+                          {parsedDosesByMonth ?
+                            Object.entries(parsedDosesByMonth).map(([month, doses]: any) => (
+                              <li key={month}>{month}: {doses} dosis</li>
+                            ))
+                            : <li>{plan.dosesByMonth}</li>
+                          }
+                        </ul>
                       </div>
+                    </div>
 
-                      <div className="px-6 pb-6 space-y-4 text-sm text-slate-200">
-                        <div className="text-center space-y-1">
-                          <h3 className="text-lg font-semibold text-teal-300">{plan.planName}</h3>
-                          <p className="text-slate-400">
-                            <span className="font-medium text-slate-200">{medicines.find(m => m.idMedicine === plan.fk_idMedicine)?.name || 'N/A'}</span>
-                          </p>
-                        </div>
-
-                        <div className="space-y-2 text-center text-xs">
-                          <div>
-                            <p className="font-semibold text-teal-300 mb-1">Meses Programados:</p>
-                            <ul className="list-none space-y-1">
-                              {parsedScheduledMonths ?
-                                Object.values(parsedScheduledMonths).map((month: any, index) => (
-                                  <li key={index}>{month}</li>
-                                ))
-                                : <li>{plan.scheduledMonths}</li>
-                              }
-                            </ul>
-                          </div>
-                          
-                          <div>
-                            <p className="font-semibold text-teal-300 mb-1">Dosis por Mes:</p>
-                            <ul className="list-none space-y-1">
-                              {parsedDosesByMonth ?
-                                Object.entries(parsedDosesByMonth).map(([month, doses]: any) => (
-                                  <li key={month}>{month}: {doses} dosis</li>
-                                ))
-                                : <li>{plan.dosesByMonth}</li>
-                              }
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-center gap-6 border-t border-slate-800 pt-6 pb-2">
-                        <button
-                          onClick={() => handleEditClick(plan)}
-                          className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
-                                    bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
-                                    shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
-                                    hover:scale-[1.1]
-                                    active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
-                                    transition-all duration-300 ease-in-out"
-                        >
-                          <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" />
-                        </button>
-                        <button
-                          onClick={() => deletePlan(plan.idVaccinationPlan!)}
-                          className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
+                    <div className="flex items-center justify-center gap-6 border-t border-slate-800 pt-6 pb-2">
+                      <button
+                        onClick={() => handleEditClick(plan)}
+                        className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
                                   bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
                                   shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
                                   hover:scale-[1.1]
                                   active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
                                   transition-all duration-300 ease-in-out"
-                        >
-                          <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
-                        </button>
-                      </div>
+                      >
+                        <Edit size={28} className="text-[#E8C967] drop-shadow-[0_0_10px_rgba(255,215,100,0.85)] transition-transform duration-300 hover:rotate-3" />
+                      </button>
+                      <button
+                        onClick={() => deletePlan(plan.idVaccinationPlan!)}
+                        className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
+                                bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
+                                shadow-[8px_8px_16px_rgba(0,0,0,0.85),-5px_-5px_12px_rgba(255,255,255,0.06)]
+                                hover:scale-[1.1]
+                                active:shadow-[inset_5px_5px_12px_rgba(0,0,0,0.9),inset_-4px_-4px_10px_rgba(255,255,255,0.05)]
+                                transition-all duration-300 ease-in-out"
+                      >
+                        <Trash2 size={28} className="text-[#E86B6B] drop-shadow-[0_0_12px_rgba(255,80,80,0.9)] transition-transform duration-300 hover:-rotate-3" />
+                      </button>
                     </div>
-                    </>
-                  )}
+                  </div>
                 </div>
               );
             })}
           </div>
+        )}
+
+        {isEditModalOpen && createPortal(
+          <div
+            className="fixed inset-0 lg:left-80 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            onClick={() => { setEditingId(null); setEditingPlanData(null); }}
+          >
+            <div
+              className="w-full max-w-2xl max-h-[95vh] overflow-y-auto rounded-2xl border border-[#167C79]/60 bg-[#0f172a] p-6 shadow-[0_25px_80px_rgba(0,0,0,0.6)]"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="mb-5 flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold text-[#F8F4E3]">Editar Plan de Vacunación</h3>
+                  <p className="text-sm text-slate-400">Actualiza los datos del plan.</p>
+                </div>
+                <button onClick={() => { setEditingId(null); setEditingPlanData(null); }} className="rounded-lg border border-slate-500 px-3 py-1.5 text-slate-300 hover:bg-slate-800">
+                  Cerrar
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block mb-1 text-sm font-medium">Nombre del Plan</label>
+                  <input
+                    type="text"
+                    value={editingPlanData!.planName}
+                    onChange={e => setEditingPlanData((prev) => prev ? { ...prev, planName: e.target.value } : null)}
+                    className="w-full p-2 rounded-md bg-gray-700"
+                  />
+                </div>
+                {renderEditForm()}
+                <div>
+                  <label className="block mb-1 text-sm font-medium">Estado de Alerta</label>
+                  <input
+                    type="text"
+                    value={editingPlanData!.alertStatus}
+                    onChange={e => setEditingPlanData((prev) => prev ? { ...prev, alertStatus: e.target.value } : null)}
+                    className="w-full p-2 rounded-md bg-gray-700"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 text-sm font-medium">Medicina</label>
+                  <select
+                    value={editingPlanData!.fk_idMedicine}
+                    onChange={e => setEditingPlanData((prev) => prev ? { ...prev, fk_idMedicine: Number(e.target.value) } : null)}
+                    className="w-full p-2 rounded-md bg-gray-700"
+                  >
+                    {medicines.map(m => (<option key={m.idMedicine} value={m.idMedicine}>{m.name}</option>))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end gap-3 border-t border-slate-700 pt-4">
+                <CancelButton onClick={() => { setEditingId(null); setEditingPlanData(null); }} />
+                <SaveButton onClick={() => updatePlan(editingId!)} children="Guardar cambios" />
+              </div>
+            </div>
+          </div>,
+          document.body
         )}
       </AdminSection>
     </div>

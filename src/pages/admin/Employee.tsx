@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -6,10 +7,9 @@ import {
   UserPlus,
   Trash2,
   Edit,
-  Save,
   Loader,
-  X,
 } from 'lucide-react';
+import { ExportButton, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 import noPhoto from '../../assets/noPhoto.png';
 
@@ -98,13 +98,17 @@ const Employees = () => {
     createAccount: false,
   });
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingData, setEditingData] = useState<Employee | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const [editingPhoto, setEditingPhoto] = useState<File | null>(null);
   const [creatingAccount, setCreatingAccount] = useState<boolean>(false);
 
   // estado para exportación
   const [exporting, setExporting] = useState<boolean>(false);
+
+  const isEditModalOpen = editingId !== null && editingData !== null;
 
   const getEmptyEmployee = (): Employee => ({
     fullName: '',
@@ -154,31 +158,40 @@ const Employees = () => {
     fetchData();
   }, []);
 
-  // Crear o actualizar empleado
-  const handleCreateOrUpdate = async (e: React.FormEvent) => {
+  // Escape key closes edit modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isEditModalOpen) {
+        handleCancelEdit();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isEditModalOpen]);
+
+  // Crear empleado (solo desde el formulario principal)
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validar si se quiere crear cuenta
-    if (!editingId && userAccount.createAccount) {
+    if (userAccount.createAccount) {
       if (!userAccount.email || !userAccount.password || !userAccount.username) {
         toast.error("Debe completar todos los campos de la cuenta de usuario");
         return;
       }
-      
       if (userAccount.password.length < 6) {
         toast.error("La contraseña debe tener al menos 6 caracteres");
         return;
       }
     }
-    
+
     try {
       setCreatingAccount(true);
       let authUserId: string | null = null;
 
-      // 1. Crear cuenta de usuario en Supabase Auth + ERP User (solo si es nuevo empleado y checkbox está marcado)
-      if (!editingId && userAccount.createAccount) {
+      // 1. Crear cuenta de usuario en Supabase Auth + ERP User (solo si checkbox está marcado)
+      if (userAccount.createAccount) {
         try {
-          // Crear cuenta en backend (el backend manejará Supabase Auth y erp_user)
           const createAccountResponse = await fetch(`${API_URL}/employees/create-account`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -196,17 +209,15 @@ const Employees = () => {
           }
 
           const accountData = await createAccountResponse.json();
-          authUserId = accountData.uid; // UID retornado por el backend
-          
+          authUserId = accountData.uid;
+
           toast.success(`Cuenta de usuario creada para ${userAccount.email}`);
         } catch (accountError: any) {
           toast.error(`Error al crear cuenta: ${accountError.message}`);
           setCreatingAccount(false);
-          return; // No continuar si falla la creación de cuenta
+          return;
         }
       }
-
-      
 
       const employeeData = {
         ...newEmployee,
@@ -218,8 +229,8 @@ const Employees = () => {
         exitTime: newEmployee.endContractDate
           ? `${newEmployee.endContractDate}T${newEmployee.exitTime || '17:00'}:00`
           : '',
-        uid: authUserId || newEmployee.uid, // Vincular con la cuenta creada (cambiado a uid)
-        image_url: null, // Inicialmente null, se actualizará si se selecciona una foto
+        uid: authUserId || newEmployee.uid,
+        image_url: null,
       };
 
       if (!newEmployee.fk_idPositionEmployee) {
@@ -228,56 +239,94 @@ const Employees = () => {
         return;
       }
 
-      let response;
-      if (editingId) {
-        response = await fetch(`${API_URL}/employees/${editingId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(employeeData),
-        });
-      } else {
-        response = await fetch(`${API_URL}/employees/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(employeeData),
-        });
-      }
-      
+      const response = await fetch(`${API_URL}/employees/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(employeeData),
+      });
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Error: ${response.status} - ${errorText}`);
       }
-      
+
       const savedEmployee = await response.json();
 
       if (selectedPhoto) {
-        const id = editingId ?? savedEmployee.idEmployee;
         const formData = new FormData();
         formData.append('image', selectedPhoto);
-        await fetch(`${API_URL}/employees/${id}/image`, {
+        await fetch(`${API_URL}/employees/${savedEmployee.idEmployee}/image`, {
           method: 'POST',
           body: formData,
         });
       }
-      
-      const successMessage = editingId 
-        ? 'Empleado actualizado con éxito!' 
-        : userAccount.createAccount 
-          ? 'Empleado creado con cuenta de acceso!' 
-          : 'Empleado creado con éxito!';
-      
+
+      const successMessage = userAccount.createAccount
+        ? 'Empleado creado con cuenta de acceso!'
+        : 'Empleado creado con éxito!';
+
       toast.success(successMessage);
-      
-      // Resetear formularios
+
       setNewEmployee(getEmptyEmployee());
-      setUserAccount({
-        email: '',
-        password: '',
-        username: '',
-        createAccount: false,
-      });
-      setEditingId(null);
+      setUserAccount({ email: '', password: '', username: '', createAccount: false });
       setSelectedPhoto(null);
+      fetchData();
+    } catch (error: any) {
+      toast.error(`Ocurrió un error en la operación: ${error.message}`);
+    } finally {
+      setCreatingAccount(false);
+    }
+  };
+
+  // Actualizar empleado (desde el modal)
+  const handleUpdate = async () => {
+    if (!editingId || !editingData) return;
+    try {
+      setCreatingAccount(true);
+
+      const employeeData = {
+        ...editingData,
+        phoneNumber: Number(editingData.phoneNumber),
+        salary: Number(editingData.salary),
+        startTime: editingData.startContractDate
+          ? `${editingData.startContractDate}T${editingData.startTime || '08:00'}:00`
+          : '',
+        exitTime: editingData.endContractDate
+          ? `${editingData.endContractDate}T${editingData.exitTime || '17:00'}:00`
+          : '',
+        image_url: editingData.image_url ?? null,
+      };
+
+      if (!editingData.fk_idPositionEmployee) {
+        toast.error("Debe seleccionar una posición válida para el empleado.");
+        setCreatingAccount(false);
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/employees/${editingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(employeeData),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error: ${response.status} - ${errorText}`);
+      }
+
+      if (editingPhoto) {
+        const formData = new FormData();
+        formData.append('image', editingPhoto);
+        await fetch(`${API_URL}/employees/${editingId}/image`, {
+          method: 'POST',
+          body: formData,
+        });
+      }
+
+      toast.success('Empleado actualizado con éxito!');
+      setEditingId(null);
+      setEditingData(null);
+      setEditingPhoto(null);
       fetchData();
     } catch (error: any) {
       toast.error(`Ocurrió un error en la operación: ${error.message}`);
@@ -308,27 +357,21 @@ const Employees = () => {
     }
   };
 
-  // Modo edición
+  // Modo edición — abre modal
   const startEdit = (employee: Employee) => {
-    setNewEmployee({
+    setEditingData({
       ...employee,
       startTime: formatTimeForInput(employee.startTime),
       exitTime: formatTimeForInput(employee.exitTime),
     });
-    setSelectedPhoto(null);
+    setEditingPhoto(null);
     setEditingId(employee.idEmployee!);
   };
 
-  const cancelEdit = () => {
-    setNewEmployee(getEmptyEmployee());
-    setUserAccount({
-      email: '',
-      password: '',
-      username: '',
-      createAccount: false,
-    });
+  const handleCancelEdit = () => {
     setEditingId(null);
-    setSelectedPhoto(null);
+    setEditingData(null);
+    setEditingPhoto(null);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -342,9 +385,27 @@ const Employees = () => {
     setNewEmployee({ ...newEmployee, [name]: newValue });
   };
 
+  const handleEditingDataChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    if (!editingData) return;
+    const { name, value, type } = e.target;
+    let newValue: string | number | boolean = value;
+    if (type === "number") {
+      newValue = value === '' ? 0 : Number(value);
+    } else if (name === "status") {
+      newValue = (e.target as HTMLInputElement).checked;
+    }
+    setEditingData({ ...editingData, [name]: newValue });
+  };
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedPhoto(e.target.files[0]);
+    }
+  };
+
+  const handleEditingPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setEditingPhoto(e.target.files[0]);
     }
   };
 
@@ -415,7 +476,7 @@ const Employees = () => {
       autoTable(doc, {
         head,
         body,
-        startY: 38, // debajo de la fecha
+        startY: 38,
         theme: "grid",
         styles: {
           fontSize: 10,
@@ -425,7 +486,7 @@ const Employees = () => {
           lineWidth: 0.1,
         },
         headStyles: {
-          fillColor: [38, 72, 131], // color corporativo
+          fillColor: [38, 72, 131],
           textColor: [255, 255, 255],
           fontStyle: "bold",
         },
@@ -452,27 +513,23 @@ const Employees = () => {
     <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Empleados</h1>
       <form
-        onSubmit={handleCreateOrUpdate}
-       className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]"
+        onSubmit={handleCreate}
+       className="bg-white/5 p-6 rounded-2xl mb-8 text-[#F8F4E3]"
       >
-  
+
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-teal-300">
-            {editingId ? "Editar Empleado" : "Crear Nuevo Empleado"}
+            Crear Nuevo Empleado
           </h2>
 
-          <button
-            type="button"
+          <ExportButton
             onClick={exportEmployeesPDF}
             disabled={loading || exporting || employees.length === 0}
-            className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white
-                      px-3 py-1.5 text-sm rounded-md font-medium shadow-sm hover:shadow-md transition"
-            title="Generar PDF de empleados"
           >
             {exporting ? 'Exportando…' : 'Exportar PDF'}
-          </button>
+          </ExportButton>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label htmlFor="fullName">Nombre Completo</label>
@@ -529,9 +586,6 @@ const Employees = () => {
           <div>
             <label htmlFor="employeePhoto">Foto del Empleado</label>
             <input type="file" id="employeePhoto" name="employeePhoto" accept="image/*" onChange={handlePhotoChange} className="w-full p-2 text-white placeholder-slate-400" />
-            {newEmployee.image_url && !selectedPhoto && (
-              <img src={newEmployee.image_url} alt="Foto actual" className="w-16 h-16 rounded-full object-cover mt-2" />
-            )}
             {selectedPhoto && (
               <img src={URL.createObjectURL(selectedPhoto)} alt="Nueva foto" className="w-16 h-16 rounded-full object-cover mt-2 border-2 border-teal-400" />
             )}
@@ -539,81 +593,79 @@ const Employees = () => {
         </div>
 
         {/* Sección de Cuenta de Usuario (solo al crear nuevo empleado) */}
-        {!editingId && (
-          <div className="mt-6 pt-6 border-t border-slate-600">
-            <div className="flex items-center gap-3 mb-4">
-              <input
-                type="checkbox"
-                id="createAccount"
-                checked={userAccount.createAccount}
-                onChange={(e) => setUserAccount({ ...userAccount, createAccount: e.target.checked })}
-                className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-teal-500 focus:ring-2 focus:ring-teal-500"
-              />
-              <label htmlFor="createAccount" className="text-lg font-semibold text-teal-300 cursor-pointer">
-                ✨ Crear cuenta de acceso al sistema
-              </label>
-            </div>
-
-            {userAccount.createAccount && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-800/50 p-4 rounded-lg border border-teal-500/30">
-                <div>
-                  <label htmlFor="username" className="text-sm text-slate-300">
-                    Usuario <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="username"
-                    placeholder="Ej: juan.perez"
-                    value={userAccount.username}
-                    onChange={(e) => setUserAccount({ ...userAccount, username: e.target.value })}
-                    className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                    required={userAccount.createAccount}
-                  />
-                  <p className="text-xs text-slate-400 mt-1">Nombre de usuario para iniciar sesión</p>
-                </div>
-
-                <div>
-                  <label htmlFor="email" className="text-sm text-slate-300">
-                    Correo Electrónico <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    placeholder="empleado@ejemplo.com"
-                    value={userAccount.email}
-                    onChange={(e) => setUserAccount({ ...userAccount, email: e.target.value })}
-                    className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                    required={userAccount.createAccount}
-                  />
-                  <p className="text-xs text-slate-400 mt-1">Se usará para recuperar contraseña</p>
-                </div>
-
-                <div>
-                  <label htmlFor="password" className="text-sm text-slate-300">
-                    Contraseña <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="password"
-                    id="password"
-                    placeholder="Mínimo 6 caracteres"
-                    value={userAccount.password}
-                    onChange={(e) => setUserAccount({ ...userAccount, password: e.target.value })}
-                    className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                    required={userAccount.createAccount}
-                    minLength={6}
-                  />
-                  <p className="text-xs text-slate-400 mt-1">Mínimo 6 caracteres</p>
-                </div>
-
-                <div className="md:col-span-3 bg-blue-900/30 border border-blue-500/30 rounded-lg p-3">
-                  <p className="text-sm text-blue-200">
-                   ℹ️ Al crear la cuenta, el empleado podrá iniciar sesión como <strong>Caballerizo</strong> y ver sus tareas asignadas.
-                  </p>
-                </div>
-              </div>
-            )}
+        <div className="mt-6 pt-6 border-t border-slate-600">
+          <div className="flex items-center gap-3 mb-4">
+            <input
+              type="checkbox"
+              id="createAccount"
+              checked={userAccount.createAccount}
+              onChange={(e) => setUserAccount({ ...userAccount, createAccount: e.target.checked })}
+              className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-teal-500 focus:ring-2 focus:ring-teal-500"
+            />
+            <label htmlFor="createAccount" className="text-lg font-semibold text-teal-300 cursor-pointer">
+              ✨ Crear cuenta de acceso al sistema
+            </label>
           </div>
-        )}
+
+          {userAccount.createAccount && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-800/50 p-4 rounded-lg border border-teal-500/30">
+              <div>
+                <label htmlFor="username" className="text-sm text-slate-300">
+                  Usuario <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="username"
+                  placeholder="Ej: juan.perez"
+                  value={userAccount.username}
+                  onChange={(e) => setUserAccount({ ...userAccount, username: e.target.value })}
+                  className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  required={userAccount.createAccount}
+                />
+                <p className="text-xs text-slate-400 mt-1">Nombre de usuario para iniciar sesión</p>
+              </div>
+
+              <div>
+                <label htmlFor="email" className="text-sm text-slate-300">
+                  Correo Electrónico <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  placeholder="empleado@ejemplo.com"
+                  value={userAccount.email}
+                  onChange={(e) => setUserAccount({ ...userAccount, email: e.target.value })}
+                  className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  required={userAccount.createAccount}
+                />
+                <p className="text-xs text-slate-400 mt-1">Se usará para recuperar contraseña</p>
+              </div>
+
+              <div>
+                <label htmlFor="password" className="text-sm text-slate-300">
+                  Contraseña <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  placeholder="Mínimo 6 caracteres"
+                  value={userAccount.password}
+                  onChange={(e) => setUserAccount({ ...userAccount, password: e.target.value })}
+                  className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  required={userAccount.createAccount}
+                  minLength={6}
+                />
+                <p className="text-xs text-slate-400 mt-1">Mínimo 6 caracteres</p>
+              </div>
+
+              <div className="md:col-span-3 bg-blue-900/30 border border-blue-500/30 rounded-lg p-3">
+                <p className="text-sm text-blue-200">
+                 ℹ️ Al crear la cuenta, el empleado podrá iniciar sesión como <strong>Caballerizo</strong> y ver sus tareas asignadas.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Barra de acciones inferiores */}
         <div className="flex flex-wrap items-center gap-3 mt-6">
@@ -622,28 +674,17 @@ const Employees = () => {
           </span>
 
           <div className="ml-auto flex gap-2">
-            {editingId ? (
-              <>
-                <button 
-                  type="submit" 
-                  disabled={creatingAccount}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md shadow-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {creatingAccount ? <Loader size={18} className="animate-spin" /> : <Save size={18} />}
-                  {creatingAccount ? 'Guardando...' : 'Guardar Cambios'}
-                </button>
-                <button type="button" onClick={cancelEdit} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md shadow-md hover:bg-red-700 transition-colors"><X size={18} /> Cancelar</button>
-              </>
-            ) : (
-              <button 
-                type="submit" 
-                disabled={creatingAccount}
-                className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-md shadow-md hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+            <button
+              type="submit"
+              aria-disabled={creatingAccount}
+              className={`group relative ${creatingAccount ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            >
+              <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[23px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-4 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
                 {creatingAccount ? <Loader size={18} className="animate-spin" /> : <UserPlus size={18} />}
                 {creatingAccount ? 'Creando...' : userAccount.createAccount ? 'Crear Empleado + Cuenta' : 'Agregar Empleado'}
-              </button>
-            )}
+              </div>
+              <div className="absolute inset-0 z-0 h-full w-full rounded-[23px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+            </button>
           </div>
         </div>
       </form>
@@ -730,6 +771,160 @@ const Employees = () => {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Modal de edición */}
+      {isEditModalOpen && editingData && createPortal(
+        <div
+          className="fixed inset-0 lg:left-80 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={handleCancelEdit}
+        >
+          <div
+            className="w-full max-w-4xl max-h-[95vh] overflow-y-auto rounded-2xl border border-[#167C79]/60 bg-[#0f172a] p-6 shadow-[0_25px_80px_rgba(0,0,0,0.6)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-bold text-[#F8F4E3]">Editar Empleado</h3>
+                <p className="text-sm text-slate-400">Actualiza los datos del empleado.</p>
+              </div>
+              <button onClick={handleCancelEdit} className="rounded-lg border border-slate-500 px-3 py-1.5 text-slate-300 hover:bg-slate-800">
+                Cerrar
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label htmlFor="edit-fullName" className="block mb-1 text-sm text-slate-300">Nombre Completo</label>
+                <input
+                  type="text"
+                  id="edit-fullName"
+                  name="fullName"
+                  value={editingData.fullName}
+                  onChange={handleEditingDataChange}
+                  className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="edit-ci" className="block mb-1 text-sm text-slate-300">C.I.</label>
+                <input
+                  type="number"
+                  id="edit-ci"
+                  name="ci"
+                  value={editingData.ci}
+                  onChange={handleEditingDataChange}
+                  className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="edit-phoneNumber" className="block mb-1 text-sm text-slate-300">Número de Teléfono</label>
+                <input
+                  type="number"
+                  id="edit-phoneNumber"
+                  name="phoneNumber"
+                  value={editingData.phoneNumber}
+                  onChange={handleEditingDataChange}
+                  className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="edit-startContractDate" className="block mb-1 text-sm text-slate-300">Fecha de Contrato (Inicio)</label>
+                <input
+                  type="date"
+                  id="edit-startContractDate"
+                  name="startContractDate"
+                  value={editingData.startContractDate}
+                  onChange={handleEditingDataChange}
+                  className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="edit-endContractDate" className="block mb-1 text-sm text-slate-300">Fecha de Contrato (Fin)</label>
+                <input
+                  type="date"
+                  id="edit-endContractDate"
+                  name="endContractDate"
+                  value={editingData.endContractDate}
+                  onChange={handleEditingDataChange}
+                  className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="edit-startTime" className="block mb-1 text-sm text-slate-300">Hora de Entrada</label>
+                <input
+                  type="time"
+                  id="edit-startTime"
+                  name="startTime"
+                  value={editingData.startTime}
+                  onChange={handleEditingDataChange}
+                  className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="edit-exitTime" className="block mb-1 text-sm text-slate-300">Hora de Salida</label>
+                <input
+                  type="time"
+                  id="edit-exitTime"
+                  name="exitTime"
+                  value={editingData.exitTime}
+                  onChange={handleEditingDataChange}
+                  className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="edit-salary" className="block mb-1 text-sm text-slate-300">Salario</label>
+                <input
+                  type="number"
+                  id="edit-salary"
+                  name="salary"
+                  value={editingData.salary}
+                  onChange={handleEditingDataChange}
+                  step="0.01"
+                  min="0"
+                  inputMode="decimal"
+                  className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="edit-fk_idPositionEmployee" className="block mb-1 text-sm text-slate-300">Posición</label>
+                <select
+                  id="edit-fk_idPositionEmployee"
+                  name="fk_idPositionEmployee"
+                  value={editingData.fk_idPositionEmployee}
+                  onChange={handleEditingDataChange}
+                  className="w-full p-2 rounded-md bg-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  {positions.map((position) => (
+                    <option key={position.idPositionEmployee} value={position.idPositionEmployee}>{position.namePosition}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="edit-employeePhoto" className="block mb-1 text-sm text-slate-300">Foto del Empleado</label>
+                <input
+                  type="file"
+                  id="edit-employeePhoto"
+                  name="employeePhoto"
+                  accept="image/*"
+                  onChange={handleEditingPhotoChange}
+                  className="w-full p-2 text-white placeholder-slate-400"
+                />
+                {editingData.image_url && !editingPhoto && (
+                  <img src={editingData.image_url} alt="Foto actual" className="w-16 h-16 rounded-full object-cover mt-2" />
+                )}
+                {editingPhoto && (
+                  <img src={URL.createObjectURL(editingPhoto)} alt="Nueva foto" className="w-16 h-16 rounded-full object-cover mt-2 border-2 border-teal-400" />
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3 border-t border-slate-700 pt-4">
+              <CancelButton onClick={handleCancelEdit} />
+              <SaveButton onClick={() => handleUpdate()}>Guardar cambios</SaveButton>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );
