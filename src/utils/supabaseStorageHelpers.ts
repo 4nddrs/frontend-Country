@@ -14,6 +14,10 @@ type BucketType = 'horse-photos' | 'employee-photos' | 'owner-photos';
 export function getSupabaseImageUrl(bucketName: BucketType, filePath: string | null): string | null {
   if (!filePath) return null;
 
+  if (filePath.startsWith('http://') || filePath.startsWith('https://') || filePath.startsWith('data:')) {
+    return filePath;
+  }
+
   return `${SUPABASE_URL}/storage/v1/object/public/${bucketName}/${filePath}`;
 }
 

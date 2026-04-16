@@ -1,28 +1,45 @@
-import { useState, useEffect } from 'react';
-import { User, Mail, Phone, Edit2, Save, X, Loader } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Camera, Edit2, Loader, Mail, Save, User, X, Heart, BedDouble, Apple } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import UserHeader from '../../components/UserHeader';
 import { useCurrentUser, useOwnerData, useOwnerHorses } from '../../hooks/useUserData';
-import { updateOwner, type Horse } from '../../services/userService';
+import {
+  getHorseNutritionalPlan,
+  getHorseTotalControl,
+  getNutritionalPlanById,
+  type Horse,
+  updateOwner,
+  uploadOwnerImage,
+} from '../../services/userService';
 import { toast } from 'react-hot-toast';
+import { decodeBackendImage } from '../../utils/imageHelpers';
+import { getOwnerImageUrl } from '../../utils/supabaseStorageHelpers';
 
 interface PerfilProps {}
+
+type HorseSummary = {
+  raceName: string;
+  planName: string;
+  planDescription?: string;
+  hasBox: boolean;
+  boxLabel: string;
+  boxPeriod?: string;
+};
 
 export function UserProfile(_: PerfilProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
-    name: '',
-    FirstName: '',
-    SecondName: '',
     email: '',
     phoneNumber: '',
-    ci: ''
   });
   const [saving, setSaving] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [horseSummaries, setHorseSummaries] = useState<Record<number, HorseSummary>>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Usar hooks optimizados con React Query
   const { data: user } = useCurrentUser();
   const { data: ownerData, isLoading: ownerLoading, refetch: refetchOwner } = useOwnerData(user?.id);
   const { data: horses = [], isLoading: horsesLoading } = useOwnerHorses(ownerData?.idOwner);
@@ -32,37 +49,122 @@ export function UserProfile(_: PerfilProps) {
   const horsesList = horses as Horse[];
 
   useEffect(() => {
-    if (owner) {
-      setEditForm({
-        name: owner.name || '',
-        FirstName: owner.FirstName || '',
-        SecondName: owner.SecondName || '',
-        email: owner.email || user?.email || '',
-        phoneNumber: owner.phoneNumber?.toString() || '',
-        ci: owner.ci?.toString() || ''
-      });
-    }
+    setEditForm({
+      email: owner?.email || user?.email || '',
+      phoneNumber: owner?.phoneNumber?.toString() || owner?.phone?.toString() || '',
+    });
   }, [owner, user]);
+
+  useEffect(() => {
+    if (!photoFile) {
+      setPhotoPreview(null);
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(photoFile);
+    setPhotoPreview(previewUrl);
+
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [photoFile]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadHorseSummaries = async () => {
+      if (horsesList.length === 0) {
+        setHorseSummaries({});
+        return;
+      }
+
+      const entries = await Promise.all(
+        horsesList.map(async (horse) => {
+          let planName = 'Sin plan asignado';
+          let planDescription: string | undefined;
+
+          try {
+            const relation = await getHorseNutritionalPlan(horse.idHorse);
+            const relationRecord = Array.isArray(relation) ? relation[0] : relation;
+            const planId = relationRecord?.fk_idNutritionalPlan;
+
+            if (planId) {
+              const plan = await getNutritionalPlanById(planId);
+              if (plan?.planName) {
+                planName = plan.planName;
+                planDescription = plan.description || undefined;
+              }
+            }
+          } catch (error) {
+            console.error('Error loading nutritional plan:', error);
+          }
+
+          let hasBox = false;
+          let boxLabel = 'Sin box';
+          let boxPeriod: string | undefined;
+
+          try {
+            const controlInfo = await getHorseTotalControl(horse.idHorse);
+            if (controlInfo && controlInfo.box !== undefined && controlInfo.box !== null) {
+              hasBox = true;
+              boxLabel = `Box #${controlInfo.box}`;
+              boxPeriod = controlInfo.period || undefined;
+            } else if (horse.box) {
+              hasBox = true;
+              boxLabel = 'Con box';
+            }
+          } catch (error) {
+            console.error('Error loading control info:', error);
+            if (horse.box) {
+              hasBox = true;
+              boxLabel = 'Con box';
+            }
+          }
+
+          return [horse.idHorse, {
+            raceName: horse.race?.nameRace || 'Sin especificar',
+            planName,
+            planDescription,
+            hasBox,
+            boxLabel,
+            boxPeriod,
+          }] as const;
+        })
+      );
+
+      if (!cancelled) {
+        setHorseSummaries(Object.fromEntries(entries));
+      }
+    };
+
+    loadHorseSummaries();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [horsesList]);
+
+  const ownerPhotoSource = owner?.ownerPhoto
+    ? getOwnerImageUrl(owner.ownerPhoto) || decodeBackendImage(owner.ownerPhoto)
+    : null;
 
   const handleSave = async () => {
     if (!owner) return;
 
     try {
       setSaving(true);
-      
+
       await updateOwner(owner.idOwner, {
-        name: editForm.name,
-        FirstName: editForm.FirstName,
-        SecondName: editForm.SecondName,
         email: editForm.email,
         phoneNumber: editForm.phoneNumber,
-        ci: editForm.ci
       });
 
+      if (photoFile) {
+        await uploadOwnerImage(owner.idOwner, photoFile);
+      }
+
       setIsEditing(false);
+      setPhotoFile(null);
       toast.success('Perfil actualizado correctamente');
-      await refetchOwner(); // Refrescar datos desde el servidor
-      
+      await refetchOwner();
     } catch (error: any) {
       console.error('Error updating owner:', error);
       toast.error('Error al actualizar perfil');
@@ -73,7 +175,7 @@ export function UserProfile(_: PerfilProps) {
 
   if (loading && !owner) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
         <div className="text-center">
           <Loader className="w-12 h-12 animate-spin text-cyan-500 mx-auto mb-4" />
           <p className="text-slate-400">Cargando perfil...</p>
@@ -95,223 +197,304 @@ export function UserProfile(_: PerfilProps) {
     );
   }
 
+  const ownerDisplayName = owner.name || `${owner.FirstName || ''} ${owner.SecondName || ''}`.trim() || 'Sin nombre';
+  const ownerCi = owner.ci || 'No especificado';
+  const ownerEmail = user?.email || owner.email || 'No especificado';
+  const ownerPhone = owner.phoneNumber || owner.phone || 'No especificado';
+
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl m-6 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
+      <div className="bg-white/0 backdrop-blur-lg p-4 md:p-6 rounded-2xl m-4 md:m-6 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
         <UserHeader title="Mi Perfil" />
 
-        <div className="max-w-4xl mx-auto space-y-6">
-        {/* Profile Header */}
-        <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/60 to-slate-900/60 border-slate-700/50 backdrop-blur-sm shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl" />
-          <div className="relative p-6 md:p-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-              <div className="flex items-center gap-4">
-                {ownerData?.ownerPhoto ? (
-                  <img
-                    src={ownerData.ownerPhoto || `${import.meta.env.BASE_URL}image/avatar-default.png`}
-                    alt={owner.name || owner.FirstName || 'Owner'}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = `${import.meta.env.BASE_URL}image/avatar-default.png`;
-                    }}
-                    className="w-20 h-20 rounded-2xl object-cover shadow-lg shadow-cyan-500/20 border-2 border-cyan-400/30"
-                  />
+        <div className="max-w-6xl mx-auto space-y-5 md:space-y-6">
+          <Card className="relative overflow-hidden border-slate-700/50 bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-800/80 shadow-[0_18px_50px_rgba(0,0,0,0.45)]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.18),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(139,92,246,0.15),transparent_35%)]" />
+            <div className="relative p-5 md:p-7 lg:p-8">
+              <div className="flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-8">
+                <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-5 flex-1">
+                  <div className="relative shrink-0">
+                    {photoPreview || ownerPhotoSource ? (
+                      <img
+                        src={photoPreview || ownerPhotoSource || ''}
+                        alt={ownerDisplayName}
+                        className="w-24 h-24 md:w-28 md:h-28 rounded-[28px] object-cover border-2 border-cyan-400/30 shadow-[0_12px_40px_rgba(8,145,178,0.35)]"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 md:w-28 md:h-28 rounded-[28px] bg-gradient-to-br from-cyan-500 to-cyan-700 flex items-center justify-center border-2 border-cyan-400/30 shadow-[0_12px_40px_rgba(8,145,178,0.25)]">
+                        <User className="w-11 h-11 text-white" />
+                      </div>
+                    )}
+                    <div className="absolute -bottom-2 -right-2 h-9 w-9 rounded-full bg-slate-950 border border-cyan-400/30 flex items-center justify-center shadow-lg">
+                      <Camera className="h-4 w-4 text-cyan-300" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 flex-1 min-w-0">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.28em] text-cyan-300/80 mb-2">Rol Dueño</p>
+                      <h2 className="text-2xl md:text-3xl font-semibold text-white leading-tight">{ownerDisplayName}</h2>
+                      <p className="text-sm text-slate-400 mt-1">Cédula de identidad: {ownerCi}</p>
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 gap-3 pt-2 max-w-2xl">
+                      <div className="rounded-2xl border border-white/8 bg-white/5 px-4 py-3 backdrop-blur-sm">
+                        <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400 mb-1">Caballos registrados</p>
+                        <p className="text-lg font-semibold text-white">{horsesList.length}</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/8 bg-white/5 px-4 py-3 backdrop-blur-sm">
+                        <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400 mb-1">Estado de cuenta</p>
+                        <p className="text-lg font-semibold text-emerald-400">Activo</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-5 md:gap-6">
+            <Card className="border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/60 backdrop-blur-sm shadow-[0_12px_36px_rgba(0,0,0,0.35)]">
+              <div className="p-5 md:p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="h-11 w-11 rounded-2xl bg-cyan-500/15 border border-cyan-400/20 flex items-center justify-center">
+                    <Mail className="w-5 h-5 text-cyan-300" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">Datos de contacto</h3>
+                    <p className="text-sm text-slate-400">Solo email, teléfono y foto son editables</p>
+                  </div>
+                </div>
+
+                <div className="grid gap-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Nombre completo</p>
+                      <div className="rounded-2xl border border-white/8 bg-white/5 px-4 py-3 text-white">
+                        {ownerDisplayName}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Cédula de identidad</p>
+                      <div className="rounded-2xl border border-white/8 bg-white/5 px-4 py-3 text-white">
+                        {ownerCi}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Email</label>
+                      {isEditing ? (
+                        <Input
+                          type="email"
+                          value={editForm.email}
+                          onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                          className="w-full bg-slate-950/50 border-slate-700 text-white"
+                        />
+                      ) : (
+                        <div className="rounded-2xl border border-white/8 bg-white/5 px-4 py-3 text-white break-all">
+                          {ownerEmail}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Teléfono</label>
+                      {isEditing ? (
+                        <Input
+                          value={editForm.phoneNumber}
+                          onChange={(e) => setEditForm({ ...editForm, phoneNumber: e.target.value })}
+                          className="w-full bg-slate-950/50 border-slate-700 text-white"
+                        />
+                      ) : (
+                        <div className="rounded-2xl border border-white/8 bg-white/5 px-4 py-3 text-white">
+                          {ownerPhone}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Foto de perfil</label>
+                    {isEditing ? (
+                      <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+                        <div className="rounded-2xl border border-dashed border-cyan-400/30 bg-cyan-500/5 px-4 py-3 text-sm text-slate-300">
+                          Selecciona una nueva foto para el perfil del Dueño.
+                        </div>
+                        <label className="inline-flex items-center justify-center rounded-2xl bg-white/10 px-4 py-3 text-sm font-medium text-white border border-white/10 cursor-pointer hover:bg-white/15 transition-colors">
+                          Elegir archivo
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
+                          />
+                        </label>
+                      </div>
+                    ) : null}
+                    {photoFile ? (
+                      <div className="mt-2 flex items-center gap-3 rounded-2xl border border-cyan-400/20 bg-cyan-500/5 p-3">
+                        <img
+                          src={photoPreview || ''}
+                          alt="Vista previa"
+                          className="h-14 w-14 rounded-xl object-cover border border-white/10"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-white truncate">{photoFile.name}</p>
+                          <p className="text-xs text-cyan-300">La foto se guardará al presionar Guardar cambios</p>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    {!isEditing ? (
+                      <Button
+                        onClick={() => setIsEditing(true)}
+                        className="bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white shadow-lg shadow-cyan-500/20 w-full"
+                      >
+                        <Edit2 className="w-4 h-4 mr-2" />
+                        Editar contacto
+                      </Button>
+                    ) : (
+                      <>
+                        <Button
+                          onClick={handleSave}
+                          disabled={saving}
+                          className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white flex-1"
+                        >
+                          {saving ? <Loader className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                          {saving ? 'Guardando...' : 'Guardar cambios'}
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setIsEditing(false);
+                            setPhotoFile(null);
+                            setEditForm({
+                              email: owner?.email || user?.email || '',
+                              phoneNumber: owner?.phoneNumber?.toString() || owner?.phone?.toString() || '',
+                            });
+                            if (fileInputRef.current) fileInputRef.current.value = '';
+                          }}
+                          variant="outline"
+                          className="border-slate-600 text-slate-300 hover:bg-slate-800 flex-1"
+                        >
+                          <X className="w-4 h-4 mr-2" />
+                          Cancelar
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/60 backdrop-blur-sm shadow-[0_12px_36px_rgba(0,0,0,0.35)]">
+              <div className="p-5 md:p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="h-11 w-11 rounded-2xl bg-emerald-500/15 border border-emerald-400/20 flex items-center justify-center">
+                    <Heart className="w-5 h-5 text-emerald-300" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">Caballos del Dueño</h3>
+                    <p className="text-sm text-slate-400">Raza, plan nutricional y box por caballo</p>
+                  </div>
+                </div>
+
+                {horsesList.length === 0 ? (
+                  <div className="rounded-2xl border border-white/8 bg-white/5 p-6 text-center text-slate-400">
+                    No tienes caballos registrados
+                  </div>
                 ) : (
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-                    <User className="w-10 h-10" />
+                  <div className="space-y-3 max-h-[34rem] overflow-y-auto pr-1">
+                    {horsesList.map((horse) => {
+                      const summary = horseSummaries[horse.idHorse];
+                      const raceName = summary?.raceName || horse.race?.nameRace || 'Sin especificar';
+                      const planName = summary?.planName || 'Sin plan asignado';
+                      const boxLabel = summary?.boxLabel || (horse.box ? 'Con box' : 'Sin box');
+                      const boxActive = summary?.hasBox || Boolean(horse.box);
+
+                      return (
+                        <div
+                          key={horse.idHorse}
+                          className="group rounded-3xl border border-white/8 bg-slate-950/40 p-4 transition-all hover:border-cyan-400/25 hover:bg-slate-950/60"
+                        >
+                          <div className="flex items-start justify-between gap-4 mb-3">
+                            <div>
+                              <p className="text-lg font-semibold text-white">{horse.horseName}</p>
+                              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Caballo registrado</p>
+                            </div>
+                            <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ${boxActive ? 'bg-emerald-500/12 text-emerald-300 border border-emerald-400/20' : 'bg-slate-500/10 text-slate-300 border border-slate-400/10'}`}>
+                              <BedDouble className="h-3.5 w-3.5" />
+                              {boxLabel}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="rounded-2xl border border-white/8 bg-white/5 p-3">
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400 mb-1">Raza</p>
+                              <p className="text-sm text-white">{raceName}</p>
+                            </div>
+                            <div className="rounded-2xl border border-white/8 bg-white/5 p-3">
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400 mb-1">Plan nutricional</p>
+                              <p className="text-sm text-white">{planName}</p>
+                              {summary?.planDescription ? (
+                                <p className="text-xs text-cyan-300 mt-1">{summary.planDescription}</p>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="rounded-2xl border border-white/8 bg-white/5 p-3">
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400 mb-1">Box</p>
+                              <p className="text-sm text-white">{boxLabel}</p>
+                            </div>
+                            <div className="rounded-2xl border border-white/8 bg-white/5 p-3">
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400 mb-1">Estado</p>
+                              <p className="text-sm text-emerald-300">Activo</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
+              </div>
+            </Card>
+          </div>
+
+          <Card className="border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/60 backdrop-blur-sm shadow-[0_12px_36px_rgba(0,0,0,0.35)]">
+            <div className="p-5 md:p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded-2xl bg-cyan-500/15 border border-cyan-400/20 flex items-center justify-center">
+                  <Apple className="w-5 h-5 text-cyan-300" />
+                </div>
                 <div>
-                  <h2 className="text-2xl font-semibold text-teal-400 mb-1">
-                    {owner.name || `${owner.FirstName || ''} ${owner.SecondName || ''}`.trim() || 'Sin nombre'}
-                  </h2>
-                  <p className="text-sm text-slate-400">CI: {owner.ci || 'No especificado'}</p>
-                </div>
-              </div>
-              {!isEditing ? (
-                <Button 
-                  onClick={() => setIsEditing(true)}
-                  className="bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white shadow-lg shadow-cyan-500/20 w-full sm:w-auto"
-                >
-                  <Edit2 className="w-4 h-4 mr-2" />
-                  Editar perfil
-                </Button>
-              ) : (
-                <div className="flex gap-2 w-full sm:w-auto">
-                  <Button 
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white flex-1 sm:flex-initial"
-                  >
-                    {saving ? <Loader className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                    {saving ? 'Guardando...' : 'Guardar'}
-                  </Button>
-                  <Button 
-                    onClick={() => {
-                      setIsEditing(false);
-                      setEditForm({
-                        name: owner.name || '',
-                        FirstName: owner.FirstName || '',
-                        SecondName: owner.SecondName || '',
-                        email: owner.email || user?.email || '',
-                        phoneNumber: owner.phoneNumber?.toString() || '',
-                        ci: owner.ci?.toString() || ''
-                      });
-                    }}
-                    variant="outline"
-                    className="border-slate-600 text-slate-300 hover:bg-slate-800"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            <div className="grid sm:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-slate-800/50 flex items-center justify-center flex-shrink-0">
-                    <User className="w-5 h-5 text-cyan-400" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs text-slate-500 mb-1">Nombre completo</p>
-                    {isEditing ? (
-                      <div className="space-y-2">
-                        <Input 
-                          placeholder="Nombre"
-                          value={editForm.name}
-                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                          className="w-full"
-                        />
-                        <Input 
-                          placeholder="Primer Apellido"
-                          value={editForm.FirstName}
-                          onChange={(e) => setEditForm({ ...editForm, FirstName: e.target.value })}
-                          className="w-full"
-                        />
-                        <Input 
-                          placeholder="Segundo Apellido"
-                          value={editForm.SecondName}
-                          onChange={(e) => setEditForm({ ...editForm, SecondName: e.target.value })}
-                          className="w-full"
-                        />
-                      </div>
-                    ) : (
-                      <p className="text-sm text-white">
-                        {owner.name || `${owner.FirstName || ''} ${owner.SecondName || ''}`.trim() || 'No especificado'}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-slate-800/50 flex items-center justify-center flex-shrink-0">
-                    <User className="w-5 h-5 text-cyan-400" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs text-slate-500 mb-1">Cédula de Identidad</p>
-                    {isEditing ? (
-                      <Input 
-                        value={editForm.ci}
-                        onChange={(e) => setEditForm({ ...editForm, ci: e.target.value })}
-                        className="w-full"
-                      />
-                    ) : (
-                      <p className="text-sm text-white">{owner.ci || 'No especificado'}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-slate-800/50 flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-5 h-5 text-cyan-400" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs text-slate-500 mb-1">Email</p>
-                    {isEditing ? (
-                      <Input 
-                        type="email"
-                        value={editForm.email}
-                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                        className="w-full"
-                      />
-                    ) : (
-                      <p className="text-sm text-white break-all">{user?.email || owner.email || 'No especificado'}</p>
-                    )}
-                  </div>
+                  <h3 className="text-lg font-semibold text-white">Resumen del rol Dueño</h3>
+                  <p className="text-sm text-slate-400">Acceso de consulta a caballos y edición limitada a contacto</p>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-slate-800/50 flex items-center justify-center flex-shrink-0">
-                    <Phone className="w-5 h-5 text-cyan-400" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-slate-500 mb-1">Teléfono</p>
-                    {isEditing ? (
-                      <Input 
-                        value={editForm.phoneNumber}
-                        onChange={(e) => setEditForm({ ...editForm, phoneNumber: e.target.value })}
-                        className="w-full"
-                      />
-                    ) : (
-                      <p className="text-sm text-white">{owner.phoneNumber || 'No especificado'}</p>
-                    )}
-                  </div>
+              <div className="grid sm:grid-cols-3 gap-3">
+                <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400 mb-1">Nombre</p>
+                  <p className="text-white">Solo lectura</p>
+                </div>
+                <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400 mb-1">Cédula</p>
+                  <p className="text-white">Solo lectura</p>
+                </div>
+                <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400 mb-1">Contacto</p>
+                  <p className="text-white">Editable</p>
                 </div>
               </div>
             </div>
-          </div>
-        </Card>
-
-        {/* My Horses */}
-        <Card className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm">
-          <div className="p-6">
-            <h3 className="text-lg text-white mb-6">Mis caballos</h3>
-            {horsesList.length === 0 ? (
-              <p className="text-center text-slate-400">No tienes caballos registrados</p>
-            ) : (
-              <div className="space-y-3">
-                {horsesList.map((horse: Horse, index: number) => (
-                  <div key={index} className="flex items-center justify-between p-4 rounded-lg bg-slate-800/50 hover:bg-slate-800/70 transition-colors">
-                    <div>
-                      <p className="text-sm text-white mb-1">{horse.horseName}</p>
-                      <p className="text-xs text-slate-400">Ver detalles en "Mi Caballo"</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                      <span className="text-xs text-emerald-400">Activo</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </Card>
-
-        {/* ID Card */}
-        <Card className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm">
-          <div className="p-6">
-            <h3 className="text-lg text-white mb-6">Información adicional</h3>
-            <div className="space-y-3">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-4 rounded-lg bg-slate-800/50">
-                <span className="text-sm text-slate-300">Documento de identidad</span>
-                <span className="text-sm text-white">{owner.ci || 'No registrado'}</span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-4 rounded-lg bg-slate-800/50">
-                <span className="text-sm text-slate-300">Total de caballos</span>
-                <span className="text-sm text-white">{horses.length}</span>
-              </div>
-            </div>
-          </div>
-        </Card>
+          </Card>
         </div>
       </div>
     </div>
   );
 }
-
-
-
-

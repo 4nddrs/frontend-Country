@@ -36,6 +36,17 @@ export interface Horse {
   horsePhoto?: string | null;
 }
 
+export interface HorseNutritionalPlan {
+  idNutritionalPlan?: number;
+  planName?: string;
+  description?: string;
+}
+
+export interface HorseControlInfo {
+  box?: number;
+  period?: string;
+}
+
 export interface OwnerReport {
   idOwnerReportMonth: number;
   fk_idOwner: number;
@@ -146,6 +157,24 @@ export const getHorseNutritionalPlan = async (horseId: number) => {
   return response.json();
 };
 
+export const getNutritionalPlanById = async (planId: number): Promise<HorseNutritionalPlan | null> => {
+  const response = await fetch(`${API_URL}/nutritional_plans/${planId}`);
+  if (!response.ok) return null;
+  return response.json();
+};
+
+export const getHorseTotalControl = async (horseId: number): Promise<HorseControlInfo | null> => {
+  const response = await fetch(`${API_URL}/total_control/by_horse/${horseId}`);
+  if (!response.ok) return null;
+
+  const controls = await response.json();
+  if (Array.isArray(controls)) {
+    return controls[0] ?? null;
+  }
+
+  return controls ?? null;
+};
+
 export const getTotalControlByOwner = async (ownerId: number) => {
   const response = await fetch(`${API_URL}/total_control/`);
   if (!response.ok) throw new Error('Error al obtener control total');
@@ -167,6 +196,20 @@ export const updateOwner = async (ownerId: number, data: Partial<Owner>): Promis
   ownerCache = null;
   
   return response.json();
+};
+
+export const uploadOwnerImage = async (ownerId: number, file: File): Promise<void> => {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  const response = await fetch(`${API_URL}/owner/${ownerId}/image`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error('No se pudo subir la imagen del propietario');
+  }
 };
 
 // Limpiar cache manualmente si es necesario

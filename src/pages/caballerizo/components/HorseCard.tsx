@@ -1,10 +1,12 @@
-import { Calendar, CalendarClock, ShieldCheck, Trophy } from "lucide-react";
+import { Calendar, CalendarClock, Trophy } from "lucide-react";
 import type {
   CaballerizoHorse,
   CaballerizoHorseAssignment,
 } from "../types";
 import { Card } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
+import { decodeBackendImage } from "../../../utils/imageHelpers";
+import { getHorseImageUrl } from "../../../utils/supabaseStorageHelpers";
 
 interface HorseCardProps {
   assignment: CaballerizoHorseAssignment;
@@ -33,55 +35,91 @@ const resolveStateClass = (state?: string | null) => {
   return "bg-slate-800/60 text-slate-200 border border-slate-700/60";
 };
 
+const getHorseImageSource = (horse: CaballerizoHorse | null): string | null => {
+  if (!horse) return null;
+
+  const record = horse as Record<string, unknown>;
+  const rawImage =
+    (typeof horse.horsePhoto === "string" && horse.horsePhoto) ||
+    (typeof horse.image_url === "string" && horse.image_url) ||
+    (typeof record.imageUrl === "string" && record.imageUrl) ||
+    (typeof record.photo === "string" && record.photo) ||
+    (typeof record.photo_url === "string" && record.photo_url) ||
+    null;
+
+  if (!rawImage) return null;
+
+  return getHorseImageUrl(rawImage) || decodeBackendImage(rawImage);
+};
+
 export function HorseCard({ assignment, horse }: HorseCardProps) {
   const horseName = horse?.horseName ?? `Caballo #${assignment.fk_idHorse}`;
   const horseState = horse?.state ?? "Sin estado";
+  const horseImage = getHorseImageSource(horse);
 
   return (
-    <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/40 to-slate-900/40 border-slate-700/50 backdrop-blur-sm">
-      <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl" />
-      <div className="relative p-6 space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3">
-              <Trophy className="w-6 h-6 text-emerald-400" />
-              <h3 className="text-lg text-white font-semibold">{horseName}</h3>
+    <Card className="relative overflow-hidden border border-slate-700/60 bg-slate-900/70 shadow-[0_14px_40px_rgba(0,0,0,0.35)]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.14),transparent_35%)]" />
+      <div className="relative flex flex-col md:flex-row w-full p-3 md:p-4 gap-4">
+        <div className="relative md:w-2/5 shrink-0 overflow-hidden rounded-xl">
+          {horseImage ? (
+            <img
+              src={horseImage}
+              alt={horseName}
+              className="h-52 md:h-full w-full object-cover"
+            />
+          ) : (
+            <div className="h-52 md:h-full w-full bg-gradient-to-br from-slate-800 to-slate-950 flex items-center justify-center">
+              <Trophy className="w-10 h-10 text-emerald-300/70" />
             </div>
-            <p className="text-xs text-slate-400 mt-2">
-              ID asignacion #{assignment.idHorseAssignments}
-            </p>
-          </div>
-          <Badge className={resolveStateClass(horseState)}>{horseState}</Badge>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-slate-800/50 flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-emerald-400" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 mb-1">Inicio</p>
-              <p className="text-sm text-white">
-                {formatDate(assignment.assignmentDate)}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-slate-800/50 flex items-center justify-center">
-              <CalendarClock className="w-5 h-5 text-emerald-400" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 mb-1">Fin previsto</p>
-              <p className="text-sm text-white">
-                {formatDate(assignment.endDate)}
-              </p>
-            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-transparent to-transparent" />
+          <div className="absolute left-3 bottom-3 flex items-center gap-2 text-xs text-white/90">
+            <Trophy className="w-4 h-4 text-emerald-300" />
+            Asignacion #{assignment.idHorseAssignments}
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-slate-400">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          Plan de bienestar activo
+        <div className="flex-1 p-1 md:p-2">
+          <div className="mb-4 rounded-full bg-emerald-600/90 py-1 px-3 border border-emerald-400/20 text-xs text-white shadow-sm w-fit text-center">
+            CABALLO ASIGNADO
+          </div>
+
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="text-xl md:text-2xl font-semibold text-white leading-tight">
+              {horseName}
+            </h3>
+            <Badge className={resolveStateClass(horseState)}>{horseState}</Badge>
+          </div>
+
+          <p className="mt-3 text-sm md:text-base text-slate-300 leading-relaxed max-w-2xl">
+            Estado actual: {horseState}. Asignado desde {formatDate(assignment.assignmentDate)}
+            {assignment.endDate ? ` con cierre previsto para ${formatDate(assignment.endDate)}.` : "."}
+          </p>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 max-w-xl">
+            <div className="flex items-center gap-3 rounded-lg border border-slate-700/70 bg-slate-800/60 p-3">
+              <div className="w-9 h-9 rounded-md bg-slate-900/80 flex items-center justify-center">
+                <Calendar className="w-4 h-4 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-[11px] text-slate-400 uppercase tracking-wide">Inicio</p>
+                <p className="text-sm text-white">{formatDate(assignment.assignmentDate)}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 rounded-lg border border-slate-700/70 bg-slate-800/60 p-3">
+              <div className="w-9 h-9 rounded-md bg-slate-900/80 flex items-center justify-center">
+                <CalendarClock className="w-4 h-4 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-[11px] text-slate-400 uppercase tracking-wide">Fin previsto</p>
+                <p className="text-sm text-white">{formatDate(assignment.endDate)}</p>
+              </div>
+            </div>
+          </div>
+
+         
         </div>
       </div>
     </Card>

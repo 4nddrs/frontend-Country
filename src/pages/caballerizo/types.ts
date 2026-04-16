@@ -34,6 +34,8 @@ export interface CaballerizoHorse {
   idHorse: number;
   horseName: string;
   state?: string | null;
+  horsePhoto?: string | null;
+  image_url?: string | null;
   [key: string]: unknown;
 }
 

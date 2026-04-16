@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
-import { Edit, Save, Trash2, X } from 'lucide-react';
+import { Plus, Edit, Save, Trash2, X } from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
 import noPhoto from '../../assets/noPhoto.png';
-import { AddButton, AdminSection } from '../../components/ui/admin-buttons';
 
 const API_URL = 'http://localhost:8000/owner/';
 
@@ -200,7 +199,7 @@ const OwnersManagement = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Propietarios</h1>
 
       {/* ── Formulario de creación ── */}
-      <AdminSection>
+      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Propietario</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <input type="text" placeholder="Nombre" value={newOwner.name}
@@ -227,12 +226,15 @@ const OwnersManagement = () => {
           />
         </div>
         <div className="mt-4 text-right">
-          <AddButton onClick={createOwner} />
+          <button onClick={createOwner}
+            className="bg-green-600 hover:bg-green-700 text-white p-2 px-4 rounded-md font-semibold flex items-center gap-2 inline-flex">
+            <Plus size={20} /> Agregar
+          </button>
         </div>
-      </AdminSection>
+      </div>
 
       {/* ── Lista de propietarios ── */}
-      <AdminSection>
+      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
         <div className="flex items-center justify-between mb-4 text-sm text-gray-300">
           <span>Página {currentPage}</span>
           <div className="flex items-center gap-2">
@@ -346,7 +348,7 @@ const OwnersManagement = () => {
             ))}
           </div>
         )}
-      </AdminSection>
+      </div>
     </div>
   );
 };

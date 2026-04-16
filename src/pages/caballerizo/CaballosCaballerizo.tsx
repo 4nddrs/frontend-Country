@@ -52,7 +52,7 @@ export function CaballosCaballerizo({
               </p>
             </Card>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="space-y-4">
               {assignments.map((assignment) => (
                 <HorseCard
                   key={assignment.idHorseAssignments}
