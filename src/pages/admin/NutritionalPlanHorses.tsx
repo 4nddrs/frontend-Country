@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import { Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import { AddButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'http://localhost:8000/nutritional-plan-horses/';
@@ -163,9 +164,7 @@ const NutritionalPlanHorsesManagement = () => {
               </option>
             ))}
           </select>
-          <button onClick={createAssignment} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
-            <Plus size={20} /> Agregar
-          </button>
+          <AddButton onClick={createAssignment} />
         </div>
       </div>
       <div className="bg-slate-800 p-6 rounded-lg shadow-xl mb-8 border border-slate-700">

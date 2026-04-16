@@ -10,6 +10,7 @@ import {
   Loader,
   X,
 } from 'lucide-react';
+import { ExportButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 import noPhoto from '../../assets/noPhoto.png';
 
@@ -453,7 +454,7 @@ const Employees = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Empleados</h1>
       <form
         onSubmit={handleCreateOrUpdate}
-       className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]"
+       className="bg-white/5 p-6 rounded-2xl mb-8 text-[#F8F4E3]"
       >
   
         <div className="flex items-center justify-between mb-4">
@@ -461,16 +462,12 @@ const Employees = () => {
             {editingId ? "Editar Empleado" : "Crear Nuevo Empleado"}
           </h2>
 
-          <button
-            type="button"
+          <ExportButton
             onClick={exportEmployeesPDF}
             disabled={loading || exporting || employees.length === 0}
-            className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white
-                      px-3 py-1.5 text-sm rounded-md font-medium shadow-sm hover:shadow-md transition"
-            title="Generar PDF de empleados"
           >
             {exporting ? 'Exportando…' : 'Exportar PDF'}
-          </button>
+          </ExportButton>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -635,13 +632,16 @@ const Employees = () => {
                 <button type="button" onClick={cancelEdit} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md shadow-md hover:bg-red-700 transition-colors"><X size={18} /> Cancelar</button>
               </>
             ) : (
-              <button 
-                type="submit" 
-                disabled={creatingAccount}
-                className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-md shadow-md hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              <button
+                type="submit"
+                aria-disabled={creatingAccount}
+                className={`group relative ${creatingAccount ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
-                {creatingAccount ? <Loader size={18} className="animate-spin" /> : <UserPlus size={18} />}
-                {creatingAccount ? 'Creando...' : userAccount.createAccount ? 'Crear Empleado + Cuenta' : 'Agregar Empleado'}
+                <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[23px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-4 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+                  {creatingAccount ? <Loader size={18} className="animate-spin" /> : <UserPlus size={18} />}
+                  {creatingAccount ? 'Creando...' : userAccount.createAccount ? 'Crear Empleado + Cuenta' : 'Agregar Empleado'}
+                </div>
+                <div className="absolute inset-0 z-0 h-full w-full rounded-[23px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
               </button>
             )}
           </div>

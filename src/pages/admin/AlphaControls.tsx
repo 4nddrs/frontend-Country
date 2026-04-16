@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { Plus, Save, Trash2, Loader, X, Edit, FileText } from "lucide-react";
+import { ExportButton, AdminSection } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -548,19 +549,15 @@ const AlphaControlsManagement: React.FC = () => {
           </select>
         </div>
 
-        <button
-          onClick={exportAlphaPDF}
-          disabled={exporting}
-          className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2"
-        >
+        <ExportButton onClick={exportAlphaPDF} disabled={exporting}>
           <FileText size={18} />
           {exporting ? "Generando..." : "Exportar PDF"}
-        </button>
+        </ExportButton>
       </div>
 
 
       {/* FORMULARIO (crear / editar) */}
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">
           {editingId ? "Editar Control de Alfalfa" : "Agregar Nuevo Control"}
         </h2>
@@ -661,17 +658,21 @@ const AlphaControlsManagement: React.FC = () => {
             </label>
 
             <div className="col-span-full flex justify-end gap-3">
-              <button
-                onClick={handleSubmit}
-                className={`${
-                  editingId
-                    ? "bg-blue-600 hover:bg-blue-700"
-                    : "bg-green-600 hover:bg-green-700"
-                } text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2`}
-              >
-                {editingId ? <Save size={20} /> : <Plus size={20} />}
-                {editingId ? "Guardar Cambios" : "Agregar"}
-              </button>
+              {editingId ? (
+                <button
+                  onClick={handleSubmit}
+                  className="inline-flex items-center gap-2 px-4 h-9 rounded-[23px] border border-blue-500/70 bg-blue-500/12 text-blue-400 font-semibold tracking-wide text-sm shadow-[0_0_14px_rgba(59,130,246,0.35)] ring-1 ring-blue-500/20 transition-all duration-300 hover:bg-blue-500/20"
+                >
+                  <Save size={16} /> Guardar Cambios
+                </button>
+              ) : (
+                <button type="button" onClick={handleSubmit} className="group relative cursor-pointer">
+                  <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[23px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-4 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+                    <Plus size={15} /> Agregar
+                  </div>
+                  <div className="absolute inset-0 z-0 h-full w-full rounded-[23px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+                </button>
+              )}
 
               {editingId && (
                 <button
@@ -684,7 +685,7 @@ const AlphaControlsManagement: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
+      </AdminSection>
 
       {/* TABLA */}
       <div className="overflow-x-auto bg-slate-800 rounded-lg shadow-xl border border-slate-700">

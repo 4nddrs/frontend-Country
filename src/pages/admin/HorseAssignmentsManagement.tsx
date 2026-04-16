@@ -10,6 +10,7 @@ import {
   FileText,
 } from "lucide-react";
 import { confirmDialog } from '../../utils/confirmDialog';
+import { AddButton, ExportButton, AdminSection } from '../../components/ui/admin-buttons';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dayjs from "dayjs";
@@ -356,7 +357,7 @@ const HorseAssignmentsManagement = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Asignaciones de Caballos</h1>
 
       {/* === FORM === */}
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">
           {editingId ? "Editar Asignación" : "Nueva Asignación"}
         </h2>
@@ -449,15 +450,10 @@ const HorseAssignmentsManagement = () => {
               </button>
             </>
           ) : (
-            <button
-              onClick={handleSubmit}
-              className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2"
-            >
-              <Plus size={18} /> Agregar
-            </button>
+            <AddButton onClick={handleSubmit} />
           )}
         </div>
-      </div>
+      </AdminSection>
 
       {/* === FILTRO + BOTÓN PDF === */}
       <div className="flex justify-end items-center gap-3 mb-6">
@@ -467,14 +463,10 @@ const HorseAssignmentsManagement = () => {
           onChange={(e) => setFilterMonth(e.target.value)}
           className="select-field"
         />
-        <button
-          onClick={exportPDF}
-          disabled={exporting}
-          className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2"
-        >
+        <ExportButton onClick={exportPDF} disabled={exporting}>
           <FileText size={18} />
           {exporting ? "Generando..." : "Exportar PDF"}
-        </button>
+        </ExportButton>
       </div>
 
       {/* === TABLA === */}

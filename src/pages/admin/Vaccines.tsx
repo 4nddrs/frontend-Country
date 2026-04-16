@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import { Edit, Save, Trash2, Loader, X } from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
+import { AddButton, AdminSection } from '../../components/ui/admin-buttons';
 
 const API_URL = 'http://localhost:8000/vaccines/';
 
@@ -91,7 +92,7 @@ const VaccinesManagement = () => {
   return (
     <div className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Vacunas</h1>
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      <AdminSection>
         <h2 className="text-xl font-semibold mb-4">Agregar Nueva Vacuna</h2>
         <div className="flex gap-4">
           <input
@@ -110,12 +111,10 @@ const VaccinesManagement = () => {
             onChange={e => setNewVaccine({ ...newVaccine, vaccineType: e.target.value })}
             className="select-field flex-1 placeholder-gray-400"
           />
-          <button onClick={createVaccine} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2">
-            <Plus size={20} /> Agregar
-          </button>
+          <AddButton onClick={createVaccine} />
         </div>
-      </div>
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      </AdminSection>
+      <AdminSection>
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
             <Loader size={24} className="animate-spin" />Cargando vacunas...
@@ -216,7 +215,7 @@ const VaccinesManagement = () => {
             ))}
           </div>
         )}
-      </div>
+      </AdminSection>
     </div>
   );
 };

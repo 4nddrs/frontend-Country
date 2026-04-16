@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import type { ChangeEvent } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { ExportButton, AdminSection } from '../../components/ui/admin-buttons';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
@@ -908,10 +909,10 @@ const TotalControlManagement = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Control Total</h1>
       
       <div
-        className={`bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3] ${
+        className={`bg-white/5 p-6 rounded-2xl mb-8 text-[#F8F4E3] ${
           isEditing
-            ? "bg-slate-800 border-2 border-teal-400 shadow-[0_0_20px_#14b8a6]"
-            : "bg-slate-800 border border-slate-700"
+            ? "border-2 border-teal-400 shadow-[0_0_20px_#14b8a6]"
+            : "border border-slate-700"
         }`}
       >
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Control Total</h2>
@@ -1276,13 +1277,21 @@ const TotalControlManagement = () => {
           </div>
         </div>
         <div className="mt-6 flex justify-center gap-3 px-6 pb-6">
-          <button
-            onClick={createControl}
-            className={`${isEditing ? "bg-blue-600 hover:bg-blue-700" : "bg-green-600 hover:bg-green-700"} text-white p-2 rounded-md font-semibold flex items-center gap-2`}
-          >
-            {isEditing ? <Save size={20} /> : <Plus size={20} />}
-            {isEditing ? "Actualizar Registro" : "Agregar"}
-          </button>
+          {isEditing ? (
+            <button
+              onClick={createControl}
+              className="inline-flex items-center gap-2 px-4 h-9 rounded-[23px] border border-blue-500/70 bg-blue-500/12 text-blue-400 font-semibold tracking-wide text-sm shadow-[0_0_14px_rgba(59,130,246,0.35)] ring-1 ring-blue-500/20 hover:bg-blue-500/20 transition-all duration-300"
+            >
+              <Save size={16} /> Actualizar Registro
+            </button>
+          ) : (
+            <button onClick={createControl} className="group relative cursor-pointer">
+              <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[23px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-4 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+                <Plus size={15} /> Agregar
+              </div>
+              <div className="absolute inset-0 z-0 h-full w-full rounded-[23px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+            </button>
+          )}
 
           {isEditing && (
             <button
@@ -1294,7 +1303,7 @@ const TotalControlManagement = () => {
           )}
         </div>
       </div>
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      <AdminSection>
         <div className="flex flex-col gap-4 w-full md:flex-row">
           <div className="w-full md:w-auto">
             <label htmlFor="filterMonth" className="block mb-1 text-sm font-semibold text-teal-300">
@@ -1341,17 +1350,15 @@ const TotalControlManagement = () => {
             </select>
           </div>
         </div>
-        <button
-          type="button"
+        <ExportButton
           onClick={exportFilteredPDF}
           disabled={exporting}
-          className="bg-teal-500 hover:bg-teal-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2 justify-center"
         >
           {exporting && <Loader size={18} className="animate-spin" />}
           {exporting ? "Generando PDF..." : "Exportar PDF"}
-        </button>
-      </div>
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+        </ExportButton>
+      </AdminSection>
+      <AdminSection>
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
             <Loader size={24} className="animate-spin" />Cargando controles...
@@ -1481,7 +1488,7 @@ const TotalControlManagement = () => {
             })}
           </div>
         )}
-      </div>
+      </AdminSection>
     </div>
   );
 };

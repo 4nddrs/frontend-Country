@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast, Toaster } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import { Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import { AddButton, AdminSection } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'http://localhost:8000/vaccination_plan_application/';
@@ -166,7 +167,7 @@ const VaccinationPlanApplicationManagement = () => {
     <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Ejecución del Plan Sanitario (Vacunas)</h1>
       
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Aplicación</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"> {/* Added mb-6 for spacing */}
           <div className="flex flex-col"> {/* Use flex-col for label-input stacking */}
@@ -232,17 +233,12 @@ const VaccinationPlanApplicationManagement = () => {
             </select>
           </div>
         </div>
-        <div className="flex justify-end"> {/* Moved button outside the grid for independent positioning */}
-          <button
-            onClick={createApplication}
-            className="bg-green-600 hover:bg-green-700 text-white p-2 px-4 rounded-md font-semibold flex items-center gap-2 transition duration-300 ease-in-out transform hover:scale-105"
-          >
-            <Plus size={20} /> Agregar Aplicación
-          </button>
+        <div className="flex justify-end">
+          <AddButton onClick={createApplication}>Agregar Aplicación</AddButton>
         </div>
-      </div>
+      </AdminSection>
 
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      <AdminSection>
         <h2 className="text-xl font-semibold mb-4">Lista de Aplicaciones</h2>
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400 p-8">
@@ -380,7 +376,7 @@ const VaccinationPlanApplicationManagement = () => {
             )}
           </div>
         )}
-      </div>
+      </AdminSection>
     </div>
   );
 };

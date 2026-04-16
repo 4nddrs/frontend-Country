@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Edit, Plus, Save, Trash2, X } from "lucide-react";
+import { AddButton, ExportButton, AdminSection } from '../../components/ui/admin-buttons';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dayjs from "dayjs";
@@ -391,7 +392,7 @@ const SalaryPayments: React.FC = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Pagos de Salario</h1>
       
       {/* Formulario único */}
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">
           {editingRow ? "Editar Pago" : "Agregar Pago"}
         </h2>
@@ -476,19 +477,13 @@ const SalaryPayments: React.FC = () => {
               </button>
             </>
           ) : (
-            <button
-              onClick={createItem}
-              disabled={saving}
-              className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-white inline-flex items-center gap-2"
-            >
-              <Plus size={18} /> Agregar
-            </button>
+            <AddButton onClick={createItem} disabled={saving} />
           )}
         </div>
-      </div>
+      </AdminSection>
 
       {/* Tabla de Pagos */}
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      <AdminSection>
         <h2 className="text-xl font-semibold mb-2 text-teal-400">
           Pagos Registrados
         </h2>
@@ -572,10 +567,10 @@ const SalaryPayments: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </div>
+      </AdminSection>
 
       {/* Exportar PDF */}
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">
           Exportar PDF de Salarios
         </h2>
@@ -623,18 +618,14 @@ const SalaryPayments: React.FC = () => {
         </div>
 
         <div className="text-right">
-          <button
-            onClick={exportFilteredPDF}
-            disabled={exporting || items.length === 0}
-            className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-6 py-3 text-lg rounded-xl font-semibold shadow-md hover:shadow-lg transition"
-          >
+          <ExportButton onClick={exportFilteredPDF} disabled={exporting || items.length === 0}>
             {exporting ? "Exportando..." : "Exportar PDF"}
-          </button>
+          </ExportButton>
         </div>
-      </div>
+      </AdminSection>
 
       {/* Tabla de Expenses */}
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      <AdminSection>
         <h2 className="text-xl font-semibold mb-2 text-teal-400">
           Registros en Expenses
         </h2>
@@ -675,7 +666,7 @@ const SalaryPayments: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </div>
+      </AdminSection>
     </div>
   );
 

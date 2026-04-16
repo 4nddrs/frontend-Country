@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import type { ChangeEvent } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X, FileDown, ChevronUp, ChevronDown } from 'lucide-react';
+import { ExportButton, AdminSection } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -534,7 +535,7 @@ const AttentionHorsesManagement = () => {
     <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Atenciones a Caballos</h1>
       
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Atención</h2>
         <div className="flex gap-4 flex-wrap">
           <div className="flex-1 min-w-[200px]">
@@ -658,21 +659,22 @@ const AttentionHorsesManagement = () => {
             </select>
           </div>
           <div className="flex items-end gap-2">
-            <button
-              type="button"
-              onClick={submitAttention}
-              className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center gap-2"
-            >
-              {editingId !== null ? (
-                <>
-                  <Save size={20} /> Guardar
-                </>
-              ) : (
-                <>
-                  <Plus size={20} /> Agregar
-                </>
-              )}
-            </button>
+            {editingId !== null ? (
+              <button
+                type="button"
+                onClick={submitAttention}
+                className="inline-flex items-center gap-2 px-4 h-9 rounded-[23px] border border-blue-500/70 bg-blue-500/12 text-blue-400 font-semibold tracking-wide text-sm shadow-[0_0_14px_rgba(59,130,246,0.35)] ring-1 ring-blue-500/20 transition-all duration-300 hover:bg-blue-500/20"
+              >
+                <Save size={16} /> Guardar
+              </button>
+            ) : (
+              <button type="button" onClick={submitAttention} className="group relative cursor-pointer">
+                <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[23px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-4 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+                  <Plus size={15} /> Agregar
+                </div>
+                <div className="absolute inset-0 z-0 h-full w-full rounded-[23px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+              </button>
+            )}
             {editingId !== null && (
               <button
                 type="button"
@@ -684,8 +686,8 @@ const AttentionHorsesManagement = () => {
             )}
           </div>
         </div>
-      </div>
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      </AdminSection>
+      <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Exportacion a PDF</h2>
         <div className="flex flex-wrap items-end gap-4">
           <div className="min-w-[200px]">
@@ -731,15 +733,13 @@ const AttentionHorsesManagement = () => {
             />
           </div>
           <div className="flex gap-2">
-            <button
-              type="button"
+            <ExportButton
               onClick={exportFilteredPDF}
               disabled={exporting || loading}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-900 disabled:cursor-not-allowed text-white p-2 rounded-md font-semibold flex items-center gap-2"
             >
               {exporting ? <Loader size={18} className="animate-spin" /> : <FileDown size={18} />}
               Generar PDF
-            </button>
+            </ExportButton>
             {(filterHorse || filterStartDate || filterEndDate) && (
               <button
                 type="button"
@@ -757,8 +757,8 @@ const AttentionHorsesManagement = () => {
             </p>
           </div>
         </div>
-      </div>
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      </AdminSection>
+      <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Registros</h2>
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
@@ -860,7 +860,7 @@ const AttentionHorsesManagement = () => {
             })}
           </div>
         )}
-      </div>
+      </AdminSection>
     </div>
   );
 };

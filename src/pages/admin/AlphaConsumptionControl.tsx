@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Loader } from "lucide-react";
+import { ExportButton, AdminSection } from '../../components/ui/admin-buttons';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dayjs from "dayjs";
@@ -279,19 +280,17 @@ const AlphaConsumptionControl: React.FC = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Control Consumo Alfa</h1>
       
       {/* Filtros */}
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      <AdminSection>
         <div className="flex items-center justify-between gap-4 mb-4">
           <h2 className="text-xl font-semibold">Filtros</h2>
 
           {/* Botón Exportar PDF */}
-          <button
+          <ExportButton
             onClick={exportPDF}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-md font-semibold disabled:opacity-50"
             disabled={!report || loadingReport || exporting}
-            title="Exporta el reporte filtrado actual"
           >
             {exporting ? "Exportando..." : "Exportar PDF"}
-          </button>
+          </ExportButton>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -346,7 +345,7 @@ const AlphaConsumptionControl: React.FC = () => {
             </button>
           </div>
         </div>
-      </div>
+      </AdminSection>
 
       {/* Resumen + Tabla */}
       {loading ? (
@@ -360,7 +359,7 @@ const AlphaConsumptionControl: React.FC = () => {
       ) : (
         <>
           {/* Resumen */}
-          <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+          <AdminSection>
             <h2 className="text-xl font-semibold mb-4">Resumen</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <div className="bg-gray-700 p-4 rounded-md">
@@ -388,10 +387,10 @@ const AlphaConsumptionControl: React.FC = () => {
                 <div className="text-2xl font-bold">{totals?.total_klg_mes}</div>
               </div>
             </div>
-          </div>
+          </AdminSection>
 
           {/* Tabla */}
-          <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+          <AdminSection>
             <h2 className="text-xl font-semibold mb-4">Detalle por Caballo</h2>
             <div className="overflow-auto border border-gray-700 rounded">
               <table className="min-w-full text-sm">
@@ -427,7 +426,7 @@ const AlphaConsumptionControl: React.FC = () => {
                 </tbody>
               </table>
             </div>
-          </div>
+          </AdminSection>
         </>
       )}
     </div>

@@ -136,13 +136,13 @@ export default function PendingUsers() {
 
       {/* Loading State */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-12 bg-white/10 backdrop-blur-lg rounded-2xl">
+        <div className="flex flex-col items-center justify-center py-12 bg-white/5 rounded-2xl">
           <Loader2 className="w-12 h-12 text-[#bdab62] animate-spin mb-4" />
           <p className="text-gray-400">Cargando usuarios pendientes...</p>
         </div>
       ) : pending.length === 0 ? (
         /* Empty State */
-        <div className="bg-white/10 backdrop-blur-lg p-12 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.5)]">
+        <div className="bg-white/5 p-12 rounded-2xl">
           <div className="flex flex-col items-center justify-center text-center">
             <div className="w-20 h-20 rounded-full bg-green-600/20 border border-green-500/30 flex items-center justify-center mb-4">
               <CheckCircle2 className="w-10 h-10 text-green-500" />
@@ -171,7 +171,7 @@ export default function PendingUsers() {
             return (
               <div
                 key={u.uid || u.username}
-                className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3] hover:bg-white/15 transition-all duration-200"
+                className="bg-white/5 p-6 rounded-2xl text-[#F8F4E3] hover:bg-white/10 transition-all duration-200"
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   {/* User Info */}

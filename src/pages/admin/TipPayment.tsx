@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Edit, Plus, Save, Trash2, X } from "lucide-react";
+import { AddButton, ExportButton, AdminSection } from '../../components/ui/admin-buttons';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dayjs from "dayjs";
@@ -422,7 +423,7 @@ const TipPayment: React.FC = () => {
             
 
             {/* Formulario único */}
-            <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+            <AdminSection>
             <h2 className="text-xl font-semibold mb-4">
                 {editingRow ? "Editar Propina" : "Agregar Propina"}
             </h2>
@@ -513,19 +514,13 @@ const TipPayment: React.FC = () => {
                     </button>
                 </>
                 ) : (
-                <button
-                    onClick={createItem}
-                    disabled={saving}
-                    className="bg-green-600 px-4 py-2 rounded inline-flex items-center gap-2"
-                >
-                    <Plus size={18} /> Agregar
-                </button>
+                <AddButton onClick={createItem} disabled={saving} />
                 )}
             </div>
-            </div>
+            </AdminSection>
 
             {/* Tabla de Propinas */}
-            <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+            <AdminSection>
                 <h2 className="text-xl font-semibold mb-2">Propinas registradas</h2>
                 <div className="overflow-x-auto bg-slate-800 rounded-lg shadow-xl border border-slate-700">
                     <table className="w-full text-sm mb-8">
@@ -601,10 +596,10 @@ const TipPayment: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </AdminSection>
 
             {/* Sección de filtros para PDF */}
-            <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+            <AdminSection>
             <h2 className="text-xl font-semibold mb-4">Exportar PDF de Propinas</h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                 <div>
@@ -649,18 +644,17 @@ const TipPayment: React.FC = () => {
             </div>
 
             <div className="text-right">
-                <button
+                <ExportButton
                 onClick={exportFilteredPDF}
                 disabled={exporting || items.length === 0}
-                className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-6 py-3 text-lg rounded-xl font-semibold shadow-md hover:shadow-lg transition"
                 >
                 {exporting ? "Exportando..." : "Exportar PDF"}
-                </button>
+                </ExportButton>
             </div>
-            </div>
+            </AdminSection>
 
             {/* Tabla de Expenses */}
-            <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+            <AdminSection>
                 <h2 className="text-xl font-semibold mb-2">
                     Registros en Egresos (Propinas)
                 </h2>
@@ -695,7 +689,7 @@ const TipPayment: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </AdminSection>
         </div>
         );
 

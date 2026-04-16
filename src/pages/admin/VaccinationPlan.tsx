@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import { AddButton, AdminSection } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'http://localhost:8000/vaccination_plan/';
@@ -486,7 +487,7 @@ const VaccinationPlanManagement = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión del Plan Sanitario (Vacunas)</h1>
       
       {/* Formulario para agregar */}
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Plan</h2>
         <div className="flex flex-col gap-4">
           <input
@@ -515,14 +516,12 @@ const VaccinationPlanManagement = () => {
             <option value={1} disabled>-- Selecciona Medicina --</option>
             {medicines.map(m => (<option key={m.idMedicine} value={m.idMedicine}>{m.name}</option>))}
           </select>
-          <button onClick={createPlan} className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-md font-semibold flex items-center justify-center gap-2 mt-4">
-            <Plus size={20} /> Agregar Plan
-          </button>
+          <AddButton onClick={createPlan} className="mt-4">Agregar Plan</AddButton>
         </div>
-      </div>
-      
+      </AdminSection>
+
       {/* Lista de planes */}
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      <AdminSection>
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
             <Loader size={24} className="animate-spin" />Cargando planes...
@@ -647,7 +646,7 @@ const VaccinationPlanManagement = () => {
             })}
           </div>
         )}
-      </div>
+      </AdminSection>
     </div>
   );
 };

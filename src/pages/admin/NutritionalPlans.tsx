@@ -1,18 +1,71 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
+import { Edit, Trash2, Loader } from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
+import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 
 const API_URL = 'http://localhost:8000/nutritional-plans/';
 
 interface NutritionalPlan {
   idNutritionalPlan?: number;
   name: string;
-  assignmentDate: string; // <--- CAMBIO aquí
+  assignmentDate: string;
   endDate: string;
-  state: string;          // <--- CAMBIO aquí
+  state: string;
   description?: string;
 }
+
+const computeState = (assignmentDate: string, endDate: string): string => {
+  if (!assignmentDate || !endDate) return '';
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const end = new Date(endDate);
+  end.setHours(0, 0, 0, 0);
+  const diffDays = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return 'VENCIDO';
+  if (diffDays <= 7) return 'POR VENCER';
+  return 'ACTIVO';
+};
+
+const STATE_CONFIG: Record<string, { dot: string; text: string; bg: string; glow: string; pulse: boolean }> = {
+  ACTIVO: {
+    dot: 'bg-emerald-400',
+    text: 'text-emerald-300',
+    bg: 'bg-emerald-950/60 border border-emerald-500/30',
+    glow: 'shadow-[0_0_12px_rgba(16,185,129,0.25)]',
+    pulse: true,
+  },
+  'POR VENCER': {
+    dot: 'bg-amber-400',
+    text: 'text-amber-300',
+    bg: 'bg-amber-950/60 border border-amber-500/30',
+    glow: 'shadow-[0_0_12px_rgba(245,158,11,0.25)]',
+    pulse: false,
+  },
+  VENCIDO: {
+    dot: 'bg-rose-400',
+    text: 'text-rose-300',
+    bg: 'bg-rose-950/60 border border-rose-500/30',
+    glow: 'shadow-[0_0_12px_rgba(244,63,94,0.25)]',
+    pulse: false,
+  },
+};
+
+const StateBadge = ({ state }: { state: string }) => {
+  const cfg = STATE_CONFIG[state];
+  if (!cfg) return <span className="text-slate-500 text-xs">—</span>;
+  return (
+    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-semibold tracking-widest uppercase ${cfg.bg} ${cfg.glow} ${cfg.text}`}>
+      <span className="relative flex h-2 w-2 shrink-0">
+        {cfg.pulse && (
+          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-70 ${cfg.dot}`} />
+        )}
+        <span className={`relative inline-flex h-2 w-2 rounded-full ${cfg.dot}`} />
+      </span>
+      {state}
+    </span>
+  );
+};
 
 const NutritionalPlansManagement = () => {
   const [plans, setPlans] = useState<NutritionalPlan[]>([]);
@@ -45,11 +98,15 @@ const NutritionalPlansManagement = () => {
   }, []);
 
   const createPlan = async () => {
+    const planToCreate = {
+      ...newPlan,
+      state: computeState(newPlan.assignmentDate, newPlan.endDate),
+    };
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newPlan),
+        body: JSON.stringify(planToCreate),
       });
       if (!res.ok) throw new Error('Error al crear plan');
       toast.success('Plan creado!');
@@ -98,7 +155,7 @@ const NutritionalPlansManagement = () => {
     <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Planes Nutricionales</h1>
       
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Plan Nutricional</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
@@ -135,17 +192,6 @@ const NutritionalPlansManagement = () => {
             />
           </div>
 
-          <div>
-            <label className="block mb-1">Estado del Plan</label>
-            <input
-              type="text"
-              name="state"
-              value={newPlan.state}
-              onChange={e => setNewPlan({ ...newPlan, state: e.target.value })}
-              className="w-full"
-            />
-          </div>
-
           <div className="md:col-span-2 lg:col-span-3">
             <label className="block mb-1">Descripción</label>
             <input
@@ -159,17 +205,12 @@ const NutritionalPlansManagement = () => {
 
         </div>
 
-        <div className="mt-4 text-right">
-          <button
-            onClick={createPlan}
-            className="bg-green-600 hover:bg-green-700 text-white p-2 px-4 rounded-md font-semibold flex items-center gap-2 inline-flex"
-          >
-            <Plus size={20} /> Agregar
-          </button>
+        <div className="mt-6 text-right">
+          <AddButton onClick={createPlan} />
         </div>
-      </div>
+      </AdminSection>
 
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      <AdminSection>
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
             <Loader size={24} className="animate-spin" />Cargando planes...
@@ -203,61 +244,52 @@ const NutritionalPlansManagement = () => {
                       />
                       <input
                         type="text"
-                        defaultValue={plan.state}
-                        onChange={e => setNewPlan({ ...newPlan, state: e.target.value })}
-                        className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
-                      />
-                      <input
-                        type="text"
                         defaultValue={plan.description}
                         onChange={e => setNewPlan({ ...newPlan, description: e.target.value })}
                         className="select-field px-4 py-2 rounded-md border border-gray-600 focus:border-blue-500 focus:outline-none w-full mb-2"
                       />
                       <div className="flex justify-center gap-3 px-6 pb-4 mt-3">
-                        <button
-                          onClick={() => updatePlan(plan.idNutritionalPlan!, {
-                            name: newPlan.name || plan.name,
-                            assignmentDate: newPlan.assignmentDate || plan.assignmentDate,
-                            endDate: newPlan.endDate || plan.endDate,
-                            state: newPlan.state || plan.state,
-                            description: newPlan.description || plan.description,
-                          })}
-                          className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md flex items-center gap-1"
-                        >
-                          <Save size={16} /> Guardar
-                        </button>
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-1"
-                        >
-                          <X size={16} /> Cancelar
-                        </button>
+                        <SaveButton
+                          onClick={() => {
+                            const endDate = newPlan.endDate || plan.endDate;
+                            const assignmentDate = newPlan.assignmentDate || plan.assignmentDate;
+                            updatePlan(plan.idNutritionalPlan!, {
+                              name: newPlan.name || plan.name,
+                              assignmentDate,
+                              endDate,
+                              state: computeState(assignmentDate, endDate),
+                              description: newPlan.description || plan.description,
+                            });
+                          }}
+                        />
+                        <CancelButton
+                          onClick={() => {
+                            setEditingId(null);
+                            setNewPlan({ name: '', assignmentDate: '', endDate: '', state: '', description: '' });
+                          }}
+                        />
                       </div>
                     </div>
                   ) : (
                     <>
                       <div className="flex flex-col items-center gap-2 py-5">
                         <span className="h-4 w-4 rounded-full bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.6)]" />
-                        <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                          {plan.state || 'Plan'}
-                        </span>
+                        <span className="text-xs uppercase tracking-[0.3em] text-slate-400">Planes</span>
                       </div>
 
                       <div className="px-6 pb-6 space-y-4 text-sm text-slate-200">
                         <div className="text-center space-y-1">
                           <h3 className="text-lg font-semibold text-blue-300">{plan.name}</h3>
-                          <p className="text-slate-400">
-                            Asignado: <span className="font-medium text-slate-200">{plan.assignmentDate?.slice(0, 10)}</span>
-                          </p>
                         </div>
 
                         <div className="rounded-xl border border-slate-800/80 bg-slate-900/70 p-4 text-xs leading-relaxed">
                           <ul className="space-y-1">
                             <li><strong>Fin:</strong> {plan.endDate?.slice(0, 10)}</li>
-                            <li><strong>Estado:</strong> {plan.state}</li>
+                            <li className="flex items-center gap-2"><strong>Estado:</strong> <StateBadge state={computeState(plan.assignmentDate, plan.endDate)} /></li>
                             <li><strong>Descripción:</strong> {plan.description || 'Sin descripción'}</li>
                           </ul>
                         </div>
+
 
                         <div className="flex items-center justify-center gap-6 border-t border-slate-800 pt-6 pb-2">
                           <button
@@ -290,7 +322,7 @@ const NutritionalPlansManagement = () => {
             ))}
           </div>
         )}
-      </div>
+      </AdminSection>
     </div>
   );
 };

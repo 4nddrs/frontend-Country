@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { Edit, Save, Trash2, Loader, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { AddButton, AdminSection } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'http://localhost:8000/medicines/';
@@ -247,12 +248,7 @@ const MedicinesManagement = () => {
     <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Medicamentos</h1>
       
-      <div
-        className={`bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]${
-          editingId !== null
-            ? "bg-slate-800 border-2 border-teal-400 shadow-[0_0_20px_#14b8a6]"
-            : "bg-slate-800 border border-slate-700"
-        }`}>
+      <AdminSection className={editingId !== null ? "border-2 border-teal-400 shadow-[0_0_20px_#14b8a6]" : "border border-slate-700"}>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">
           {editingId !== null ? 'Editar Medicamento' : 'Agregar Nuevo Medicamento'}
         </h2>
@@ -421,21 +417,17 @@ const MedicinesManagement = () => {
             </select>
           </div>
           <div className="w-full flex justify-center gap-3 px-6 pb-6 mt-6">
-            <button
-              type="button"
-              onClick={handleSubmit}
-              className={`${editingId !== null ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} text-white p-2 rounded-md font-semibold flex items-center gap-2`}
-            >
-              {editingId !== null ? (
-                <>
-                  <Save size={20} /> Guardar cambios
-                </>
-              ) : (
-                <>
-                  <Plus size={20} /> Agregar
-                </>
-              )}
-            </button>
+            {editingId !== null ? (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                className="inline-flex items-center gap-2 px-4 h-9 rounded-[23px] border border-blue-500/70 bg-blue-500/12 text-blue-400 font-semibold tracking-wide text-sm shadow-[0_0_14px_rgba(59,130,246,0.35)] ring-1 ring-blue-500/20 transition-all duration-300 hover:bg-blue-500/20"
+              >
+                <Save size={16} /> Guardar cambios
+              </button>
+            ) : (
+              <AddButton type="button" onClick={handleSubmit}>Agregar</AddButton>
+            )}
             {editingId !== null && (
               <button
                 type="button"
@@ -447,8 +439,8 @@ const MedicinesManagement = () => {
             )}
           </div>
         </div>
-      </div>
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      </AdminSection>
+      <AdminSection>
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
             <Loader size={24} className="animate-spin" />Cargando medicamentos...
@@ -545,7 +537,7 @@ const MedicinesManagement = () => {
             })}
           </div>
         )}
-      </div>
+      </AdminSection>
     </div>
   );
 };

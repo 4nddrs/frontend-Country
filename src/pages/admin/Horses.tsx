@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, X } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { AddButton, ExportButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
 import { confirmDialog } from '../../utils/confirmDialog';
@@ -324,25 +326,6 @@ const HorsesManagement = () => {
   useEffect(() => {
     if (!isEditModalOpen) return;
 
-    const body = document.body;
-    const prevOverflow = body.style.overflow;
-    const prevPaddingRight = body.style.paddingRight;
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-    body.style.overflow = 'hidden';
-    if (scrollbarWidth > 0) {
-      body.style.paddingRight = `${scrollbarWidth}px`;
-    }
-
-    return () => {
-      body.style.overflow = prevOverflow;
-      body.style.paddingRight = prevPaddingRight;
-    };
-  }, [isEditModalOpen]);
-
-  useEffect(() => {
-    if (!isEditModalOpen) return;
-
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         handleCancelEdit();
@@ -462,19 +445,9 @@ const HorsesManagement = () => {
     <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Caballos</h1>
       
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      <AdminSection>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Agregar Nuevo Caballo</h2>
-          <button
-            onClick={exportHorsesPDF}
-            disabled={loading || exporting || horses.length === 0}
-            className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white 
-                      px-6 py-3 text-lg rounded-xl font-semibold shadow-md
-                      hover:shadow-lg transition"
-            title="Generar PDF de caballos y duenos"
-          >
-            {exporting ? 'Exportando...' : 'Exportar PDF'}
-          </button>
         </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
@@ -500,12 +473,15 @@ const HorsesManagement = () => {
 
       <div>
         <label className="block mb-1">Sexo</label>
-        <input
-          type="text"
+        <select
           value={newHorse.sex}
           onChange={e => setNewHorse({ ...newHorse, sex: e.target.value })}
           className="w-full p-2 rounded-md bg-gray-700"
-        />
+        >
+          <option value="">-- Selecciona --</option>
+          <option value="Macho">Macho</option>
+          <option value="Hembra">Hembra</option>
+        </select>
       </div>
 
       <div>
@@ -532,39 +508,37 @@ const HorsesManagement = () => {
         <label className="block mb-1">Número de Pasaporte</label>
         <input
           type="number"
-          value={newHorse.passportNumber}
-          onChange={e => setNewHorse({ ...newHorse, passportNumber: Number(e.target.value) })}
+          value={newHorse.passportNumber === 0 ? '' : newHorse.passportNumber}
+          onChange={e => setNewHorse({ ...newHorse, passportNumber: e.target.value === '' ? 0 : Number(e.target.value) })}
           className="w-full p-2 rounded-md bg-gray-700"
         />
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className="block">Opciones de Establo</label>
-        <div className="flex items-center gap-2">
-          <label>
-            <input
-              type="checkbox"
-              checked={newHorse.box}
-              onChange={e => setNewHorse({ ...newHorse, box: e.target.checked })}
-            />
-            <span className="ml-2">Box</span>
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={newHorse.section}
-              onChange={e => setNewHorse({ ...newHorse, section: e.target.checked })}
-            />
-            <span className="ml-2">Seccion</span>
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={newHorse.basket}
-              onChange={e => setNewHorse({ ...newHorse, basket: e.target.checked })}
-            />
-            <span className="ml-2">Canasta</span>
-          </label>
+        <label className="block mb-2 text-sm font-medium text-slate-300">Opciones de Establo</label>
+        <div className="grid grid-cols-3 gap-2">
+          {([
+            { key: 'box', label: 'Box' },
+            { key: 'section', label: 'Sección' },
+            { key: 'basket', label: 'Canasta' },
+          ] as const).map(({ key, label }) => (
+            <label
+              key={key}
+              className={`flex items-center justify-center gap-2 cursor-pointer rounded-lg border px-3 py-2 text-sm font-medium transition-all duration-200
+                ${newHorse[key]
+                  ? 'border-teal-400/70 bg-teal-500/15 text-teal-300 shadow-[0_0_8px_rgba(20,184,166,0.3)]'
+                  : 'border-slate-600/60 bg-slate-800/50 text-slate-400 hover:border-slate-500'}`}
+            >
+              <input
+                type="checkbox"
+                className="hidden"
+                checked={newHorse[key]}
+                onChange={e => setNewHorse({ ...newHorse, [key]: e.target.checked })}
+              />
+              <span className={`h-2 w-2 rounded-full ${newHorse[key] ? 'bg-teal-400' : 'bg-slate-600'}`} />
+              {label}
+            </label>
+          ))}
         </div>
       </div>
 
@@ -646,37 +620,40 @@ const HorsesManagement = () => {
         </select>
       </div>
 
-      <div className="flex items-center gap-2">
-        <input
-          id="stateSchool"
-          type="checkbox"
-          checked={newHorse.stateSchool}
-          onChange={e => setNewHorse({ ...newHorse, stateSchool: e.target.checked })}
-        />
-        <label htmlFor="stateSchool">Pertenece a escuela</label>
+      <div className="flex flex-col gap-2">
+        <label className="block mb-2 text-sm font-medium text-slate-300">Escuela</label>
+        <label
+          className={`flex items-center gap-3 cursor-pointer rounded-lg border px-4 py-2.5 text-sm font-medium transition-all duration-200
+            ${newHorse.stateSchool
+              ? 'border-fuchsia-400/70 bg-fuchsia-500/15 text-fuchsia-300 shadow-[0_0_8px_rgba(217,70,239,0.3)]'
+              : 'border-slate-600/60 bg-slate-800/50 text-slate-400 hover:border-slate-500'}`}
+        >
+          <input
+            type="checkbox"
+            className="hidden"
+            checked={newHorse.stateSchool}
+            onChange={e => setNewHorse({ ...newHorse, stateSchool: e.target.checked })}
+          />
+          <span className={`h-2.5 w-2.5 rounded-full transition-all duration-200 ${newHorse.stateSchool ? 'bg-fuchsia-400 shadow-[0_0_6px_rgba(217,70,239,0.8)]' : 'bg-slate-600'}`} />
+          Pertenece a escuela
+        </label>
       </div>
 
     </div>
 
-    <div className="mt-4 text-right">
-      <button
-        onClick={createHorse}
-        className="bg-green-600 hover:bg-green-700 text-white p-2 px-4 rounded-md font-semibold flex items-center gap-2 inline-flex"
+    <div className="mt-4 flex items-center justify-end gap-3">
+      <ExportButton
+        onClick={exportHorsesPDF}
+        disabled={loading || exporting || horses.length === 0}
       >
-        <Plus size={20} /> Agregar
-      </button>
+        {exporting ? 'Exportando...' : 'Exportar PDF'}
+      </ExportButton>
+      <AddButton onClick={createHorse} />
     </div>
-
-    {/* Resumen + Boton PDF */}
-    <div className="flex items-center gap-4">
-      <span className="text-base bg-gray-700 px-4 py-2 rounded-lg">
-        Total caballos: <b>{totalCaballos}</b>
-      </span>
-    </div>
-  </div>
+  </AdminSection>
 
       {/* Lista de caballos */}
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      <AdminSection>
         <div className="flex items-center justify-between mb-4 text-sm text-gray-300">
           <span>Pagina {horsePage}</span>
           <div className="flex items-center gap-2">
@@ -733,7 +710,7 @@ const HorsesManagement = () => {
                       <div className="mb-3 grid grid-cols-2 gap-2 text-sm">
                         <div className="rounded-lg border border-slate-500/35 bg-slate-800/45 px-2.5 py-2">
                           <p className="text-[10px] uppercase tracking-wide text-slate-400">Nacimiento</p>
-                          <p className="text-slate-200 font-semibold">{new Date(horse.birthdate).toLocaleDateString()}</p>
+                          <p className="text-slate-200 font-semibold">{horse.birthdate?.slice(0, 10).split('-').reverse().join('/')}</p>
                         </div>
                         <div className="rounded-lg border border-slate-500/35 bg-slate-800/45 px-2.5 py-2">
                           <p className="text-[10px] uppercase tracking-wide text-slate-400">Pasaporte</p>
@@ -805,13 +782,13 @@ const HorsesManagement = () => {
           </div>
         )}
 
-        {editingId !== null && editingHorseData && (
+        {editingId !== null && editingHorseData && createPortal(
           <div
-            className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-hidden"
+            className="fixed inset-0 lg:left-80 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
             onClick={handleCancelEdit}
           >
             <div
-              className="w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-2xl border border-[#167C79]/60 bg-[#0f172a] p-6 shadow-[0_25px_80px_rgba(0,0,0,0.6)]"
+              className="w-full max-w-4xl max-h-[95vh] overflow-y-auto rounded-2xl border border-[#167C79]/60 bg-[#0f172a] p-6 shadow-[0_25px_80px_rgba(0,0,0,0.6)]"
               onClick={(event) => event.stopPropagation()}
             >
               <div className="mb-5 flex items-center justify-between">
@@ -835,7 +812,11 @@ const HorsesManagement = () => {
                 </div>
                 <div>
                   <label className="block mb-1">Sexo</label>
-                  <input type="text" value={editingHorseData.sex} onChange={e => setEditingHorseData({ ...editingHorseData, sex: e.target.value })} className="w-full p-2 rounded-md bg-gray-700" />
+                  <select value={editingHorseData.sex} onChange={e => setEditingHorseData({ ...editingHorseData, sex: e.target.value })} className="w-full p-2 rounded-md bg-gray-700">
+                    <option value="">-- Selecciona --</option>
+                    <option value="Macho">Macho</option>
+                    <option value="Hembra">Hembra</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block mb-1">Color</label>
@@ -843,7 +824,7 @@ const HorsesManagement = () => {
                 </div>
                 <div>
                   <label className="block mb-1">Numero de Pasaporte</label>
-                  <input type="number" value={editingHorseData.passportNumber} onChange={e => setEditingHorseData({ ...editingHorseData, passportNumber: Number(e.target.value) })} className="w-full p-2 rounded-md bg-gray-700" />
+                  <input type="number" value={editingHorseData.passportNumber === 0 ? '' : editingHorseData.passportNumber} onChange={e => setEditingHorseData({ ...editingHorseData, passportNumber: e.target.value === '' ? 0 : Number(e.target.value) })} className="w-full p-2 rounded-md bg-gray-700" />
                 </div>
                 <div>
                   <label className="block mb-1">Estado</label>
@@ -920,13 +901,21 @@ const HorsesManagement = () => {
                     className="w-full p-1.5 rounded-md bg-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
                   />
                 </div>
-                <div className="lg:col-span-1 flex items-end">
-                  <label className="flex items-center gap-2">
+                <div className="lg:col-span-1 flex flex-col gap-2">
+                  <label className="block text-sm font-medium text-slate-300">Escuela</label>
+                  <label
+                    className={`flex items-center gap-3 cursor-pointer rounded-lg border px-4 py-2.5 text-sm font-medium transition-all duration-200
+                      ${editingHorseData.stateSchool
+                        ? 'border-fuchsia-400/70 bg-fuchsia-500/15 text-fuchsia-300 shadow-[0_0_8px_rgba(217,70,239,0.3)]'
+                        : 'border-slate-600/60 bg-slate-800/50 text-slate-400 hover:border-slate-500'}`}
+                  >
                     <input
                       type="checkbox"
+                      className="hidden"
                       checked={editingHorseData.stateSchool}
                       onChange={e => setEditingHorseData({ ...editingHorseData, stateSchool: e.target.checked })}
                     />
+                    <span className={`h-2.5 w-2.5 rounded-full transition-all duration-200 ${editingHorseData.stateSchool ? 'bg-fuchsia-400 shadow-[0_0_6px_rgba(217,70,239,0.8)]' : 'bg-slate-600'}`} />
                     Pertenece a escuela
                   </label>
                 </div>
@@ -956,18 +945,15 @@ const HorsesManagement = () => {
               </div>
 
               <div className="mt-6 flex justify-end gap-3 border-t border-slate-700 pt-4">
-                <button onClick={handleCancelEdit} className="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-md flex items-center gap-2">
-                  <X size={16} /> Cancelar
-                </button>
-                <button onClick={() => updateHorse(editingId)} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2">
-                  <Save size={16} /> Guardar cambios
-                </button>
+                <CancelButton onClick={handleCancelEdit} />
+                <SaveButton onClick={() => updateHorse(editingId)} children="Guardar cambios" />
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
         {!loading && null}
-      </div>
+      </AdminSection>
     </div>
   );
 };

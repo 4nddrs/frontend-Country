@@ -7,6 +7,7 @@ import autoTable, { type CellInput } from 'jspdf-autotable';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Save, Trash2, Loader, X, Download ,ChevronUp,ChevronDown,} from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
+import { ExportButton, AdminSection } from '../../components/ui/admin-buttons';
 
 
 const API_URL = 'http://localhost:8000/owner_report_month/';
@@ -981,10 +982,10 @@ const OwnerReportMonthManagement = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión Reportes Mensuales de Propietarios</h1>
 
       <div
-        className={`bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3] ${
+        className={`bg-white/5 p-6 rounded-2xl mb-8 text-[#F8F4E3] ${
           isEditing
-            ? "bg-slate-800 border-2 border-teal-400 shadow-[0_0_20px_#14b8a6]"
-            : "bg-slate-800 border border-slate-700"
+            ? "border-2 border-teal-400 shadow-[0_0_20px_#14b8a6]"
+            : "border border-slate-700"
         }`}
       >
         <div className="flex items-center justify-between mb-4">
@@ -1314,15 +1315,21 @@ const OwnerReportMonthManagement = () => {
         </div>
 
         <div className="mt-6 flex justify-end gap-3">
-          <button
-            onClick={isEditing ? updateReport : createReport}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md font-semibold text-white ${
-              isEditing ? 'bg-blue-600 hover:bg-blue-500' : 'bg-green-600 hover:bg-green-500'
-            }`}
-          >
-            {isEditing ? <Save size={18} /> : <Plus size={18} />}
-            {isEditing ? 'Actualizar Reporte' : 'Crear Reporte'}
-          </button>
+          {isEditing ? (
+            <button
+              onClick={updateReport}
+              className="inline-flex items-center gap-2 px-4 h-9 rounded-[23px] border border-blue-500/70 bg-blue-500/12 text-blue-400 font-semibold tracking-wide text-sm shadow-[0_0_14px_rgba(59,130,246,0.35)] ring-1 ring-blue-500/20 hover:bg-blue-500/20 transition-all duration-300"
+            >
+              <Save size={16} /> Actualizar Reporte
+            </button>
+          ) : (
+            <button onClick={createReport} className="group relative cursor-pointer">
+              <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[23px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-4 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+                <Plus size={15} /> Crear Reporte
+              </div>
+              <div className="absolute inset-0 z-0 h-full w-full rounded-[23px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+            </button>
+          )}
           {isEditing && (
             <button
               onClick={resetForm}
@@ -1334,7 +1341,7 @@ const OwnerReportMonthManagement = () => {
       </div>
     </div>
 
-      <div className="bg-white/10 backdrop-blur-lg p-6 rounded-2xl mb-8 shadow-[0_8px_30px_rgba(0,0,0,0.5)] text-[#F8F4E3]">
+      <AdminSection>
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
             <h3 className="text-lg font-semibold text-teal-300">Filtrar reportes por periodo</h3>
@@ -1363,12 +1370,9 @@ const OwnerReportMonthManagement = () => {
               />
             </div>
             <div className="flex items-end gap-2">
-              <button
-                onClick={handleDownloadFilteredReports}
-                className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-md px-4 py-2"
-              >
+              <ExportButton onClick={handleDownloadFilteredReports}>
                 Descargar filtrados
-              </button>
+              </ExportButton>
               <button
                 onClick={handleResetFilters}
                 className="w-full"
@@ -1384,7 +1388,7 @@ const OwnerReportMonthManagement = () => {
             filtrado.
           </p>
         )}
-      </div>
+      </AdminSection>
 
       <div
         ref={reportsSectionRef}
