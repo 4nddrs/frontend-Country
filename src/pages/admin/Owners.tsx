@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Toaster, toast } from 'react-hot-toast';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Upload, RotateCcw } from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
 import noPhoto from '../../assets/noPhoto.png';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
@@ -45,13 +45,61 @@ const OwnersManagement = () => {
   const [newOwner, setNewOwner] = useState<OwnerFormData>(EMPTY_FORM);
   const [newImageFile, setNewImageFile] = useState<File | null>(null);
   const newFileRef = useRef<HTMLInputElement>(null);
+  const [newPreviewUrl, setNewPreviewUrl] = useState<string | null>(null);
+  const [newProgress, setNewProgress] = useState<number>(0);
+  const [newDragOver, setNewDragOver] = useState<boolean>(false);
 
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingOwnerData, setEditingOwnerData] = useState<Owner | null>(null);
   const [editImageFile, setEditImageFile] = useState<File | null>(null);
   const editFileRef = useRef<HTMLInputElement>(null);
+  const [editPreviewUrl, setEditPreviewUrl] = useState<string | null>(null);
+  const [editProgress, setEditProgress] = useState<number>(0);
+  const [editDragOver, setEditDragOver] = useState<boolean>(false);
 
   const [loading, setLoading] = useState<boolean>(true);
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
+
+  const animateProgress = (setProgress: (v: number) => void) => {
+    setProgress(0);
+    let p = 0;
+    const iv = setInterval(() => {
+      p += 4;
+      setProgress(Math.min(p, 100));
+      if (p >= 100) clearInterval(iv);
+    }, 25);
+  };
+
+  const applyNewFile = (file: File) => {
+    setNewImageFile(file);
+    setNewPreviewUrl(URL.createObjectURL(file));
+    animateProgress(setNewProgress);
+  };
+
+  const clearNewFile = () => {
+    setNewImageFile(null);
+    setNewPreviewUrl(null);
+    setNewProgress(0);
+    if (newFileRef.current) newFileRef.current.value = '';
+  };
+
+  const applyEditFile = (file: File) => {
+    setEditImageFile(file);
+    setEditPreviewUrl(URL.createObjectURL(file));
+    animateProgress(setEditProgress);
+  };
+
+  const clearEditFile = () => {
+    setEditImageFile(null);
+    setEditPreviewUrl(null);
+    setEditProgress(0);
+    if (editFileRef.current) editFileRef.current.value = '';
+  };
 
   const isEditModalOpen = editingId !== null && editingOwnerData !== null;
 
@@ -113,8 +161,7 @@ const OwnersManagement = () => {
       }
       toast.success('Propietario creado!');
       setNewOwner(EMPTY_FORM);
-      setNewImageFile(null);
-      if (newFileRef.current) newFileRef.current.value = '';
+      clearNewFile();
     } catch {
       toast.error('No se pudo crear el propietario.');
     }
@@ -136,8 +183,7 @@ const OwnersManagement = () => {
       toast.success('Propietario actualizado!');
       setEditingId(null);
       setEditingOwnerData(null);
-      setEditImageFile(null);
-      if (editFileRef.current) editFileRef.current.value = '';
+      clearEditFile();
       fetchOwners(currentPage);
     } catch {
       toast.error('No se pudo actualizar el propietario.');
@@ -165,14 +211,13 @@ const OwnersManagement = () => {
   const handleEditClick = (owner: Owner) => {
     setEditingId(owner.idOwner!);
     setEditingOwnerData({ ...owner });
-    setEditImageFile(null);
+    clearEditFile();
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditingOwnerData(null);
-    setEditImageFile(null);
-    if (editFileRef.current) editFileRef.current.value = '';
+    clearEditFile();
   };
 
   return (
@@ -183,29 +228,79 @@ const OwnersManagement = () => {
       {/* Formulario de creación */}
       <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Propietario</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <input type="text" placeholder="Nombre" value={newOwner.name}
-            onChange={e => setNewOwner({ ...newOwner, name: e.target.value })}
-            className="p-2 rounded-md bg-gray-700" />
-          <input type="text" placeholder="Primer Apellido" value={newOwner.FirstName}
-            onChange={e => setNewOwner({ ...newOwner, FirstName: e.target.value })}
-            className="p-2 rounded-md bg-gray-700" />
-          <input type="text" placeholder="Segundo Apellido (Opcional)" value={newOwner.SecondName}
-            onChange={e => setNewOwner({ ...newOwner, SecondName: e.target.value })}
-            className="p-2 rounded-md bg-gray-700" />
-          <input type="number" placeholder="Cedula de Identidad" value={newOwner.ci || ''}
-            onChange={e => setNewOwner({ ...newOwner, ci: Number(e.target.value) })}
-            className="p-2 rounded-md bg-gray-700" />
-          <input type="number" placeholder="Telefono" value={newOwner.phoneNumber || ''}
-            onChange={e => setNewOwner({ ...newOwner, phoneNumber: Number(e.target.value) })}
-            className="p-2 rounded-md bg-gray-700" />
-          <input
-            type="file"
-            accept="image/*"
-            ref={newFileRef}
-            onChange={e => setNewImageFile(e.target.files?.[0] ?? null)}
-            className="p-1.5 rounded-md bg-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
-          />
+        {/* Fila 1 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label className="block text-sm text-slate-300 mb-1">Nombre</label>
+            <input type="text" placeholder="Nombre" value={newOwner.name}
+              onChange={e => setNewOwner({ ...newOwner, name: e.target.value })}
+              className="w-full p-2 rounded-md bg-gray-700" />
+          </div>
+          <div>
+            <label className="block text-sm text-slate-300 mb-1">Primer Apellido</label>
+            <input type="text" placeholder="Primer Apellido" value={newOwner.FirstName}
+              onChange={e => setNewOwner({ ...newOwner, FirstName: e.target.value })}
+              className="w-full p-2 rounded-md bg-gray-700" />
+          </div>
+          <div>
+            <label className="block text-sm text-slate-300 mb-1">Segundo Apellido <span className="text-slate-500">(Opcional)</span></label>
+            <input type="text" placeholder="Segundo Apellido" value={newOwner.SecondName}
+              onChange={e => setNewOwner({ ...newOwner, SecondName: e.target.value })}
+              className="w-full p-2 rounded-md bg-gray-700" />
+          </div>
+        </div>
+
+        {/* Fila 2 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label className="block text-sm text-slate-300 mb-1">Cédula de Identidad</label>
+            <input type="number" placeholder="C.I." value={newOwner.ci || ''}
+              onChange={e => setNewOwner({ ...newOwner, ci: Number(e.target.value) })}
+              className="w-full p-2 rounded-md bg-gray-700" />
+          </div>
+          <div>
+            <label className="block text-sm text-slate-300 mb-1">Teléfono</label>
+            <input type="number" placeholder="Teléfono" value={newOwner.phoneNumber || ''}
+              onChange={e => setNewOwner({ ...newOwner, phoneNumber: Number(e.target.value) })}
+              className="w-full p-2 rounded-md bg-gray-700" />
+          </div>
+          <div>
+            <label className="block text-sm text-slate-300 mb-1">Foto del Propietario</label>
+            <div
+              onDragOver={(e) => { e.preventDefault(); setNewDragOver(true); }}
+              onDragLeave={() => setNewDragOver(false)}
+              onDrop={(e) => { e.preventDefault(); setNewDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) applyNewFile(f); }}
+              className={`h-[38px] flex items-center rounded-md border-2 border-dashed transition-all duration-200 cursor-pointer overflow-hidden
+                ${newDragOver ? 'border-[#167C79] bg-[#167C79]/15' : 'border-[#167C79]/40 bg-slate-800/60'}`}
+              onClick={() => !newImageFile && newFileRef.current?.click()}
+            >
+              {!newImageFile && (
+                <div className="flex items-center gap-2 px-3 w-full">
+                  <Upload size={14} className="text-[#167C79] shrink-0" />
+                  <span className="text-sm text-slate-400 truncate">Arrastra o selecciona</span>
+                </div>
+              )}
+              {newImageFile && newPreviewUrl && (
+                <div className="flex items-center gap-2 px-3 w-full">
+                  <img src={newPreviewUrl} alt="preview" className="h-6 w-6 rounded object-cover shrink-0 border border-slate-600" />
+                  <span className="text-sm text-[#bdab62] truncate flex-1">{newImageFile.name}</span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button type="button" onClick={e => { e.stopPropagation(); newFileRef.current?.click(); }} className="text-slate-400 hover:text-teal-300 transition-colors"><RotateCcw size={13} /></button>
+                    <button type="button" onClick={e => { e.stopPropagation(); clearNewFile(); }} className="text-slate-400 hover:text-red-400 transition-colors"><Trash2 size={13} /></button>
+                  </div>
+                </div>
+              )}
+              <input type="file" accept="image/*" ref={newFileRef} onChange={e => { const f = e.target.files?.[0]; if (f) applyNewFile(f); }} className="hidden" />
+            </div>
+            {newImageFile && newPreviewUrl && (
+              <div className="mt-1.5 flex items-center gap-2">
+                <div className="flex-1 h-1 bg-slate-700 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all duration-75 ${newProgress < 34 ? 'bg-rose-400' : newProgress < 67 ? 'bg-amber-400' : 'bg-emerald-400'}`} style={{ width: `${newProgress}%` }} />
+                </div>
+                <span className={`text-xs font-medium ${newProgress < 34 ? 'text-rose-300' : newProgress < 67 ? 'text-amber-300' : 'text-emerald-300'}`}>{newProgress}%</span>
+              </div>
+            )}
+          </div>
         </div>
         <div className="mt-4 text-right">
           <AddButton onClick={createOwner} />
@@ -331,21 +426,48 @@ const OwnersManagement = () => {
                     onChange={e => setEditingOwnerData({ ...editingOwnerData, phoneNumber: Number(e.target.value) })}
                     className="w-full p-2 rounded-md bg-gray-700" />
                 </div>
-                <div>
-                  <label className="block mb-1">Foto</label>
-                  <input type="file" accept="image/*" ref={editFileRef}
-                    onChange={e => setEditImageFile(e.target.files?.[0] ?? null)}
-                    className="w-full p-1.5 rounded-md bg-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" />
-                </div>
-                {(editingOwnerData.image_url || editImageFile) && (
-                  <div className="md:col-span-2">
-                    <img
-                      src={editImageFile ? URL.createObjectURL(editImageFile) : editingOwnerData.image_url ?? PLACEHOLDER}
-                      alt="Vista previa"
-                      className="w-full h-44 rounded-xl object-cover border border-slate-600"
-                    />
+                <div className="md:col-span-2">
+                  <label className="block mb-1 text-sm font-medium text-slate-300">Foto</label>
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setEditDragOver(true); }}
+                    onDragLeave={() => setEditDragOver(false)}
+                    onDrop={(e) => { e.preventDefault(); setEditDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) applyEditFile(f); }}
+                    className={`rounded-xl border-2 border-dashed transition-all duration-200 ${editDragOver ? 'border-[#167C79] bg-[#167C79]/15' : 'border-[#167C79]/40 bg-slate-800/60'}`}
+                  >
+                    {!editImageFile && (
+                      <div className="text-center cursor-pointer py-6 px-4" onClick={() => editFileRef.current?.click()}>
+                        <button type="button" className="flex items-center gap-1.5 mx-auto rounded-lg bg-[#167C79]/20 border border-[#167C79]/50 px-4 py-2 text-sm font-medium text-teal-300 hover:bg-[#167C79]/30 transition-colors">
+                          <Upload size={15} className="shrink-0" />
+                          Arrastra y suelta para subir
+                        </button>
+                      </div>
+                    )}
+                    {editImageFile && editPreviewUrl && (
+                      <div className="mx-4 mb-4 mt-2">
+                        <div className="rounded-xl border border-slate-600/50 bg-slate-800/80 p-3">
+                          <div className="flex items-center gap-3">
+                            <img src={editPreviewUrl} alt="preview" className="h-10 w-10 rounded-lg object-cover border border-slate-600/50 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-[#F8F4E3] truncate">{editImageFile.name}</p>
+                              <p className="text-xs text-slate-400">{formatFileSize(editImageFile.size)}</p>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button type="button" onClick={() => editFileRef.current?.click()} className="text-slate-400 hover:text-teal-300 transition-colors"><RotateCcw size={15} /></button>
+                              <button type="button" onClick={clearEditFile} className="text-slate-400 hover:text-red-400 transition-colors"><Trash2 size={15} /></button>
+                            </div>
+                          </div>
+                          <div className="mt-2.5 flex items-center gap-2">
+                            <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full transition-all duration-75 ${editProgress < 34 ? 'bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.8)]' : editProgress < 67 ? 'bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.8)]' : 'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]'}`} style={{ width: `${editProgress}%` }} />
+                            </div>
+                            <span className={`text-xs shrink-0 w-12 text-right font-medium ${editProgress < 34 ? 'text-rose-300' : editProgress < 67 ? 'text-amber-300' : 'text-emerald-300'}`}>{editProgress} %</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <input type="file" accept="image/*" ref={editFileRef} onChange={e => { const f = e.target.files?.[0]; if (f) applyEditFile(f); }} className="hidden" />
                   </div>
-                )}
+                </div>
               </div>
 
               <div className="mt-6 flex justify-end gap-3 border-t border-slate-700 pt-4">

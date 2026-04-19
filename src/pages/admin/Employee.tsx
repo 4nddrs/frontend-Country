@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import jsPDF from 'jspdf';
@@ -8,6 +8,8 @@ import {
   Trash2,
   Edit,
   Loader,
+  Upload,
+  RotateCcw,
 } from 'lucide-react';
 import { ExportButton, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
@@ -104,6 +106,15 @@ const Employees = () => {
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [editingPhoto, setEditingPhoto] = useState<File | null>(null);
   const [creatingAccount, setCreatingAccount] = useState<boolean>(false);
+
+  const newFileInputRef = useRef<HTMLInputElement>(null);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
+  const [newPreviewUrl, setNewPreviewUrl] = useState<string | null>(null);
+  const [newProgress, setNewProgress] = useState<number>(0);
+  const [newDragOver, setNewDragOver] = useState<boolean>(false);
+  const [editPreviewUrl, setEditPreviewUrl] = useState<string | null>(null);
+  const [editProgress, setEditProgress] = useState<number>(0);
+  const [editDragOver, setEditDragOver] = useState<boolean>(false);
 
   // estado para exportación
   const [exporting, setExporting] = useState<boolean>(false);
@@ -269,7 +280,7 @@ const Employees = () => {
 
       setNewEmployee(getEmptyEmployee());
       setUserAccount({ email: '', password: '', username: '', createAccount: false });
-      setSelectedPhoto(null);
+      clearNewFile();
       fetchData();
     } catch (error: any) {
       toast.error(`Ocurrió un error en la operación: ${error.message}`);
@@ -326,7 +337,7 @@ const Employees = () => {
       toast.success('Empleado actualizado con éxito!');
       setEditingId(null);
       setEditingData(null);
-      setEditingPhoto(null);
+      clearEditFile();
       fetchData();
     } catch (error: any) {
       toast.error(`Ocurrió un error en la operación: ${error.message}`);
@@ -364,14 +375,14 @@ const Employees = () => {
       startTime: formatTimeForInput(employee.startTime),
       exitTime: formatTimeForInput(employee.exitTime),
     });
-    setEditingPhoto(null);
+    clearEditFile();
     setEditingId(employee.idEmployee!);
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditingData(null);
-    setEditingPhoto(null);
+    clearEditFile();
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -397,16 +408,56 @@ const Employees = () => {
     setEditingData({ ...editingData, [name]: newValue });
   };
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
+
+  const animateProgress = (setProgress: (v: number) => void) => {
+    setProgress(0);
+    let p = 0;
+    const iv = setInterval(() => {
+      p += 4;
+      setProgress(Math.min(p, 100));
+      if (p >= 100) clearInterval(iv);
+    }, 25);
+  };
+
+  const applyNewFile = (file: File) => {
+    setSelectedPhoto(file);
+    setNewPreviewUrl(URL.createObjectURL(file));
+    animateProgress(setNewProgress);
+  };
+
+  const clearNewFile = () => {
+    setSelectedPhoto(null);
+    setNewPreviewUrl(null);
+    setNewProgress(0);
+    if (newFileInputRef.current) newFileInputRef.current.value = '';
+  };
+
+  const applyEditFile = (file: File) => {
+    setEditingPhoto(file);
+    setEditPreviewUrl(URL.createObjectURL(file));
+    animateProgress(setEditProgress);
+  };
+
+  const clearEditFile = () => {
+    setEditingPhoto(null);
+    setEditPreviewUrl(null);
+    setEditProgress(0);
+    if (editFileInputRef.current) editFileInputRef.current.value = '';
+  };
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedPhoto(e.target.files[0]);
-    }
+    const file = e.target.files?.[0];
+    if (file) applyNewFile(file);
   };
 
   const handleEditingPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setEditingPhoto(e.target.files[0]);
-    }
+    const file = e.target.files?.[0];
+    if (file) applyEditFile(file);
   };
 
   // ====== Exportar PDF ======
@@ -521,13 +572,6 @@ const Employees = () => {
           <h2 className="text-xl font-semibold text-teal-300">
             Crear Nuevo Empleado
           </h2>
-
-          <ExportButton
-            onClick={exportEmployeesPDF}
-            disabled={loading || exporting || employees.length === 0}
-          >
-            {exporting ? 'Exportando…' : 'Exportar PDF'}
-          </ExportButton>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -584,26 +628,121 @@ const Employees = () => {
             </select>
           </div>
           <div>
-            <label htmlFor="employeePhoto">Foto del Empleado</label>
-            <input type="file" id="employeePhoto" name="employeePhoto" accept="image/*" onChange={handlePhotoChange} className="w-full p-2 text-white placeholder-slate-400" />
-            {selectedPhoto && (
-              <img src={URL.createObjectURL(selectedPhoto)} alt="Nueva foto" className="w-16 h-16 rounded-full object-cover mt-2 border-2 border-teal-400" />
-            )}
+            <label className="block mb-1 text-sm font-medium text-slate-300">Foto del Empleado</label>
+            <div
+              onDragOver={(e) => { e.preventDefault(); setNewDragOver(true); }}
+              onDragLeave={() => setNewDragOver(false)}
+              onDrop={(e) => { e.preventDefault(); setNewDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) applyNewFile(f); }}
+              className={`rounded-xl border-2 border-dashed transition-all duration-200 ${newDragOver ? 'border-[#167C79] bg-[#167C79]/15' : 'border-[#167C79]/40 bg-slate-800/60'}`}
+            >
+              {!(selectedPhoto && newPreviewUrl) && (
+                <div className="text-center cursor-pointer py-6 px-4" onClick={() => newFileInputRef.current?.click()}>
+                  <button type="button" className="flex items-center gap-1.5 mx-auto rounded-lg bg-[#167C79]/20 border border-[#167C79]/50 px-4 py-2 text-sm font-medium text-teal-300 hover:bg-[#167C79]/30 transition-colors">
+                    <Upload size={15} className="shrink-0" />
+                    Arrastra y suelta para subir
+                  </button>
+                </div>
+              )}
+              {selectedPhoto && newPreviewUrl && (
+                <div className="px-4 pb-4 flex justify-center">
+                  <div className="w-full max-w-sm rounded-xl border border-slate-600/50 bg-slate-800/80 p-3">
+                    <div className="flex items-center gap-3">
+                      <img src={newPreviewUrl} alt="preview" className="h-10 w-10 rounded-lg object-cover border border-slate-600/50 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#F8F4E3] truncate">{selectedPhoto.name}</p>
+                        <p className="text-xs text-slate-400">{formatFileSize(selectedPhoto.size)}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button type="button" onClick={() => newFileInputRef.current?.click()} className="text-slate-400 hover:text-teal-300 transition-colors"><RotateCcw size={15} /></button>
+                        <button type="button" onClick={clearNewFile} className="text-slate-400 hover:text-red-400 transition-colors"><Trash2 size={15} /></button>
+                      </div>
+                    </div>
+                    <div className="mt-2.5 flex items-center gap-2">
+                      <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full transition-all duration-75 ${newProgress < 34 ? 'bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.8)]' : newProgress < 67 ? 'bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.8)]' : 'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]'}`} style={{ width: `${newProgress}%` }} />
+                      </div>
+                      <span className={`text-xs shrink-0 w-12 text-right font-medium ${newProgress < 34 ? 'text-rose-300' : newProgress < 67 ? 'text-amber-300' : 'text-emerald-300'}`}>{newProgress} %</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <input type="file" accept="image/*" ref={newFileInputRef} onChange={handlePhotoChange} className="hidden" />
+            </div>
           </div>
         </div>
 
         {/* Sección de Cuenta de Usuario (solo al crear nuevo empleado) */}
         <div className="mt-6 pt-6 border-t border-slate-600">
-          <div className="flex items-center gap-3 mb-4">
-            <input
-              type="checkbox"
-              id="createAccount"
-              checked={userAccount.createAccount}
-              onChange={(e) => setUserAccount({ ...userAccount, createAccount: e.target.checked })}
-              className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-teal-500 focus:ring-2 focus:ring-teal-500"
-            />
-            <label htmlFor="createAccount" className="text-lg font-semibold text-teal-300 cursor-pointer">
-              ✨ Crear cuenta de acceso al sistema
+          <div className="flex items-center gap-4 mb-4">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={userAccount.createAccount}
+              onClick={() => setUserAccount({ ...userAccount, createAccount: !userAccount.createAccount })}
+              className="relative w-24 h-10 shrink-0 cursor-pointer rounded-full overflow-hidden focus:outline-none shadow-[4px_4px_14px_rgba(0,0,0,0.9),inset_2px_2px_6px_rgba(0,0,0,0.6)]"
+              style={{
+                borderWidth: '2px',
+                borderStyle: 'solid',
+                borderColor: userAccount.createAccount ? '#9333ea' : '#ea580c',
+                transition: 'border-color 550ms cubic-bezier(0.4,0,0.2,1)',
+              }}
+            >
+              {/* Fondo — color animado con style inline garantizado */}
+              <span
+                className="absolute inset-0"
+                style={{
+                  backgroundColor: userAccount.createAccount ? '#7e22ce' : '#c2410c',
+                  boxShadow: userAccount.createAccount
+                    ? 'inset 0 0 22px rgba(168,85,247,0.55)'
+                    : 'inset 0 0 22px rgba(249,115,22,0.55)',
+                  transition: 'background-color 550ms cubic-bezier(0.4,0,0.2,1), box-shadow 550ms cubic-bezier(0.4,0,0.2,1)',
+                }}
+              />
+
+              {/* "off" fijo a la izquierda */}
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white text-xs font-bold tracking-wide select-none pointer-events-none z-10">
+                off
+              </span>
+
+              {/* "on" fijo a la derecha */}
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white text-xs font-bold tracking-wide select-none pointer-events-none z-10">
+                on
+              </span>
+
+              {/* Knob — un solo eje left para animación continua real */}
+              <span
+                className="absolute top-1/2 -translate-y-1/2 h-8 w-10 rounded-full z-20 bg-gradient-to-b from-[#32353a] to-[#0c0d0f] shadow-[4px_4px_12px_rgba(0,0,0,0.95),-2px_-2px_7px_rgba(255,255,255,0.06),inset_0_1px_0_rgba(255,255,255,0.07)]"
+                style={{
+                  left: userAccount.createAccount ? 'calc(100% - 2.625rem)' : '0.125rem',
+                  transition: 'left 550ms cubic-bezier(0.4,0,0.2,1)',
+                }}
+              >
+                {/* Punto indicador de color */}
+                <span
+                  className="absolute top-[6px] left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full"
+                  style={{
+                    backgroundColor: userAccount.createAccount ? '#c084fc' : '#fb923c',
+                    boxShadow: userAccount.createAccount
+                      ? '0 0 5px rgba(168,85,247,0.9)'
+                      : '0 0 5px rgba(249,115,22,0.9)',
+                    transition: 'background-color 550ms cubic-bezier(0.4,0,0.2,1), box-shadow 550ms cubic-bezier(0.4,0,0.2,1)',
+                  }}
+                />
+                {/* Ranuras verticales */}
+                <span className="absolute inset-0 flex items-center justify-center gap-[4px] pt-3">
+                  {[0, 1, 2, 3].map(i => (
+                    <span key={i} className="block h-3 w-[2px] rounded-full bg-slate-500/55" />
+                  ))}
+                </span>
+              </span>
+            </button>
+            <label
+              className="text-lg font-semibold cursor-pointer select-none"
+              onClick={() => setUserAccount({ ...userAccount, createAccount: !userAccount.createAccount })}
+            >
+              <span className={`transition-colors duration-300 ${userAccount.createAccount ? 'text-purple-300 drop-shadow-[0_0_6px_rgba(168,85,247,0.8)]' : 'text-slate-400'}`}>
+                Crear cuenta de acceso al sistema
+              </span>
             </label>
           </div>
 
@@ -669,21 +808,23 @@ const Employees = () => {
 
         {/* Barra de acciones inferiores */}
         <div className="flex flex-wrap items-center gap-3 mt-6">
-          <span className="text-sm bg-gray-700 px-3 py-1 rounded-md">
-            Total: <b>{formatCurrency(employees.reduce((acc, e) => acc + Number(e.salary || 0), 0))}</b>
-          </span>
-
           <div className="ml-auto flex gap-2">
+            <ExportButton
+              onClick={exportEmployeesPDF}
+              disabled={loading || exporting || employees.length === 0}
+            >
+              {exporting ? 'Exportando…' : 'Exportar PDF'}
+            </ExportButton>
             <button
               type="submit"
               aria-disabled={creatingAccount}
               className={`group relative ${creatingAccount ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
-              <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[23px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-4 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+              <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[10px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-8 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
                 {creatingAccount ? <Loader size={18} className="animate-spin" /> : <UserPlus size={18} />}
                 {creatingAccount ? 'Creando...' : userAccount.createAccount ? 'Crear Empleado + Cuenta' : 'Agregar Empleado'}
               </div>
-              <div className="absolute inset-0 z-0 h-full w-full rounded-[23px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+              <div className="absolute inset-0 z-0 h-full w-full rounded-[10px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
             </button>
           </div>
         </div>
@@ -899,22 +1040,47 @@ const Employees = () => {
                   ))}
                 </select>
               </div>
-              <div>
-                <label htmlFor="edit-employeePhoto" className="block mb-1 text-sm text-slate-300">Foto del Empleado</label>
-                <input
-                  type="file"
-                  id="edit-employeePhoto"
-                  name="employeePhoto"
-                  accept="image/*"
-                  onChange={handleEditingPhotoChange}
-                  className="w-full p-2 text-white placeholder-slate-400"
-                />
-                {editingData.image_url && !editingPhoto && (
-                  <img src={editingData.image_url} alt="Foto actual" className="w-16 h-16 rounded-full object-cover mt-2" />
-                )}
-                {editingPhoto && (
-                  <img src={URL.createObjectURL(editingPhoto)} alt="Nueva foto" className="w-16 h-16 rounded-full object-cover mt-2 border-2 border-teal-400" />
-                )}
+              <div className="md:col-span-3">
+                <label className="block mb-1 text-sm font-medium text-slate-300">Foto del Empleado</label>
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setEditDragOver(true); }}
+                  onDragLeave={() => setEditDragOver(false)}
+                  onDrop={(e) => { e.preventDefault(); setEditDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) applyEditFile(f); }}
+                  className={`rounded-xl border-2 border-dashed transition-all duration-200 ${editDragOver ? 'border-[#167C79] bg-[#167C79]/15' : 'border-[#167C79]/40 bg-slate-800/60'}`}
+                >
+                  {!editingPhoto && (
+                    <div className="text-center cursor-pointer py-6 px-4" onClick={() => editFileInputRef.current?.click()}>
+                      <button type="button" className="flex items-center gap-1.5 mx-auto rounded-lg bg-[#167C79]/20 border border-[#167C79]/50 px-4 py-2 text-sm font-medium text-teal-300 hover:bg-[#167C79]/30 transition-colors">
+                        <Upload size={15} className="shrink-0" />
+                        Arrastra y suelta para subir
+                      </button>
+                    </div>
+                  )}
+                  {editingPhoto && editPreviewUrl && (
+                    <div className="mx-4 mb-4 mt-2">
+                      <div className="rounded-xl border border-slate-600/50 bg-slate-800/80 p-3">
+                        <div className="flex items-center gap-3">
+                          <img src={editPreviewUrl} alt="preview" className="h-10 w-10 rounded-lg object-cover border border-slate-600/50 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-[#F8F4E3] truncate">{editingPhoto.name}</p>
+                            <p className="text-xs text-slate-400">{formatFileSize(editingPhoto.size)}</p>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button type="button" onClick={() => editFileInputRef.current?.click()} className="text-slate-400 hover:text-teal-300 transition-colors"><RotateCcw size={15} /></button>
+                            <button type="button" onClick={clearEditFile} className="text-slate-400 hover:text-red-400 transition-colors"><Trash2 size={15} /></button>
+                          </div>
+                        </div>
+                        <div className="mt-2.5 flex items-center gap-2">
+                          <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full transition-all duration-75 ${editProgress < 34 ? 'bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.8)]' : editProgress < 67 ? 'bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.8)]' : 'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]'}`} style={{ width: `${editProgress}%` }} />
+                          </div>
+                          <span className={`text-xs shrink-0 w-12 text-right font-medium ${editProgress < 34 ? 'text-rose-300' : editProgress < 67 ? 'text-amber-300' : 'text-emerald-300'}`}>{editProgress} %</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <input type="file" accept="image/*" ref={editFileInputRef} onChange={handleEditingPhotoChange} className="hidden" />
+                </div>
               </div>
             </div>
 

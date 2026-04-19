@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Upload, RotateCcw } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { AddButton, ExportButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import autoTable from 'jspdf-autotable';
@@ -80,7 +80,14 @@ const HorsesManagement = () => {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingHorseData, setEditingHorseData] = useState<Horse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null); // CAMBIO: Nuevo estado para guardar el archivo de la foto
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [dragOver, setDragOver] = useState<boolean>(false);
+
+  const editFileInputRef = useRef<HTMLInputElement>(null);
+  const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null);
+  const [editDragOver, setEditDragOver] = useState<boolean>(false);
 
   // PDF state
   const [exporting, setExporting] = useState(false);
@@ -147,9 +154,48 @@ const HorsesManagement = () => {
     }
   };
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
+
+  const animateUpload = () => {
+    setUploadProgress(0);
+    let p = 0;
+    const iv = setInterval(() => {
+      p += 4;
+      setUploadProgress(Math.min(p, 100));
+      if (p >= 100) clearInterval(iv);
+    }, 25);
+  };
+
+  const applyFile = (file: File) => {
+    setSelectedPhotoFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    animateUpload();
+  };
+
+  const clearFile = () => {
+    setSelectedPhotoFile(null);
+    setPreviewUrl(null);
+    setUploadProgress(0);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const applyEditFile = (file: File) => {
+    setEditPhotoFile(file);
+    if (editFileInputRef.current) editFileInputRef.current.value = '';
+  };
+
+  const clearEditFile = () => {
+    setEditPhotoFile(null);
+    if (editFileInputRef.current) editFileInputRef.current.value = '';
+  };
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setSelectedPhotoFile(file);
+    if (file) applyFile(file);
   };
 
   const createHorse = async () => {
@@ -207,8 +253,7 @@ const HorsesManagement = () => {
 
       toast.success('Caballo creado exitosamente!');
       setNewHorse({ ...initialHorse });
-      setSelectedPhotoFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      clearFile();
 
     } catch (error: any) {
       toast.error(`Error al crear caballo: ${error.message}`);
@@ -247,17 +292,16 @@ const HorsesManagement = () => {
       });
       if (!res.ok) throw new Error();
 
-      if (selectedPhotoFile) {
+      if (editPhotoFile) {
         const formData = new FormData();
-        formData.append('image', selectedPhotoFile);
+        formData.append('image', editPhotoFile);
         await fetch(`${API_URL}${id}/image`, { method: 'POST', body: formData });
       }
 
       toast.success('Caballo actualizado');
       setEditingId(null);
       setEditingHorseData(null);
-      setSelectedPhotoFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      clearEditFile();
       fetchHorses(horsePage);
 
     } catch {
@@ -286,13 +330,13 @@ const HorsesManagement = () => {
   const handleEditClick = (horse: Horse) => {
     setEditingId(horse.idHorse!);
     setEditingHorseData({ ...horse });
-    setSelectedPhotoFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    clearEditFile();
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditingHorseData(null);
+    clearEditFile();
   };
 
   // Helpers
@@ -593,33 +637,6 @@ const HorsesManagement = () => {
         </select>
       </div>
 
-      <div>
-        <label className="block mb-1">Foto del Caballo</label>
-        <input
-          type="file"
-          accept="image/*"
-          ref={fileInputRef}
-          onChange={handlePhotoChange}
-          className="w-full p-1.5 rounded-md bg-gray-700 file:mr-4 file:py-2 file:px-4 
-                    file:rounded-full file:border-0 file:text-sm file:font-semibold 
-                    file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
-        />
-      </div>
-
-      <div>
-        <label className="block mb-1">Estado</label>
-        <select
-          required
-          value={newHorse.state}
-          onChange={e => setNewHorse({ ...newHorse, state: e.target.value })}
-          className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
-        >
-          <option value="ACTIVO">ACTIVO</option>
-          <option value="AUSENTE">AUSENTE</option>
-          <option value="FALLECIDO">FALLECIDO</option>
-        </select>
-      </div>
-
       <div className="flex flex-col gap-2">
         <label className="block mb-2 text-sm font-medium text-slate-300">Escuela</label>
         <label
@@ -637,6 +654,88 @@ const HorsesManagement = () => {
           <span className={`h-2.5 w-2.5 rounded-full transition-all duration-200 ${newHorse.stateSchool ? 'bg-fuchsia-400 shadow-[0_0_6px_rgba(217,70,239,0.8)]' : 'bg-slate-600'}`} />
           Pertenece a escuela
         </label>
+      </div>
+
+      <div>
+        <label className="block mb-1">Estado</label>
+        <select
+          required
+          value={newHorse.state}
+          onChange={e => setNewHorse({ ...newHorse, state: e.target.value })}
+          className="w-full p-2 rounded-md border border-gray-300 bg-white text-black"
+        >
+          <option value="ACTIVO">ACTIVO</option>
+          <option value="AUSENTE">AUSENTE</option>
+          <option value="FALLECIDO">FALLECIDO</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block mb-1 text-sm font-medium text-slate-300">Foto del Caballo</label>
+        <div
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            const file = e.dataTransfer.files?.[0];
+            if (file) applyFile(file);
+          }}
+          className={`rounded-xl border-2 border-dashed transition-all duration-200 ${dragOver ? 'border-[#167C79] bg-[#167C79]/15' : 'border-[#167C79]/40 bg-slate-800/60'}`}
+        >
+          {!(selectedPhotoFile && previewUrl) && (
+            <div className="text-center cursor-pointer py-6 px-4" onClick={() => fileInputRef.current?.click()}>
+              <button
+                type="button"
+                className="flex items-center gap-1.5 mx-auto rounded-lg bg-[#167C79]/20 border border-[#167C79]/50 px-4 py-2 text-sm font-medium text-teal-300 hover:bg-[#167C79]/30 transition-colors"
+              >
+                <Upload size={15} className="shrink-0" />
+                Arrastra y suelta para subir
+              </button>
+            </div>
+          )}
+          {selectedPhotoFile && previewUrl && (
+            <div className="px-4 pb-4 flex justify-center">
+              <div className="w-full max-w-sm">
+                <div className="rounded-xl border border-slate-600/50 bg-slate-800/80 p-3">
+                <div className="flex items-center gap-3">
+                  <img src={previewUrl} alt="preview" className="h-10 w-10 rounded-lg object-cover border border-slate-600/50 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[#F8F4E3] truncate">{selectedPhotoFile.name}</p>
+                    <p className="text-xs text-slate-400">{formatFileSize(selectedPhotoFile.size)}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button type="button" onClick={() => fileInputRef.current?.click()} className="text-slate-400 hover:text-teal-300 transition-colors">
+                      <RotateCcw size={15} />
+                    </button>
+                    <button type="button" onClick={clearFile} className="text-slate-400 hover:text-red-400 transition-colors">
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-2.5 flex items-center gap-2">
+                  <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-75 ${
+                        uploadProgress < 34
+                          ? 'bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.8)]'
+                          : uploadProgress < 67
+                          ? 'bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.8)]'
+                          : 'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]'
+                      }`}
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                  <span className={`text-xs shrink-0 w-12 text-right font-medium ${
+                    uploadProgress < 34 ? 'text-rose-300' : uploadProgress < 67 ? 'text-amber-300' : 'text-emerald-300'
+                  }`}>{uploadProgress} %</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          )}
+          <input type="file" accept="image/*" ref={fileInputRef} onChange={handlePhotoChange} className="hidden" />
+        </div>
       </div>
 
     </div>
@@ -891,16 +990,6 @@ const HorsesManagement = () => {
                     ))}
                   </select>
                 </div>
-                <div className="lg:col-span-2">
-                  <label className="block mb-1">Foto del Caballo</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    ref={fileInputRef}
-                    onChange={handlePhotoChange}
-                    className="w-full p-1.5 rounded-md bg-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
-                  />
-                </div>
                 <div className="lg:col-span-1 flex flex-col gap-2">
                   <label className="block text-sm font-medium text-slate-300">Escuela</label>
                   <label
@@ -919,6 +1008,32 @@ const HorsesManagement = () => {
                     Pertenece a escuela
                   </label>
                 </div>
+                <div className="lg:col-span-2">
+                  <label className="block mb-1 text-sm font-medium text-slate-300">Foto del Caballo</label>
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setEditDragOver(true); }}
+                    onDragLeave={() => setEditDragOver(false)}
+                    onDrop={(e) => { e.preventDefault(); setEditDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) applyEditFile(f); }}
+                    className={`rounded-xl border-2 border-dashed transition-all duration-200 ${editDragOver ? 'border-[#167C79] bg-[#167C79]/15' : 'border-[#167C79]/40 bg-slate-800/60'}`}
+                  >
+                    {!editPhotoFile && (
+                      <div className="text-center cursor-pointer py-6 px-4" onClick={() => editFileInputRef.current?.click()}>
+                        <button type="button" className="flex items-center gap-1.5 mx-auto rounded-lg bg-[#167C79]/20 border border-[#167C79]/50 px-4 py-2 text-sm font-medium text-teal-300 hover:bg-[#167C79]/30 transition-colors">
+                          <Upload size={15} className="shrink-0" />
+                          Arrastra y suelta para subir
+                        </button>
+                      </div>
+                    )}
+                    {editPhotoFile && (
+                      <div className="mx-4 my-3 flex items-center gap-3 rounded-xl border border-slate-600/50 bg-slate-800/80 px-3 py-2.5">
+                        <span className="text-sm font-medium text-[#F8F4E3] truncate flex-1">{editPhotoFile.name}</span>
+                        <button type="button" onClick={() => editFileInputRef.current?.click()} className="text-slate-400 hover:text-teal-300 transition-colors shrink-0"><RotateCcw size={15} /></button>
+                        <button type="button" onClick={clearEditFile} className="text-slate-400 hover:text-red-400 transition-colors shrink-0"><Trash2 size={15} /></button>
+                      </div>
+                    )}
+                    <input type="file" accept="image/*" ref={editFileInputRef} onChange={e => { const f = e.target.files?.[0]; if (f) applyEditFile(f); }} className="hidden" />
+                  </div>
+                </div>
                 <div className="lg:col-span-3 flex items-center gap-4">
                   <label className="flex items-center gap-2">
                     <input type="checkbox" checked={editingHorseData.box} onChange={e => setEditingHorseData({ ...editingHorseData, box: e.target.checked })} />
@@ -933,10 +1048,10 @@ const HorsesManagement = () => {
                     Canasta
                   </label>
                 </div>
-                {(editingHorseData?.image_url || selectedPhotoFile) && (
+                {(editingHorseData?.image_url || editPhotoFile) && (
                   <div className="lg:col-span-3">
                     <img
-                      src={selectedPhotoFile ? URL.createObjectURL(selectedPhotoFile) : editingHorseData.image_url ?? PLACEHOLDER}
+                      src={editPhotoFile ? URL.createObjectURL(editPhotoFile) : editingHorseData.image_url ?? PLACEHOLDER}
                       alt="Vista previa"
                       className="w-full h-44 rounded-xl object-cover border border-slate-600"
                     />
