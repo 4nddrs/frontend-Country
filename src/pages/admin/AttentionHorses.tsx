@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import type { ChangeEvent } from 'react';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X, FileDown, ChevronUp, ChevronDown } from 'lucide-react';
-import { ExportButton, AdminSection } from '../../components/ui/admin-buttons';
+import { Plus, Edit, Trash2, Loader, FileDown, ChevronUp, ChevronDown } from 'lucide-react';
+import { ExportButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -138,6 +139,8 @@ const AttentionHorsesManagement = () => {
   const [attentions, setAttentions] = useState<AttentionHorse[]>([]);
   const [newAttention, setNewAttention] = useState<AttentionHorseForm>(() => createEmptyForm());
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [editAttention, setEditAttention] = useState<AttentionHorseForm | null>(null);
+  const [editCostInput, setEditCostInput] = useState('');
   const [loading, setLoading] = useState<boolean>(true);
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
 
@@ -514,8 +517,50 @@ const AttentionHorsesManagement = () => {
     if (!attention.idAttentionHorse) {
       return;
     }
+    const form = mapAttentionToForm(attention);
     setEditingId(attention.idAttentionHorse);
-    setNewAttention(mapAttentionToForm(attention));
+    setEditAttention(form);
+    setEditCostInput(form.cost);
+  };
+
+  const handleEditCostChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { value } = event.target;
+    const sanitized = sanitizeCostInput(value);
+    setEditCostInput(sanitized);
+    setEditAttention((prev) => prev ? { ...prev, cost: sanitized } : prev);
+  };
+
+  const updateAttention = async () => {
+    if (!editAttention || editingId === null) return;
+    if (!validateForm(editAttention)) return;
+    const parsedCost = getParsedCostOrToast(editAttention.cost);
+    if (parsedCost === null) return;
+
+    const payload = {
+      date: editAttention.date,
+      dose: editAttention.dose.trim(),
+      cost: parsedCost,
+      description: editAttention.description.trim(),
+      fk_idHorse: editAttention.fk_idHorse,
+      fk_idMedicine: editAttention.fk_idMedicine === '' ? null : editAttention.fk_idMedicine,
+      fk_idEmployee: editAttention.fk_idEmployee,
+    };
+
+    try {
+      const res = await fetch(`${API_URL}${editingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error('Error al actualizar atención');
+      toast.success('Atención actualizada!');
+      setEditingId(null);
+      setEditAttention(null);
+      setEditCostInput('');
+      fetchAttentions();
+    } catch {
+      toast.error('No se pudo actualizar atención.');
+    }
   };
 
   const getHorseName = (id: number) =>
@@ -537,6 +582,7 @@ const AttentionHorsesManagement = () => {
       
       <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Atención</h2>
+
         <div className="flex gap-4 flex-wrap">
           <div className="flex-1 min-w-[200px]">
             <label htmlFor="date" className="block mb-1">
@@ -659,31 +705,12 @@ const AttentionHorsesManagement = () => {
             </select>
           </div>
           <div className="flex items-end gap-2">
-            {editingId !== null ? (
-              <button
-                type="button"
-                onClick={submitAttention}
-                className="inline-flex items-center gap-2 px-4 h-9 rounded-[23px] border border-blue-500/70 bg-blue-500/12 text-blue-400 font-semibold tracking-wide text-sm shadow-[0_0_14px_rgba(59,130,246,0.35)] ring-1 ring-blue-500/20 transition-all duration-300 hover:bg-blue-500/20"
-              >
-                <Save size={16} /> Guardar
-              </button>
-            ) : (
-              <button type="button" onClick={submitAttention} className="group relative cursor-pointer">
-                <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[23px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-4 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
-                  <Plus size={15} /> Agregar
-                </div>
-                <div className="absolute inset-0 z-0 h-full w-full rounded-[23px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
-              </button>
-            )}
-            {editingId !== null && (
-              <button
-                type="button"
-                onClick={handleCancelEdit}
-                className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-2"
-              >
-                <X size={20} /> Cancelar
-              </button>
-            )}
+            <button type="button" onClick={submitAttention} className="group relative cursor-pointer">
+              <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[23px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-4 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+                <Plus size={15} /> Agregar
+              </div>
+              <div className="absolute inset-0 z-0 h-full w-full rounded-[23px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+            </button>
           </div>
         </div>
       </AdminSection>
@@ -861,6 +888,64 @@ const AttentionHorsesManagement = () => {
           </div>
         )}
       </AdminSection>
+
+      {editingId !== null && editAttention && createPortal(
+        <div
+          className="fixed inset-0 lg:left-80 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => { setEditingId(null); setEditAttention(null); setEditCostInput(''); }}
+        >
+          <div
+            className="w-full max-w-4xl max-h-[95vh] overflow-y-auto rounded-2xl border border-[#167C79]/60 bg-[#0f172a] p-6 shadow-[0_25px_80px_rgba(0,0,0,0.6)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-[#F8F4E3] mb-6">Editar Atención</h3>
+            <div className="flex gap-4 flex-wrap">
+              <div className="flex-1 min-w-[200px]">
+                <label className="block mb-1">Fecha <span className="text-red-400">*</span></label>
+                <input type="date" value={editAttention.date} onChange={(e) => setEditAttention({ ...editAttention, date: e.target.value })} className="w-full" />
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="block mb-1">Dosis <span className="text-red-400">*</span></label>
+                <input type="text" placeholder="Dosis" value={editAttention.dose} onChange={(e) => setEditAttention({ ...editAttention, dose: e.target.value })} className="w-full" />
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="block mb-1">Costo <span className="text-red-400">*</span></label>
+                <input type="text" placeholder="0" value={editCostInput} onChange={handleEditCostChange} className="w-full" inputMode="decimal" />
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="block mb-1">Descripción <span className="text-red-400">*</span></label>
+                <input type="text" placeholder="Descripción" value={editAttention.description} onChange={(e) => setEditAttention({ ...editAttention, description: e.target.value })} className="w-full" />
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="block mb-1">Caballo <span className="text-red-400">*</span></label>
+                <select value={editAttention.fk_idHorse} onChange={(e) => setEditAttention({ ...editAttention, fk_idHorse: Number(e.target.value) })} className="w-full">
+                  <option value={0}>-- Selecciona caballo --</option>
+                  {horses.map(horse => <option key={horse.idHorse} value={horse.idHorse}>{horse.horseName}</option>)}
+                </select>
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="block mb-1">Medicina (opcional)</label>
+                <select value={editAttention.fk_idMedicine === '' ? '' : editAttention.fk_idMedicine} onChange={(e) => setEditAttention({ ...editAttention, fk_idMedicine: e.target.value ? Number(e.target.value) : '' })} className="w-full">
+                  <option value="">-- Sin medicina --</option>
+                  {medicines.map(med => <option key={med.idMedicine} value={med.idMedicine}>{med.name}</option>)}
+                </select>
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="block mb-1">Empleado <span className="text-red-400">*</span></label>
+                <select value={editAttention.fk_idEmployee} onChange={(e) => setEditAttention({ ...editAttention, fk_idEmployee: Number(e.target.value) })} className="w-full">
+                  <option value={0}>-- Selecciona empleado --</option>
+                  {employees.map(emp => <option key={emp.idEmployee} value={emp.idEmployee}>{emp.fullName}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3 border-t border-slate-700 pt-4">
+              <CancelButton onClick={() => { setEditingId(null); setEditAttention(null); setEditCostInput(''); }} />
+              <SaveButton onClick={updateAttention} children="Guardar cambios" />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

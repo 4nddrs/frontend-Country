@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
-import { Edit, Plus, Save, Trash2, X } from "lucide-react";
-import { AddButton, ExportButton, AdminSection } from '../../components/ui/admin-buttons';
+import { Edit, Trash2 } from "lucide-react";
+import { AddButton, ExportButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dayjs from "dayjs";
@@ -83,7 +84,8 @@ const SalaryPayments: React.FC = () => {
   const [employees, setEmployees] = useState<EmployeeLite[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [saving, setSaving] = useState(false);
-  const [amountInput, setAmountInput] = useState(""); 
+  const [amountInput, setAmountInput] = useState(""); // for edit modal
+  const [createAmountInput, setCreateAmountInput] = useState(""); // for create form
   const [filterEmployee, setFilterEmployee] = useState<number>(0);
   const [filterState, setFilterState] = useState<string>("");
 
@@ -96,23 +98,42 @@ const SalaryPayments: React.FC = () => {
     state: "",
     paymentDate: null,
     fk_idEmployee: 0,
-  });
+  }); // edit modal state
+
+  const [createForm, setCreateForm] = useState<SalaryPaymentCreate>({
+    amount: 0,
+    state: "",
+    paymentDate: null,
+    fk_idEmployee: 0,
+  }); // create form state
 
   const [editingRow, setEditingRow] = useState<SalaryPayment | null>(null);
 
-  // ===== Manejo del input numérico =====
+  // ===== Manejo del input numérico (edit modal) =====
   const handleAmountChange = (raw: string) => {
     const cleaned = normalizeInput(raw);
     const num = parseToNumber(cleaned);
-
     setAmountInput(cleaned);
     setForm((prev) => ({ ...prev, amount: num }));
   };
 
-  function resetForm() {
+  // ===== Manejo del input numérico (create form) =====
+  const handleCreateAmountChange = (raw: string) => {
+    const cleaned = normalizeInput(raw);
+    const num = parseToNumber(cleaned);
+    setCreateAmountInput(cleaned);
+    setCreateForm((prev) => ({ ...prev, amount: num }));
+  };
+
+  function resetEditForm() {
     setForm({ amount: 0, state: "", paymentDate: null, fk_idEmployee: 0 });
     setAmountInput("");
     setEditingRow(null);
+  }
+
+  function resetForm() {
+    setCreateForm({ amount: 0, state: "", paymentDate: null, fk_idEmployee: 0 });
+    setCreateAmountInput("");
   }
 
   async function load() {
@@ -182,13 +203,13 @@ const SalaryPayments: React.FC = () => {
 
   async function createItem() {
     try {
-      if (!form.state.trim()) return toast.error("Estado es requerido.");
-      if (!form.fk_idEmployee) return toast.error("Empleado es requerido.");
+      if (!createForm.state.trim()) return toast.error("Estado es requerido.");
+      if (!createForm.fk_idEmployee) return toast.error("Empleado es requerido.");
 
       setSaving(true);
       const payload: SalaryPaymentCreate = {
-        ...form,
-        amount: Math.round(form.amount * 100) / 100,
+        ...createForm,
+        amount: Math.round(createForm.amount * 100) / 100,
       };
 
       const res = await fetch(API_URL, {
@@ -205,7 +226,8 @@ const SalaryPayments: React.FC = () => {
       ]);
       await maybeRegisterExpense(created);
 
-      resetForm();
+      setCreateForm({ amount: 0, state: "", paymentDate: null, fk_idEmployee: 0 });
+      setCreateAmountInput("");
       toast.success("¡Pago creado!");
     } catch (e: any) {
       toast.error(`Error al crear: ${e.message}`);
@@ -241,7 +263,7 @@ const SalaryPayments: React.FC = () => {
         )
       );
 
-      resetForm();
+      resetEditForm();
       toast.success("¡Pago actualizado!");
     } catch (e: any) {
       toast.error(`Error al actualizar: ${e.message}`);
@@ -273,6 +295,13 @@ const SalaryPayments: React.FC = () => {
     value: SalaryPaymentCreate[K]
   ) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function onChangeCreateForm<K extends keyof SalaryPaymentCreate>(
+    key: K,
+    value: SalaryPaymentCreate[K]
+  ) {
+    setCreateForm((prev) => ({ ...prev, [key]: value }));
   }
 
   //Exportar PDF filtrado
@@ -391,94 +420,41 @@ const SalaryPayments: React.FC = () => {
     <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Pagos de Salario</h1>
       
-      {/* Formulario único */}
+      {/* Formulario crear */}
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">
-          {editingRow ? "Editar Pago" : "Agregar Pago"}
-        </h2>
+        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Pago</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Monto */}
           <div>
             <label className="text-sm mb-1 block">Monto (Bs)</label>
-            <input
-              type="text"
-              placeholder="0,00"
-              value={amountInput}
-              onChange={(e) => handleAmountChange(e.target.value)}
-              className="w-full"
-            />
+            <input type="text" placeholder="0,00" value={createAmountInput} onChange={(e) => handleCreateAmountChange(e.target.value)} className="w-full" />
           </div>
-
-          {/* Estado */}
           <div>
             <label className="text-sm mb-1 block">Estado de Pago</label>
-            <select
-              value={form.state}
-              onChange={(e) => onChangeForm("state", e.target.value)}
-              className="w-full"
-            >
+            <select value={createForm.state} onChange={(e) => onChangeCreateForm("state", e.target.value)} className="w-full">
               <option value="">Estado…</option>
               <option value="PAGADO">Pagado</option>
               <option value="PENDIENTE">Pendiente</option>
               <option value="ANULADO">Anulado</option>
             </select>
           </div>
-
-          {/* Fecha */}
           <div>
             <label className="text-sm mb-1 block">Fecha de Pago</label>
-            <input
-              type="date"
-              value={form.paymentDate ?? ""}
-              onChange={(e) =>
-                onChangeForm("paymentDate", e.target.value || null)
-              }
-              className="w-full"
-            />
+            <input type="date" value={createForm.paymentDate ?? ""} onChange={(e) => onChangeCreateForm("paymentDate", e.target.value || null)} className="w-full" />
           </div>
-
-          {/* Empleado */}
           <div>
             <label className="text-sm mb-1 block">Empleado</label>
-            <select
-              value={form.fk_idEmployee}
-              onChange={(e) =>
-                onChangeForm("fk_idEmployee", Number(e.target.value))
-              }
-              className="w-full"
-            >
+            <select value={createForm.fk_idEmployee} onChange={(e) => onChangeCreateForm("fk_idEmployee", Number(e.target.value))} className="w-full">
               <option value={0}>Empleado…</option>
               {employees.map((emp) => (
-                <option key={emp.idEmployee} value={emp.idEmployee}>
-                  {emp.fullName}
-                </option>
+                <option key={emp.idEmployee} value={emp.idEmployee}>{emp.fullName}</option>
               ))}
             </select>
           </div>
         </div>
 
-        {/* Botones */}
         <div className="mt-4 text-right">
-          {editingRow ? (
-            <>
-              <button
-                onClick={updateItem}
-                disabled={saving}
-                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white inline-flex items-center gap-2"
-              >
-                <Save size={18} /> Guardar cambios
-              </button>
-              <button
-                onClick={resetForm}
-                className="ml-2 bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white inline-flex items-center gap-2"
-              >
-                <X size={18} /> Cancelar
-              </button>
-            </>
-          ) : (
-            <AddButton onClick={createItem} disabled={saving} />
-          )}
+          <AddButton onClick={createItem} disabled={saving} />
         </div>
       </AdminSection>
 
@@ -667,6 +643,53 @@ const SalaryPayments: React.FC = () => {
           </table>
         </div>
       </AdminSection>
+
+      {editingRow && createPortal(
+        <div
+          className="fixed inset-0 lg:left-80 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={resetEditForm}
+        >
+          <div
+            className="w-full max-w-2xl max-h-[95vh] overflow-y-auto rounded-2xl border border-[#167C79]/60 bg-[#0f172a] p-6 shadow-[0_25px_80px_rgba(0,0,0,0.6)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-[#F8F4E3] mb-6">Editar Pago</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm mb-1 block">Monto (Bs)</label>
+                <input type="text" placeholder="0,00" value={amountInput} onChange={(e) => handleAmountChange(e.target.value)} className="w-full" />
+              </div>
+              <div>
+                <label className="text-sm mb-1 block">Estado de Pago</label>
+                <select value={form.state} onChange={(e) => onChangeForm("state", e.target.value)} className="w-full">
+                  <option value="">Estado…</option>
+                  <option value="PAGADO">Pagado</option>
+                  <option value="PENDIENTE">Pendiente</option>
+                  <option value="ANULADO">Anulado</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm mb-1 block">Fecha de Pago</label>
+                <input type="date" value={form.paymentDate ?? ""} onChange={(e) => onChangeForm("paymentDate", e.target.value || null)} className="w-full" />
+              </div>
+              <div>
+                <label className="text-sm mb-1 block">Empleado</label>
+                <select value={form.fk_idEmployee} onChange={(e) => onChangeForm("fk_idEmployee", Number(e.target.value))} className="w-full">
+                  <option value={0}>Empleado…</option>
+                  {employees.map((emp) => (
+                    <option key={emp.idEmployee} value={emp.idEmployee}>{emp.fullName}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3 border-t border-slate-700 pt-4">
+              <CancelButton onClick={resetEditForm} />
+              <SaveButton onClick={updateItem} disabled={saving} children="Guardar cambios" />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 

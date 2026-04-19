@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
-import { AddButton, ExportButton, AdminSection } from '../../components/ui/admin-buttons';
+import { Edit, Trash2, Loader } from 'lucide-react';
+import { AddButton, ExportButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -31,6 +32,7 @@ const ExpensesManagement = () => {
   const [filterMonth, setFilterMonth] = useState("");
   const [exporting, setExporting] = useState(false);
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
 
   const fetchExpenses = async () => {
@@ -150,14 +152,8 @@ const ExpensesManagement = () => {
 
       toast.success("Gasto actualizado correctamente ✅");
 
-      // 🧼 limpiar formulario y salir del modo edición
-      setNewExpense({
-        date: "",
-        description: "",
-        AmountBsCaptureType: 0,
-        period: "",
-      });
       setEditingId(null);
+      setEditingExpense(null);
 
       fetchExpenses();
     } catch {
@@ -293,17 +289,9 @@ const ExpensesManagement = () => {
     <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Gastos</h1>
 
-      {/* === Formulario principal (crear / editar) === */}
+      {/* === Formulario principal (crear) === */}
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">
-          {editingId ? "Editar Gasto" : "Agregar Nuevo Gasto"}
-        </h2>
-        {editingId && (
-          <div className="bg-yellow-800/30 border border-yellow-500 text-yellow-300 px-4 py-2 rounded-md mb-4 text-sm flex items-center gap-2 animate-fade-in">
-            <Edit size={16} /> 
-            <span>Estás editando un gasto existente. Modifica los datos y guarda los cambios.</span>
-          </div>
-        )}
+        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Gasto</h2>
 
         <div className="flex flex-wrap gap-4 items-end justify-between">
           <div className="flex flex-wrap gap-4">
@@ -373,37 +361,7 @@ const ExpensesManagement = () => {
             </div>
           </div>
 
-          {/* === Botones dinámicos === */}
-          {editingId ? (
-            <div className="flex gap-2">
-              <button
-                onClick={() =>
-                  updateExpense(editingId, {
-                    ...newExpense,
-                  })
-                }
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md font-semibold flex items-center justify-center gap-1 text-sm h-[36px]"
-              >
-                <Save size={16} /> Guardar cambios
-              </button>
-              <button
-                onClick={() => {
-                  setEditingId(null);
-                  setNewExpense({
-                    date: "",
-                    description: "",
-                    AmountBsCaptureType: 0,
-                    period: "",
-                  });
-                }}
-                className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-2"
-              >
-                <X size={16} /> Cancelar
-              </button>
-            </div>
-          ) : (
-            <AddButton onClick={createExpense} className="ml-auto" />
-          )}
+          <AddButton onClick={createExpense} className="ml-auto" />
         </div>
 
         {/* === Filtro y Exportar PDF === */}
@@ -459,13 +417,10 @@ const ExpensesManagement = () => {
                   <button
                     onClick={() => {
                       setEditingId(expense.idExpenses!);
-
-                      // 🧠 Mostrar el monto con coma para el input
                       const displayAmount = expense.AmountBsCaptureType
                         ? String(expense.AmountBsCaptureType).replace(".", ",")
                         : "";
-
-                      setNewExpense({
+                      setEditingExpense({
                         date: expense.date,
                         description: expense.description,
                         AmountBsCaptureType: displayAmount as any,
@@ -499,6 +454,51 @@ const ExpensesManagement = () => {
           </div>
         )}
       </AdminSection>
+
+      {editingId !== null && editingExpense && createPortal(
+        <div
+          className="fixed inset-0 lg:left-80 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => { setEditingId(null); setEditingExpense(null); }}
+        >
+          <div
+            className="w-full max-w-2xl max-h-[95vh] overflow-y-auto rounded-2xl border border-[#167C79]/60 bg-[#0f172a] p-6 shadow-[0_25px_80px_rgba(0,0,0,0.6)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-[#F8F4E3] mb-6">Editar Gasto</h3>
+            <div className="flex flex-wrap gap-4">
+              <div>
+                <label className="block mb-1 text-white">Fecha <span className="text-red-500">*</span></label>
+                <input type="date" value={editingExpense.date}
+                  onChange={(e) => setEditingExpense({ ...editingExpense, date: e.target.value })}
+                  className="select-field flex-1" />
+              </div>
+              <div>
+                <label className="block mb-1 text-white">Descripción <span className="text-red-500">*</span></label>
+                <input type="text" placeholder="Descripción" value={editingExpense.description}
+                  onChange={(e) => setEditingExpense({ ...editingExpense, description: e.target.value })}
+                  className="w-full" />
+              </div>
+              <div>
+                <label className="block mb-1 text-white">Monto <span className="text-red-500">*</span></label>
+                <input type="text" placeholder="Ej: 1.000,50" value={editingExpense.AmountBsCaptureType}
+                  onChange={(e) => setEditingExpense({ ...editingExpense, AmountBsCaptureType: e.target.value as any })}
+                  className="select-field flex-1" />
+              </div>
+              <div>
+                <label className="block mb-1 text-white">Periodo <span className="text-red-500">*</span></label>
+                <input type="date" value={editingExpense.period}
+                  onChange={(e) => setEditingExpense({ ...editingExpense, period: e.target.value })}
+                  className="select-field flex-1" />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3 border-t border-slate-700 pt-4">
+              <CancelButton onClick={() => { setEditingId(null); setEditingExpense(null); }} />
+              <SaveButton onClick={() => updateExpense(editingId, editingExpense)} children="Guardar cambios" />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

@@ -1,16 +1,14 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
 import {
-  Plus,
   Edit,
-  Save,
   Trash2,
   Loader,
-  X,
   FileText,
 } from "lucide-react";
 import { confirmDialog } from '../../utils/confirmDialog';
-import { AddButton, ExportButton, AdminSection } from '../../components/ui/admin-buttons';
+import { AddButton, ExportButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dayjs from "dayjs";
@@ -62,6 +60,12 @@ const HorseAssignmentsManagement = () => {
     endDate: "",
   });
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState({
+    fk_idEmployee: "",
+    fk_idHorse: "",
+    assignmentDate: "",
+    endDate: "",
+  });
   const [loading, setLoading] = useState<boolean>(true);
   const [exporting, setExporting] = useState<boolean>(false);
   const [filterMonth, setFilterMonth] = useState<string>("");
@@ -215,7 +219,7 @@ const HorseAssignmentsManagement = () => {
     // === Cargar datos al editar ===
     const startEdit = (a: HorseAssignment) => {
         setEditingId(a.idHorseAssignments!);
-        setForm({
+        setEditForm({
             fk_idEmployee: a.employee?.idEmployee
             ? a.employee.idEmployee.toString()
             : "",
@@ -225,9 +229,55 @@ const HorseAssignmentsManagement = () => {
         });
     };
 
+    const handleEditSubmit = async () => {
+        if (!editForm.fk_idEmployee || !editForm.fk_idHorse || !editForm.assignmentDate || !editForm.endDate) {
+            toast.error("Todos los campos marcados con * son obligatorios.");
+            return;
+        }
+        const emp = employees.find((e) => e.idEmployee === Number(editForm.fk_idEmployee));
+        const role = emp?.employee_position?.namePosition?.toLowerCase().trim() || "";
+        if (EXCLUDED_ROLES.includes(role)) {
+            toast.error("🚫 Empleado no válido para asignación de caballos.");
+            return;
+        }
+        const horseId = Number(editForm.fk_idHorse);
+        const today = new Date();
+        const isHorseAssigned = assignments.some((a) => {
+            const horseMatch = a.horse?.idHorse === horseId;
+            const endDate = new Date(a.endDate);
+            const stillActive = endDate >= today;
+            const differentRecord = a.idHorseAssignments !== editingId;
+            return horseMatch && stillActive && differentRecord;
+        });
+        if (isHorseAssigned) {
+            toast.error("Este caballo ya está asignado a otro empleado actualmente.");
+            return;
+        }
+        try {
+            const res = await fetch(`${API_URL}${editingId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(editForm),
+            });
+            if (!res.ok) throw new Error("Error al guardar asignación");
+            toast.success("Asignación actualizada!");
+            setEditingId(null);
+            fetchAssignments();
+        } catch {
+            toast.error("No se pudo guardar la asignación.");
+        }
+    };
+
 
     // === Eliminar ===
     const deleteAssignment = async (id: number) => {
+        const confirmed = await confirmDialog({
+            title: "¿Eliminar asignación?",
+            description: "Esta acción no se puede deshacer. ¿Deseas continuar?",
+            confirmText: "Eliminar",
+            cancelText: "Cancelar",
+        });
+        if (!confirmed) return;
         try {
         const res = await fetch(`${API_URL}${id}`, { method: "DELETE" });
         if (!res.ok) throw new Error("Error al eliminar asignación");
@@ -358,9 +408,7 @@ const HorseAssignmentsManagement = () => {
 
       {/* === FORM === */}
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">
-          {editingId ? "Editar Asignación" : "Nueva Asignación"}
-        </h2>
+        <h2 className="text-xl font-semibold mb-4 text-teal-400">Nueva Asignación</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
@@ -434,24 +482,7 @@ const HorseAssignmentsManagement = () => {
         </div>
 
         <div className="flex justify-end mt-4 gap-3">
-          {editingId ? (
-            <>
-              <button
-                onClick={handleSubmit}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2"
-              >
-                <Save size={18} /> Guardar cambios
-              </button>
-              <button
-                onClick={cancelEdit}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-semibold flex items-center gap-2"
-              >
-                <X size={18} /> Cancelar
-              </button>
-            </>
-          ) : (
-            <AddButton onClick={handleSubmit} />
-          )}
+          <AddButton onClick={handleSubmit} />
         </div>
       </AdminSection>
 
@@ -553,6 +584,53 @@ const HorseAssignmentsManagement = () => {
           </div>
         )}
       </div>
+
+      {editingId !== null && createPortal(
+        <div
+          className="fixed inset-0 lg:left-80 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => setEditingId(null)}
+        >
+          <div
+            className="w-full max-w-2xl max-h-[95vh] overflow-y-auto rounded-2xl border border-[#167C79]/60 bg-[#0f172a] p-6 shadow-[0_25px_80px_rgba(0,0,0,0.6)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-[#F8F4E3] mb-6">Editar Asignación</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-300 mb-1 block">Empleado <span className="text-red-500">*</span></label>
+                <select value={editForm.fk_idEmployee} onChange={(e) => setEditForm({ ...editForm, fk_idEmployee: e.target.value })} className="w-full">
+                  <option value="">Seleccionar Empleado</option>
+                  {employees.map((emp) => (
+                    <option key={emp.idEmployee} value={emp.idEmployee}>
+                      {emp.fullName}{emp.employee_position ? ` - ${emp.employee_position.namePosition}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm text-gray-300 mb-1 block">Caballo <span className="text-red-500">*</span></label>
+                <select value={editForm.fk_idHorse} onChange={(e) => setEditForm({ ...editForm, fk_idHorse: e.target.value })} className="w-full">
+                  <option value="">Seleccionar Caballo</option>
+                  {horses.map((h) => <option key={h.idHorse} value={h.idHorse}>{h.horseName}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm text-gray-300 mb-1 block">Fecha Asignación <span className="text-red-500">*</span></label>
+                <input type="date" value={editForm.assignmentDate} onChange={(e) => setEditForm({ ...editForm, assignmentDate: e.target.value })} className="w-full" />
+              </div>
+              <div>
+                <label className="text-sm text-gray-300 mb-1 block">Fecha Fin <span className="text-red-500">*</span></label>
+                <input type="date" value={editForm.endDate} onChange={(e) => setEditForm({ ...editForm, endDate: e.target.value })} className="w-full" />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3 border-t border-slate-700 pt-4">
+              <CancelButton onClick={() => setEditingId(null)} />
+              <SaveButton onClick={handleEditSubmit} children="Guardar cambios" />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

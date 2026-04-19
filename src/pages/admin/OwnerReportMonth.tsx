@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import type { ChangeEvent } from 'react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/es';
 import jsPDF from 'jspdf';
 import autoTable, { type CellInput } from 'jspdf-autotable';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X, Download ,ChevronUp,ChevronDown,} from 'lucide-react';
+import { Plus, Edit, Trash2, Loader, Download, ChevronUp, ChevronDown } from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
-import { ExportButton, AdminSection } from '../../components/ui/admin-buttons';
+import { ExportButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 
 
 const API_URL = 'http://localhost:8000/owner_report_month/';
@@ -302,12 +303,17 @@ const OwnerReportMonthManagement = () => {
   const [horses, setHorses] = useState<HorseOption[]>([]);
   const [ownerHorses, setOwnerHorses] = useState<HorseOption[]>([]);
   const [loadingOwnerHorses, setLoadingOwnerHorses] = useState(false);
+  const [editReport, setEditReport] = useState<OwnerReportMonth>(createInitialReport());
+  const [editNumericDisplays, setEditNumericDisplays] = useState<Record<NumericField, string>>(
+    () => createInitialNumericDisplays()
+  );
+  const [editHorsesReport, setEditHorsesReport] = useState<HorseReport[]>([]);
+  const [editOwnerHorses, setEditOwnerHorses] = useState<HorseOption[]>([]);
+  const [editLoadingOwnerHorses, setEditLoadingOwnerHorses] = useState(false);
   const [filterStart, setFilterStart] = useState<string>('');
   const [filterEnd, setFilterEnd] = useState<string>('');
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const reportsSectionRef = useRef<HTMLDivElement | null>(null);
-
-  const isEditing = editingId !== null;
 
   const filteredReports = useMemo(() => {
     if (!filterStart && !filterEnd) return reports;
@@ -696,6 +702,40 @@ const OwnerReportMonthManagement = () => {
     }
   };
 
+  const fetchEditOwnerHorses = async (ownerId: number, existing: HorseReport[] = []) => {
+    if (!ownerId) {
+      setEditOwnerHorses([]);
+      setEditHorsesReport([]);
+      return;
+    }
+    setEditLoadingOwnerHorses(true);
+    try {
+      const res = await fetch(`${HORSES_URL}by_owner/${ownerId}`);
+      if (!res.ok) throw new Error('Error al obtener caballos del propietario');
+      const data: HorseOption[] = await res.json();
+      setEditOwnerHorses(data);
+      setEditHorsesReport(
+        data.map((horse) => {
+          const previous = existing.find((item) => item.fk_idHorse === horse.idHorse);
+          const days = previous?.days ?? 0;
+          const alphaKg = previous?.alphaKg ?? 0;
+          return {
+            fk_idHorse: horse.idHorse,
+            days,
+            alphaKg,
+            daysDisplay: previous?.daysDisplay ?? (days ? formatNumberDisplay(days) : ''),
+            alphaKgDisplay: previous?.alphaKgDisplay ?? (alphaKg ? formatNumberDisplay(alphaKg) : ''),
+          };
+        })
+      );
+    } catch {
+      setEditOwnerHorses([]);
+      setEditHorsesReport([]);
+    } finally {
+      setEditLoadingOwnerHorses(false);
+    }
+  };
+
   const fetchReports = async () => {
     setLoading(true);
     try {
@@ -741,7 +781,14 @@ const OwnerReportMonthManagement = () => {
     setNumericDisplays(createInitialNumericDisplays());
     setHorsesReport([]);
     setOwnerHorses([]);
+  };
+
+  const resetEditForm = () => {
     setEditingId(null);
+    setEditReport(createInitialReport());
+    setEditNumericDisplays(createInitialNumericDisplays());
+    setEditHorsesReport([]);
+    setEditOwnerHorses([]);
   };
 
   const handleReportChange =
@@ -791,6 +838,41 @@ const OwnerReportMonthManagement = () => {
         [field]: parsed ?? 0,
         [displayKey]: rawValue,
       };
+      return next;
+    });
+  };
+
+  const handleEditReportChange =
+    (field: keyof OwnerReportMonth) =>
+    (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+      const { value } = event.target;
+
+      if (field === 'fk_idOwner') {
+        const ownerId = value === '' ? 0 : Number(value);
+        setEditReport((prev) => ({ ...prev, fk_idOwner: ownerId }));
+        setEditOwnerHorses([]);
+        setEditHorsesReport([]);
+        fetchEditOwnerHorses(ownerId);
+        return;
+      }
+
+      if (NUMERIC_FIELDS.includes(field as NumericField)) {
+        const numericField = field as NumericField;
+        setEditNumericDisplays((prev) => ({ ...prev, [numericField]: value }));
+        const parsed = parseNumberInput(value);
+        setEditReport((prev) => ({ ...prev, [field]: parsed ?? 0 }));
+        return;
+      }
+
+      setEditReport((prev) => ({ ...prev, [field]: value }));
+    };
+
+  const updateEditHorseRow = (index: number, field: 'days' | 'alphaKg', rawValue: string) => {
+    setEditHorsesReport((prev) => {
+      const next = [...prev];
+      const parsed = parseNumberInput(rawValue);
+      const displayKey = field === 'days' ? 'daysDisplay' : 'alphaKgDisplay';
+      next[index] = { ...next[index], [field]: parsed ?? 0, [displayKey]: rawValue };
       return next;
     });
   };
@@ -859,7 +941,7 @@ const OwnerReportMonthManagement = () => {
   const updateReport = async () => {
     if (editingId === null) return;
 
-    const hasInvalidHorse = horsesReport.some(hasIncompleteHorseValues);
+    const hasInvalidHorse = editHorsesReport.some(hasIncompleteHorseValues);
 
     if (hasInvalidHorse) {
       toast.error('Completa dias y alfalfa (Kg) para cada caballo registrado.');
@@ -867,8 +949,21 @@ const OwnerReportMonthManagement = () => {
     }
 
     try {
-      const payload = buildPayload();
-      console.debug('Actualizando reporte mensual', editingId, payload);
+      const sanitizedHorses = editHorsesReport
+        .filter((horse) => horse.fk_idHorse !== 0)
+        .map((horse) => ({
+          fk_idHorse: horse.fk_idHorse,
+          days: Number(horse.days) || 0,
+          alphaKg: Number(horse.alphaKg) || 0,
+        }));
+
+      const payload = {
+        ...editReport,
+        horses_report: sanitizedHorses,
+        period: editReport.period || null,
+        paymentDate: editReport.paymentDate ? `${editReport.paymentDate}T00:00:00` : null,
+      };
+
       const res = await fetch(`${API_URL}${editingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -879,11 +974,8 @@ const OwnerReportMonthManagement = () => {
         throw new Error(detail || 'Error al actualizar reporte');
       }
       toast.success('Reporte actualizado!');
-      resetForm();
+      resetEditForm();
       fetchReports();
-      setTimeout(() => {
-        reportsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 300);
     } catch (error) {
       console.error(error);
       toast.error(
@@ -920,31 +1012,29 @@ const OwnerReportMonthManagement = () => {
         acc[field] = rawValue;
         return acc;
       }
-
       if (typeof rawValue === 'string') {
         const parsed = parseNumberInput(rawValue);
         acc[field] = parsed ?? 0;
         return acc;
       }
-
       acc[field] = Number(rawValue) || 0;
       return acc;
     }, {} as Record<NumericField, number>);
 
     const nextNumericDisplays = createInitialNumericDisplays();
     NUMERIC_FIELDS.forEach((field) => {
-      const numericValue = sanitizedNumericValues[field];
-      nextNumericDisplays[field] = formatNumberDisplay(numericValue);
+      nextNumericDisplays[field] = formatNumberDisplay(sanitizedNumericValues[field]);
     });
-    setNumericDisplays(nextNumericDisplays);
+    setEditNumericDisplays(nextNumericDisplays);
 
-    setNewReport({
+    setEditReport({
       ...rest,
       ...sanitizedNumericValues,
       period: normalizeDateForInput(rest.period),
       paymentDate: normalizeDateForInput(rest.paymentDate),
       fk_idOwner: ownerId,
     });
+
     const existingHorses = horses_report
       ? horses_report.map((horse) => {
           const parsedDays =
@@ -953,7 +1043,6 @@ const OwnerReportMonthManagement = () => {
             typeof horse.alphaKg === 'number'
               ? horse.alphaKg
               : parseNumberInput(String(horse.alphaKg)) ?? 0;
-
           return {
             ...horse,
             fk_idHorse: horse.fk_idHorse,
@@ -964,15 +1053,12 @@ const OwnerReportMonthManagement = () => {
           };
         })
       : [];
-    setHorsesReport(existingHorses);
+
+    setEditHorsesReport(existingHorses);
     setEditingId(idOwnerReportMonth ?? null);
     if (ownerId) {
-      fetchOwnerHorses(ownerId, existingHorses);
+      fetchEditOwnerHorses(ownerId, existingHorses);
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    setTimeout(() => {
-      document.querySelector<HTMLInputElement>('input[name="period"]')?.focus();
-    }, 300);
   };
   
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
@@ -981,24 +1067,10 @@ const OwnerReportMonthManagement = () => {
     <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión Reportes Mensuales de Propietarios</h1>
 
-      <div
-        className={`bg-white/5 p-6 rounded-2xl mb-8 text-[#F8F4E3] ${
-          isEditing
-            ? "border-2 border-teal-400 shadow-[0_0_20px_#14b8a6]"
-            : "border border-slate-700"
-        }`}
-      >
+      <div className="bg-white/5 p-6 rounded-2xl mb-8 text-[#F8F4E3] border border-slate-700">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-teal-300">
-            {isEditing ? 'Editar Reporte Mensual' : 'Agregar Nuevo Reporte Mensual'}
-          </h2>
+          <h2 className="text-xl font-semibold text-teal-300">Agregar Nuevo Reporte Mensual</h2>
         </div>
-
-        {isEditing && (
-          <div className="mb-4 text-teal-400 font-semibold text-lg animate-pulse text-center">
-            Modo edición activo, actualiza los campos y guarda los cambios
-          </div>
-        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
           <div>
@@ -1315,31 +1387,14 @@ const OwnerReportMonthManagement = () => {
         </div>
 
         <div className="mt-6 flex justify-end gap-3">
-          {isEditing ? (
-            <button
-              onClick={updateReport}
-              className="inline-flex items-center gap-2 px-4 h-9 rounded-[23px] border border-blue-500/70 bg-blue-500/12 text-blue-400 font-semibold tracking-wide text-sm shadow-[0_0_14px_rgba(59,130,246,0.35)] ring-1 ring-blue-500/20 hover:bg-blue-500/20 transition-all duration-300"
-            >
-              <Save size={16} /> Actualizar Reporte
-            </button>
-          ) : (
-            <button onClick={createReport} className="group relative cursor-pointer">
-              <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[23px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-4 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
-                <Plus size={15} /> Crear Reporte
-              </div>
-              <div className="absolute inset-0 z-0 h-full w-full rounded-[23px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
-            </button>
-          )}
-          {isEditing && (
-            <button
-              onClick={resetForm}
-              className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-2"
-            >
-              <X size={18} /> Cancelar
-            </button>
-          )}
+          <button onClick={createReport} className="group relative cursor-pointer">
+            <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[23px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-4 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+              <Plus size={15} /> Crear Reporte
+            </div>
+            <div className="absolute inset-0 z-0 h-full w-full rounded-[23px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+          </button>
+        </div>
       </div>
-    </div>
 
       <AdminSection>
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
@@ -1548,6 +1603,174 @@ const OwnerReportMonthManagement = () => {
           </div>
         )}
       </div>
+
+      {editingId !== null && createPortal(
+        <div
+          className="fixed inset-0 lg:left-80 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={resetEditForm}
+        >
+          <div
+            className="w-full max-w-3xl max-h-[95vh] overflow-y-auto rounded-2xl border border-[#167C79]/60 bg-[#0f172a] p-6 shadow-[0_25px_80px_rgba(0,0,0,0.6)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-[#F8F4E3] mb-6">Editar Reporte Mensual</h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="block mb-1 text-sm text-slate-200">Propietario<RequiredMark /></label>
+                <select value={editReport.fk_idOwner} onChange={handleEditReportChange('fk_idOwner')} className="w-full">
+                  <option value={0}>Selecciona propietario</option>
+                  {owners.map((owner) => (
+                    <option key={owner.idOwner} value={owner.idOwner}>{formatOwnerName(owner)}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block mb-1 text-sm text-slate-200">Periodo<RequiredMark /></label>
+                <input
+                  type="date"
+                  value={normalizeDateForInput(editReport.period)}
+                  onChange={(e) => setEditReport((prev) => ({ ...prev, period: e.target.value }))}
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm text-slate-200">Precio Alfalfa<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0" value={editNumericDisplays.priceAlpha} onChange={handleEditReportChange('priceAlpha')} className="w-full" />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm text-slate-200">Box<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0" value={editNumericDisplays.box} onChange={handleEditReportChange('box')} className="w-full" />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm text-slate-200">Sección<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0" value={editNumericDisplays.section} onChange={handleEditReportChange('section')} className="w-full" />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm text-slate-200">A/Canaston<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0" value={editNumericDisplays.aBasket} onChange={handleEditReportChange('aBasket')} className="w-full" />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm text-slate-200">Aporte Cab. Volante<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0" value={editNumericDisplays.contributionCabFlyer} onChange={handleEditReportChange('contributionCabFlyer')} className="w-full" />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm text-slate-200">Aplicación Vacuna<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0" value={editNumericDisplays.VaccineApplication} onChange={handleEditReportChange('VaccineApplication')} className="w-full" />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm text-slate-200">Desparasitación<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0" value={editNumericDisplays.deworming} onChange={handleEditReportChange('deworming')} className="w-full" />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm text-slate-200">Toma Examen Amenia<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0" value={editNumericDisplays.AmeniaExam} onChange={handleEditReportChange('AmeniaExam')} className="w-full" />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm text-slate-200">Profesor Externo<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0" value={editNumericDisplays.externalTeacher} onChange={handleEditReportChange('externalTeacher')} className="w-full" />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm text-slate-200">Multa<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0" value={editNumericDisplays.fine} onChange={handleEditReportChange('fine')} className="w-full" />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm text-slate-200">Venta Chala<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0" value={editNumericDisplays.saleChala} onChange={handleEditReportChange('saleChala')} className="w-full" />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm text-slate-200">Costo por Cubo de Chala<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0" value={editNumericDisplays.costPerBucket} onChange={handleEditReportChange('costPerBucket')} className="w-full" />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm text-slate-200">Pago Cartilla Sanitaria<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0" value={editNumericDisplays.healthCardPayment} onChange={handleEditReportChange('healthCardPayment')} className="w-full" />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm text-slate-200">Otro<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0" value={editNumericDisplays.other} onChange={handleEditReportChange('other')} className="w-full" />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm text-slate-200">Fecha de pago</label>
+                <input
+                  type="date"
+                  value={normalizeDateForInput(editReport.paymentDate)}
+                  onChange={(e) => setEditReport((prev) => ({ ...prev, paymentDate: e.target.value }))}
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm text-slate-200">Estado<RequiredMark /></label>
+                <select value={editReport.state} onChange={handleEditReportChange('state')} className="w-full">
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Pagado">Pagado</option>
+                  <option value="Anulado">Anulado</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-4 bg-slate-700 border border-slate-600 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-teal-300">Caballos del periodo</h3>
+                {editLoadingOwnerHorses && (
+                  <span className="flex items-center gap-2 text-xs text-slate-200">
+                    <Loader size={16} className="animate-spin" /> Cargando caballos...
+                  </span>
+                )}
+              </div>
+
+              {!editReport.fk_idOwner ? (
+                <p className="text-sm text-slate-200">Selecciona un propietario para cargar sus caballos.</p>
+              ) : editHorsesReport.length === 0 ? (
+                <p className="text-sm text-slate-200">El propietario seleccionado no tiene caballos registrados.</p>
+              ) : (
+                <div className="space-y-4">
+                  {editHorsesReport.map((horse, index) => (
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end bg-slate-800 border border-slate-600 p-3 rounded-md">
+                      <div>
+                        <label className="block mb-1 text-sm text-slate-200">Caballo<RequiredMark /></label>
+                        <div className="w-full p-2 rounded-md bg-gray-800 text-slate-200 border border-slate-600">
+                          {editOwnerHorses.find((item) => item.idHorse === horse.fk_idHorse)?.horseName ??
+                            horses.find((item) => item.idHorse === horse.fk_idHorse)?.horseName ??
+                            `ID ${horse.fk_idHorse}`}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block mb-1 text-sm text-slate-200">Días<RequiredMark /></label>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="0"
+                          value={horse.daysDisplay ?? ''}
+                          onChange={(e) => updateEditHorseRow(index, 'days', e.target.value)}
+                          className="w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-1 text-sm text-slate-200">Alfalfa Kg<RequiredMark /></label>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="0"
+                          value={horse.alphaKgDisplay ?? ''}
+                          onChange={(e) => updateEditHorseRow(index, 'alphaKg', e.target.value)}
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3 border-t border-slate-700 pt-4">
+              <CancelButton onClick={resetEditForm} />
+              <SaveButton onClick={updateReport}>Guardar cambios</SaveButton>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

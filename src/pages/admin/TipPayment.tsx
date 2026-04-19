@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
-import { Edit, Plus, Save, Trash2, X } from "lucide-react";
-import { AddButton, ExportButton, AdminSection } from '../../components/ui/admin-buttons';
+import { Edit, Trash2 } from "lucide-react";
+import { AddButton, ExportButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dayjs from "dayjs";
@@ -91,7 +92,8 @@ const TipPayment: React.FC = () => {
     const [employees, setEmployees] = useState<EmployeeLite[]>([]);
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [saving, setSaving] = useState(false);
-    const [amountInput, setAmountInput] = useState("");
+    const [amountInput, setAmountInput] = useState(""); // edit modal
+    const [createAmountInput, setCreateAmountInput] = useState(""); // create form
     const [filterEmployee, setFilterEmployee] = useState<number>(0);
     const [filterState, setFilterState] = useState<string>("");
 
@@ -100,8 +102,17 @@ const TipPayment: React.FC = () => {
     const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
     const [filterMonth, setFilterMonth] = useState<string>("");
 
-    // formulario único
+    // edit modal state
     const [form, setForm] = useState<TipPaymentCreate>({
+        amount: 0,
+        state: "",
+        paymentDate: null,
+        fk_idEmployee: 0,
+        description: "",
+    });
+
+    // create form state
+    const [createForm, setCreateForm] = useState<TipPaymentCreate>({
         amount: 0,
         state: "",
         paymentDate: null,
@@ -277,12 +288,20 @@ const TipPayment: React.FC = () => {
         load();
     }, []);
 
-    // === Manejo input amount ===
+    // === Manejo input amount (edit modal) ===
     const handleAmountChange = (raw: string) => {
         const cleaned = normalizeInput(raw);
         const num = parseToNumber(cleaned);
         setAmountInput(cleaned);
         setForm((prev) => ({ ...prev, amount: num }));
+    };
+
+    // === Manejo input amount (create form) ===
+    const handleCreateAmountChange = (raw: string) => {
+        const cleaned = normalizeInput(raw);
+        const num = parseToNumber(cleaned);
+        setCreateAmountInput(cleaned);
+        setCreateForm((prev) => ({ ...prev, amount: num }));
     };
 
     function onChangeForm<K extends keyof TipPaymentCreate>(
@@ -292,16 +311,22 @@ const TipPayment: React.FC = () => {
         setForm((prev) => ({ ...prev, [key]: value }));
     }
 
-    function resetForm() {
-        setForm({
-        amount: 0,
-        state: "",
-        paymentDate: null,
-        fk_idEmployee: 0,
-        description: "",
-        });
+    function onChangeCreateForm<K extends keyof TipPaymentCreate>(
+        key: K,
+        value: TipPaymentCreate[K]
+    ) {
+        setCreateForm((prev) => ({ ...prev, [key]: value }));
+    }
+
+    function resetEditForm() {
+        setForm({ amount: 0, state: "", paymentDate: null, fk_idEmployee: 0, description: "" });
         setAmountInput("");
         setEditingRow(null);
+    }
+
+    function resetForm() {
+        setCreateForm({ amount: 0, state: "", paymentDate: null, fk_idEmployee: 0, description: "" });
+        setCreateAmountInput("");
     }
 
     async function maybeRegisterExpense(payment: TipPayment) {
@@ -330,13 +355,13 @@ const TipPayment: React.FC = () => {
 
     async function createItem() {
         try {
-        if (!form.state.trim()) return toast.error("Estado es requerido.");
-        if (!form.fk_idEmployee) return toast.error("Empleado es requerido.");
+        if (!createForm.state.trim()) return toast.error("Estado es requerido.");
+        if (!createForm.fk_idEmployee) return toast.error("Empleado es requerido.");
 
         setSaving(true);
         const payload: TipPaymentCreate = {
-            ...form,
-            amount: Math.round(form.amount * 100) / 100,
+            ...createForm,
+            amount: Math.round(createForm.amount * 100) / 100,
         };
 
         const res = await fetch(API_URL, {
@@ -353,7 +378,8 @@ const TipPayment: React.FC = () => {
         ]);
         await maybeRegisterExpense(created);
 
-        resetForm();
+        setCreateForm({ amount: 0, state: "", paymentDate: null, fk_idEmployee: 0, description: "" });
+        setCreateAmountInput("");
         toast.success("Propina creada!");
         } catch (e: any) {
         toast.error(`Error al crear: ${e.message}`);
@@ -390,7 +416,7 @@ const TipPayment: React.FC = () => {
             )
         );
         
-        resetForm();
+        resetEditForm();
         toast.success("Propina actualizada!");
         } catch (e: any) {
         toast.error(`Error al actualizar: ${e.message}`);
@@ -422,100 +448,45 @@ const TipPayment: React.FC = () => {
             <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Propinas</h1>
             
 
-            {/* Formulario único */}
+            {/* Formulario crear */}
             <AdminSection>
-            <h2 className="text-xl font-semibold mb-4">
-                {editingRow ? "Editar Propina" : "Agregar Propina"}
-            </h2>
+            <h2 className="text-xl font-semibold mb-4">Agregar Propina</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                 <label>Monto (Bs)</label>
-                <input
-                    type="text"
-                    placeholder="0,00"
-                    value={amountInput}
-                    onChange={(e) => handleAmountChange(e.target.value)}
-                    className="select-field w-full text-white"
-                />
+                <input type="text" placeholder="0,00" value={createAmountInput} onChange={(e) => handleCreateAmountChange(e.target.value)} className="select-field w-full text-white" />
                 </div>
-
                 <div>
                 <label>Estado de Propina</label>
-                <select
-                    value={form.state}
-                    onChange={(e) => onChangeForm("state", e.target.value)}
-                    className="select-field w-full text-white"
-                >
+                <select value={createForm.state} onChange={(e) => onChangeCreateForm("state", e.target.value)} className="select-field w-full text-white">
                     <option value="">Estado…</option>
                     <option value="PAGADO">Pagado</option>
                     <option value="PENDIENTE">Pendiente</option>
                     <option value="ANULADO">Anulado</option>
                 </select>
                 </div>
-
                 <div>
                 <label>Fecha de Pago</label>
-                <input
-                    type="date"
-                    value={form.paymentDate ?? ""}
-                    onChange={(e) =>
-                    onChangeForm("paymentDate", e.target.value || null)
-                    }
-                    className="select-field w-full text-white"
-                />
+                <input type="date" value={createForm.paymentDate ?? ""} onChange={(e) => onChangeCreateForm("paymentDate", e.target.value || null)} className="select-field w-full text-white" />
                 </div>
-
                 <div>
                 <label>Empleado</label>
-                <select
-                    value={form.fk_idEmployee}
-                    onChange={(e) =>
-                    onChangeForm("fk_idEmployee", Number(e.target.value))
-                    }
-                    className="select-field w-full text-white"
-                >
+                <select value={createForm.fk_idEmployee} onChange={(e) => onChangeCreateForm("fk_idEmployee", Number(e.target.value))} className="select-field w-full text-white">
                     <option value={0}>Empleado…</option>
                     {employees.map((emp) => (
-                    <option key={emp.idEmployee} value={emp.idEmployee}>
-                        {emp.fullName}
-                    </option>
+                    <option key={emp.idEmployee} value={emp.idEmployee}>{emp.fullName}</option>
                     ))}
                 </select>
                 </div>
-
                 <div>
                 <label>Descripción</label>
-                <input
-                    type="text"
-                    placeholder="Motivo de la propina"
-                    value={form.description || ""}
-                    onChange={(e) => onChangeForm("description", e.target.value)}
-                    className="select-field w-full text-white"
-                />
+                <input type="text" placeholder="Motivo de la propina" value={createForm.description || ""} onChange={(e) => onChangeCreateForm("description", e.target.value)} className="select-field w-full text-white" />
                 </div>
             </div>
 
             <div className="mt-4 text-right">
-                {editingRow ? (
-                <>
-                    <button
-                    onClick={updateItem}
-                    disabled={saving}
-                    className="bg-blue-600 px-4 py-2 rounded inline-flex items-center gap-2"
-                    >
-                    <Save size={18} /> Guardar cambios
-                    </button>
-                    <button
-                    onClick={resetForm}
-                    className="ml-2 bg-gray-600 px-4 py-2 rounded inline-flex items-center gap-2"
-                    >
-                    <X size={18} /> Cancelar
-                    </button>
-                </>
-                ) : (
                 <AddButton onClick={createItem} disabled={saving} />
-                )}
             </div>
             </AdminSection>
 
@@ -690,6 +661,57 @@ const TipPayment: React.FC = () => {
                     </table>
                 </div>
             </AdminSection>
+
+      {editingRow && createPortal(
+        <div
+          className="fixed inset-0 lg:left-80 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={resetEditForm}
+        >
+          <div
+            className="w-full max-w-2xl max-h-[95vh] overflow-y-auto rounded-2xl border border-[#167C79]/60 bg-[#0f172a] p-6 shadow-[0_25px_80px_rgba(0,0,0,0.6)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-[#F8F4E3] mb-6">Editar Propina</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-1">Monto (Bs)</label>
+                <input type="text" placeholder="0,00" value={amountInput} onChange={(e) => handleAmountChange(e.target.value)} className="select-field w-full text-white" />
+              </div>
+              <div>
+                <label className="block mb-1">Estado de Propina</label>
+                <select value={form.state} onChange={(e) => onChangeForm("state", e.target.value)} className="select-field w-full text-white">
+                  <option value="">Estado…</option>
+                  <option value="PAGADO">Pagado</option>
+                  <option value="PENDIENTE">Pendiente</option>
+                  <option value="ANULADO">Anulado</option>
+                </select>
+              </div>
+              <div>
+                <label className="block mb-1">Fecha de Pago</label>
+                <input type="date" value={form.paymentDate ?? ""} onChange={(e) => onChangeForm("paymentDate", e.target.value || null)} className="select-field w-full text-white" />
+              </div>
+              <div>
+                <label className="block mb-1">Empleado</label>
+                <select value={form.fk_idEmployee} onChange={(e) => onChangeForm("fk_idEmployee", Number(e.target.value))} className="select-field w-full text-white">
+                  <option value={0}>Empleado…</option>
+                  {employees.map((emp) => (
+                    <option key={emp.idEmployee} value={emp.idEmployee}>{emp.fullName}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-span-2">
+                <label className="block mb-1">Descripción</label>
+                <input type="text" placeholder="Motivo de la propina" value={form.description || ""} onChange={(e) => onChangeForm("description", e.target.value)} className="select-field w-full text-white" />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3 border-t border-slate-700 pt-4">
+              <CancelButton onClick={resetEditForm} />
+              <SaveButton onClick={updateItem} disabled={saving} children="Guardar cambios" />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
         </div>
         );
 

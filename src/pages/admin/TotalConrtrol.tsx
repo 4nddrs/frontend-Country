@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import type { ChangeEvent } from 'react';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X, ChevronUp, ChevronDown } from 'lucide-react';
-import { ExportButton, AdminSection } from '../../components/ui/admin-buttons';
+import { Plus, Edit, Trash2, Loader, ChevronUp, ChevronDown } from 'lucide-react';
+import { ExportButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
@@ -385,8 +386,15 @@ const TotalControlManagement = () => {
   const [formValues, setFormValues] = useState<
     Partial<Record<NumericField, string>>
   >(() => formatControlToForm(createInitialControl(), true));
-  const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
+  const [editControl, setEditControl] = useState<TotalControl>(() =>
+    applyDerivedValues(createInitialControl())
+  );
+  const [editFormValues, setEditFormValues] = useState<Partial<Record<NumericField, string>>>(
+    () => formatControlToForm(createInitialControl(), true)
+  );
+  const [editSelectedOwner, setEditSelectedOwner] = useState<number | null>(null);
+  const [editHorses, setEditHorses] = useState<any[]>([]);
 
   const [loading, setLoading] = useState<boolean>(true);
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
@@ -573,6 +581,134 @@ const TotalControlManagement = () => {
   };
 
 
+  const fetchEditHorsesByOwner = async (ownerId: number) => {
+    try {
+      const res = await fetch(`http://localhost:8000/horses/by_owner/${ownerId}`);
+      if (!res.ok) throw new Error("Error al obtener caballos del propietario");
+      const data = await res.json();
+      setEditHorses(data);
+      setHorseLookup((prev) => {
+        const updated = { ...prev };
+        data.forEach((horse: { idHorse: number; horseName: string }) => {
+          if (horse?.idHorse) updated[horse.idHorse] = horse.horseName;
+        });
+        return updated;
+      });
+    } catch {
+      // Silenciar error de carga
+    }
+  };
+
+  const handleEditNumericInputChange =
+    (field: NumericField) => (event: ChangeEvent<HTMLInputElement>) => {
+      const rawValue = event.target.value;
+      const sanitized = rawValue.replace(/[^\d.,-]/g, "");
+
+      setEditFormValues((prev) => ({ ...prev, [field]: sanitized }));
+
+      const parsed = parseLocalizedNumber(sanitized);
+
+      setEditControl((prev) => {
+        const updated = { ...prev, [field]: parsed };
+        const recalculated = applyDerivedValues(updated);
+
+        setEditFormValues((prevForm) => ({
+          ...prevForm,
+          ...getDerivedFormValues(recalculated),
+        }));
+
+        return recalculated;
+      });
+    };
+
+  const handleEditNumericInputBlur = (field: NumericField) => () => {
+    setEditFormValues((prev) => {
+      const nextValue = prev[field];
+      if (nextValue === "") return prev;
+      return { ...prev, [field]: formatNumberForInput(safeNumber(editControl[field])) };
+    });
+  };
+
+  const updateEditNumericFormValues = (
+    updates: Partial<Record<NumericField, number>>,
+    options: { zeroAsEmpty?: boolean } = {}
+  ) => {
+    const { zeroAsEmpty = false } = options;
+
+    setEditControl((prev) => {
+      const updated = { ...prev, ...updates };
+      const recalculated = applyDerivedValues(updated);
+
+      setEditFormValues((prevForm) => {
+        const nextForm = { ...prevForm };
+
+        Object.entries(updates).forEach(([key, numericValue]) => {
+          const numericKey = key as NumericField;
+          const valueToFormat = recalculated[numericKey as keyof TotalControl];
+
+          if (zeroAsEmpty && (numericValue === 0 || numericValue === null || numericValue === undefined)) {
+            nextForm[numericKey] = "";
+          } else if (typeof valueToFormat === "number") {
+            nextForm[numericKey] = formatNumberForInput(valueToFormat);
+          }
+        });
+
+        return { ...nextForm, ...getDerivedFormValues(recalculated, zeroAsEmpty) };
+      });
+
+      return recalculated;
+    });
+  };
+
+  const isEditFormValid = () => {
+    if (!editSelectedOwner || editSelectedOwner <= 0) {
+      toast.error("Selecciona un propietario.");
+      return false;
+    }
+    if (!editControl.fk_idHorse) {
+      toast.error("Selecciona un caballo.");
+      return false;
+    }
+    if (!normalizeDateForInput(editControl.period)) {
+      toast.error("Selecciona el periodo.");
+      return false;
+    }
+    const missingField = REQUIRED_NUMERIC_FIELDS.find((field) => {
+      const value = editFormValues[field];
+      return value === undefined || value.trim() === "";
+    });
+    if (missingField) {
+      const label = FIELD_LABELS[missingField] ?? missingField;
+      toast.error(`Completa el campo ${label}.`);
+      return false;
+    }
+    return true;
+  };
+
+  const updateControl = async () => {
+    if (editId === null) return;
+    if (!isEditFormValid()) return;
+
+    try {
+      const payload = applyDerivedValues(editControl);
+      const res = await fetch(`${API_URL}${editId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("Error al actualizar control");
+      toast.success("Actualización realizada correctamente", { position: "top-right" });
+      setEditId(null);
+      setEditControl(applyDerivedValues(createInitialControl()));
+      setEditFormValues(formatControlToForm(createInitialControl(), true));
+      setEditSelectedOwner(null);
+      setEditHorses([]);
+      fetchControls();
+    } catch {
+      toast.error("No se pudo actualizar el control.");
+    }
+  };
+
   const loadLogo = async () => {
     try {
       const LOGO_URL = `${import.meta.env.BASE_URL}image/LogoHipica.png`;
@@ -623,29 +759,17 @@ const TotalControlManagement = () => {
 
     try {
       const payload = applyDerivedValues(newControl);
-      if (isEditing && editId) {
-        const res = await fetch(`${API_URL}${editId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error("Error al actualizar control");
-        toast.success("Actualización realizada correctamente", { position: "top-right" });
-      } else {
-    
-        const res = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error("Error al crear control");
-        toast.success("Registro creado correctamente", { position: "top-right" });
-      }
-
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error("Error al crear control");
+      toast.success("Registro creado correctamente", { position: "top-right" });
       resetForm();
       fetchControls();
     } catch {
-      toast.error(" No se pudo procesar la acción.");
+      toast.error("No se pudo procesar la acción.");
     }
   };
 
@@ -894,13 +1018,10 @@ const TotalControlManagement = () => {
     const baseControl = applyDerivedValues(
       createInitialControl({ fk_idOwner: 0, fk_idHorse: 0 })
     );
-
     setNewControl(baseControl);
     setFormValues(formatControlToForm(baseControl, true));
     setSelectedOwner(null);
     setHorses([]);
-    setIsEditing(false);
-    setEditId(null);
   };
 
 
@@ -908,19 +1029,8 @@ const TotalControlManagement = () => {
     <div  className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Control Total</h1>
       
-      <div
-        className={`bg-white/5 p-6 rounded-2xl mb-8 text-[#F8F4E3] ${
-          isEditing
-            ? "border-2 border-teal-400 shadow-[0_0_20px_#14b8a6]"
-            : "border border-slate-700"
-        }`}
-      >
+      <div className="bg-white/5 p-6 rounded-2xl mb-8 text-[#F8F4E3] border border-slate-700">
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Control Total</h2>
-        {isEditing && (
-          <div className="mb-4 text-teal-400 font-semibold text-lg animate-pulse text-center">
-             Modo edición activo , actualiza los campos y guarda los cambios
-          </div>
-        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="col-span-1 lg:col-span-1">
@@ -1277,30 +1387,12 @@ const TotalControlManagement = () => {
           </div>
         </div>
         <div className="mt-6 flex justify-center gap-3 px-6 pb-6">
-          {isEditing ? (
-            <button
-              onClick={createControl}
-              className="inline-flex items-center gap-2 px-4 h-9 rounded-[23px] border border-blue-500/70 bg-blue-500/12 text-blue-400 font-semibold tracking-wide text-sm shadow-[0_0_14px_rgba(59,130,246,0.35)] ring-1 ring-blue-500/20 hover:bg-blue-500/20 transition-all duration-300"
-            >
-              <Save size={16} /> Actualizar Registro
-            </button>
-          ) : (
-            <button onClick={createControl} className="group relative cursor-pointer">
-              <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[23px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-4 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
-                <Plus size={15} /> Agregar
-              </div>
-              <div className="absolute inset-0 z-0 h-full w-full rounded-[23px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
-            </button>
-          )}
-
-          {isEditing && (
-            <button
-              onClick={resetForm}
-              className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-2"
-            >
-              <X size={20} /> Cancelar
-            </button>
-          )}
+          <button onClick={createControl} className="group relative cursor-pointer">
+            <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[23px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-4 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+              <Plus size={15} /> Agregar
+            </div>
+            <div className="absolute inset-0 z-0 h-full w-full rounded-[23px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+          </button>
         </div>
       </div>
       <AdminSection>
@@ -1443,22 +1535,16 @@ const TotalControlManagement = () => {
                     <div className="flex items-center justify-center gap-6 border-t border-slate-800 pt-6 pb-2">
                       <button
                         onClick={() => {
-                          setIsEditing(true);
                           setEditId(control.idTotalControl!);
                           const normalizedControl = applyDerivedValues(control);
-                          setNewControl(normalizedControl);
-                          setFormValues(formatControlToForm(normalizedControl));
-
-                          setSelectedOwner(control.fk_idOwner || null);
+                          setEditControl(normalizedControl);
+                          setEditFormValues(formatControlToForm(normalizedControl));
+                          setEditSelectedOwner(control.fk_idOwner || null);
                           if (control.fk_idOwner) {
-                            fetchHorsesByOwner(control.fk_idOwner);
+                            fetchEditHorsesByOwner(control.fk_idOwner);
                           } else {
-                            setHorses([]);
+                            setEditHorses([]);
                           }
-
-                          toast.success("Modo edición activado", { position: "top-right" });
-                          window.scrollTo({ top: 0, behavior: "smooth" });
-                          setTimeout(() => document.querySelector<HTMLInputElement>('input[name="toCaballerizo"]')?.focus(), 300);
                         }}
                         className="relative flex items-center justify-center w-15 h-15 rounded-[20px]
                                       bg-gradient-to-b from-[#1A1C1E] to-[#0E0F10]
@@ -1489,6 +1575,181 @@ const TotalControlManagement = () => {
           </div>
         )}
       </AdminSection>
+
+      {editId !== null && createPortal(
+        <div
+          className="fixed inset-0 lg:left-80 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => {
+            setEditId(null);
+            setEditControl(applyDerivedValues(createInitialControl()));
+            setEditFormValues(formatControlToForm(createInitialControl(), true));
+            setEditSelectedOwner(null);
+            setEditHorses([]);
+          }}
+        >
+          <div
+            className="w-full max-w-3xl max-h-[95vh] overflow-y-auto rounded-2xl border border-[#167C79]/60 bg-[#0f172a] p-6 shadow-[0_25px_80px_rgba(0,0,0,0.6)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-[#F8F4E3] mb-6">Editar Control Total</h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="block mb-1">Propietario<RequiredMark /></label>
+                <select
+                  value={editSelectedOwner || ""}
+                  onChange={(e) => {
+                    const ownerId = Number(e.target.value);
+                    setEditSelectedOwner(ownerId || null);
+                    setEditControl((prev) => ({ ...prev, fk_idOwner: ownerId, fk_idHorse: 0 }));
+                    updateEditNumericFormValues({ box: 0, section: 0, basket: 0 }, { zeroAsEmpty: true });
+                    if (ownerId) fetchEditHorsesByOwner(ownerId);
+                    else setEditHorses([]);
+                  }}
+                  className="select-field text-sm w-full"
+                >
+                  <option value="">-- Selecciona propietario --</option>
+                  {owners.map((o) => (
+                    <option key={o.idOwner} value={o.idOwner}>
+                      {buildOwnerDisplayName(o) || `ID ${o.idOwner}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block mb-1">Periodo<RequiredMark /></label>
+                <input
+                  type="date"
+                  value={normalizeDateForInput(editControl.period)}
+                  onChange={(e) => setEditControl((prev) => ({ ...prev, period: normalizeDateForInput(e.target.value) }))}
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1">Caballo<RequiredMark /></label>
+                <select
+                  value={editControl.fk_idHorse}
+                  onChange={(e) => {
+                    const horseId = Number(e.target.value);
+                    setEditControl((prev) => ({ ...prev, fk_idHorse: horseId }));
+                    const selectedHorse = editHorses.find((h) => h.idHorse === horseId);
+                    if (!selectedHorse) {
+                      updateEditNumericFormValues({ box: 0, section: 0, basket: 0 }, { zeroAsEmpty: true });
+                      return;
+                    }
+                    const boxValue = selectedHorse.box !== undefined && selectedHorse.box !== null
+                      ? resolveChargeFromFlag(selectedHorse.box, BOX_CHARGE, editControl.box)
+                      : editControl.box;
+                    const sectionValue = selectedHorse.section !== undefined && selectedHorse.section !== null
+                      ? resolveChargeFromFlag(selectedHorse.section, SECTION_CHARGE, editControl.section)
+                      : editControl.section;
+                    const basketValue = selectedHorse.basket !== undefined && selectedHorse.basket !== null
+                      ? resolveNumericFlag(selectedHorse.basket, editControl.basket)
+                      : editControl.basket;
+                    updateEditNumericFormValues({ box: boxValue, section: sectionValue, basket: basketValue });
+                  }}
+                  disabled={!editSelectedOwner}
+                  className="select-field disabled:opacity-50 w-full"
+                >
+                  <option value="">-- Selecciona caballo --</option>
+                  {editHorses.map((h) => (
+                    <option key={h.idHorse} value={h.idHorse}>{h.horseName}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block mb-1">Box<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0,00" value={editFormValues.box ?? ""} onChange={handleEditNumericInputChange("box")} onBlur={handleEditNumericInputBlur("box")} className="select-field placeholder-gray-400 w-full" />
+              </div>
+              <div>
+                <label className="block mb-1">Sección<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0,00" value={editFormValues.section ?? ""} onChange={handleEditNumericInputChange("section")} onBlur={handleEditNumericInputBlur("section")} className="select-field placeholder-gray-400 w-full" />
+              </div>
+              <div>
+                <label className="block mb-1">Canaston<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0,00" value={editFormValues.basket ?? ""} onChange={handleEditNumericInputChange("basket")} onBlur={handleEditNumericInputBlur("basket")} className="select-field placeholder-gray-400 w-full" />
+              </div>
+              <div>
+                <label className="block mb-1">A/ caballerizo<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0,00" value={editFormValues.toCaballerizo ?? ""} onChange={handleEditNumericInputChange("toCaballerizo")} onBlur={handleEditNumericInputBlur("toCaballerizo")} className="select-field placeholder-gray-400 w-full" />
+              </div>
+              <div>
+                <label className="block mb-1">Vacunas<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0,00" value={editFormValues.vaccines ?? ""} onChange={handleEditNumericInputChange("vaccines")} onBlur={handleEditNumericInputBlur("vaccines")} className="select-field placeholder-gray-400 w-full" />
+              </div>
+              <div>
+                <label className="block mb-1">Anemia<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0,00" value={editFormValues.anemia ?? ""} onChange={handleEditNumericInputChange("anemia")} onBlur={handleEditNumericInputBlur("anemia")} className="select-field placeholder-gray-400 w-full" />
+              </div>
+              <div>
+                <label className="block mb-1">Desparasitacion<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0,00" value={editFormValues.deworming ?? ""} onChange={handleEditNumericInputChange("deworming")} onBlur={handleEditNumericInputBlur("deworming")} className="select-field placeholder-gray-400 w-full" />
+              </div>
+
+              <div className="col-span-1 md:col-span-2 lg:col-span-3 mt-2">
+                <h4 className="text-sm font-semibold text-amber-400 uppercase tracking-wide">Datos de Alfalfa</h4>
+              </div>
+
+              <div>
+                <label className="block mb-1">Consumo alfalfa por dia (Kg)<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0,00" value={editFormValues.consumptionAlfaDiaKlg ?? ""} onChange={handleEditNumericInputChange("consumptionAlfaDiaKlg")} onBlur={handleEditNumericInputBlur("consumptionAlfaDiaKlg")} className="select-field placeholder-gray-400 w-full" />
+              </div>
+              <div>
+                <label className="block mb-1">Costo alfalfa (Bs)<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0,00" value={editFormValues.costAlfaBs ?? ""} onChange={handleEditNumericInputChange("costAlfaBs")} onBlur={handleEditNumericInputBlur("costAlfaBs")} className="select-field placeholder-gray-400 w-full" />
+              </div>
+              <div>
+                <label className="block mb-1">Días de consumo al mes<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0,00" value={editFormValues.daysConsumptionMonth ?? ""} onChange={handleEditNumericInputChange("daysConsumptionMonth")} onBlur={handleEditNumericInputBlur("daysConsumptionMonth")} className="select-field placeholder-gray-400 w-full" />
+              </div>
+              <div>
+                <label className="block mb-1">Consumo alfalfa mes (Kg)</label>
+                <input type="text" inputMode="decimal" placeholder="0,00" value={editFormValues.consumptionAlphaMonthKlg ?? ""} readOnly className="select-field placeholder-gray-400 w-full" />
+              </div>
+              <div>
+                <label className="block mb-1">Costo total alfalfa (Bs)</label>
+                <input type="text" inputMode="decimal" placeholder="0,00" value={editFormValues.costTotalAlphaBs ?? ""} readOnly className="select-field placeholder-gray-400 w-full" />
+              </div>
+
+              <div className="col-span-1 md:col-span-2 lg:col-span-3 mt-2">
+                <h4 className="text-sm font-semibold text-amber-400 uppercase tracking-wide">Datos de Chala</h4>
+              </div>
+
+              <div>
+                <label className="block mb-1">Cubo de chala<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0,00" value={editFormValues.cubeChala ?? ""} onChange={handleEditNumericInputChange("cubeChala")} onBlur={handleEditNumericInputBlur("cubeChala")} className="select-field placeholder-gray-400 w-full" />
+              </div>
+              <div>
+                <label className="block mb-1">Costo unitario chala (Bs)<RequiredMark /></label>
+                <input type="text" inputMode="decimal" placeholder="0,00" value={editFormValues.UnitCostChalaBs ?? ""} onChange={handleEditNumericInputChange("UnitCostChalaBs")} onBlur={handleEditNumericInputBlur("UnitCostChalaBs")} className="select-field placeholder-gray-400 w-full" />
+              </div>
+              <div>
+                <label className="block mb-1">Costo total chala (Bs)</label>
+                <input type="text" inputMode="decimal" placeholder="0,00" value={editFormValues.costTotalChalaBs ?? ""} readOnly className="select-field placeholder-gray-400 w-full" />
+              </div>
+              <div>
+                <label className="block mb-1">Total por Cobrar en Bs.</label>
+                <input type="text" inputMode="decimal" placeholder="0,00" value={editFormValues.totalCharge ?? ""} readOnly className="select-field placeholder-gray-400 w-full" />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3 border-t border-slate-700 pt-4">
+              <CancelButton onClick={() => {
+                setEditId(null);
+                setEditControl(applyDerivedValues(createInitialControl()));
+                setEditFormValues(formatControlToForm(createInitialControl(), true));
+                setEditSelectedOwner(null);
+                setEditHorses([]);
+              }} />
+              <SaveButton onClick={updateControl}>Guardar cambios</SaveButton>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

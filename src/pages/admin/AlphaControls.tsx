@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
-import { Plus, Save, Trash2, Loader, X, Edit, FileText } from "lucide-react";
-import { ExportButton, AdminSection } from '../../components/ui/admin-buttons';
+import { Plus, Trash2, Loader, Edit, FileText } from "lucide-react";
+import { ExportButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -86,7 +87,7 @@ const AlphaControlsManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<AlphaControl | null>(null);
-  const [, setEditDisplay] = useState({
+  const [editDisplayInputs, setEditDisplayInputs] = useState({
     alphaIncome: "",
     unitPrice: "",
     outcome: "",
@@ -165,17 +166,40 @@ const AlphaControlsManagement: React.FC = () => {
   const handleDynamicInput = (
     field: keyof AlphaControl,
     rawValue: string,
-    isEdit = false
   ) => {
     const cleaned = normalizeInput(rawValue);
     const num = parseToNumber(cleaned);
+    setDisplayInputs((prev) => ({ ...prev, [field]: cleaned }));
+    setNewControl({ ...newControl, [field]: num });
+  };
 
-    if (isEdit && editData) {
-      setEditDisplay((prev) => ({ ...prev, [field]: cleaned }));
-      setEditData({ ...editData, [field]: num });
-    } else {
-      setDisplayInputs((prev) => ({ ...prev, [field]: cleaned }));
-      setNewControl({ ...newControl, [field]: num });
+  const handleEditDynamicInput = (field: keyof AlphaControl, rawValue: string) => {
+    const cleaned = normalizeInput(rawValue);
+    const num = parseToNumber(cleaned);
+    setEditDisplayInputs((prev) => ({ ...prev, [field]: cleaned }));
+    setEditData((prev) => prev ? { ...prev, [field]: num } : prev);
+  };
+
+  const updateControl = async () => {
+    if (!editData || editingId === null) return;
+    try {
+      const payload = {
+        ...editData,
+        totalPurchasePrice: Math.round(editData.alphaIncome * editData.unitPrice * 100) / 100,
+        income: Math.round(editData.outcome * editData.salePrice * 100) / 100,
+      };
+      const res = await fetch(`${API_URL}${editingId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Control actualizado!");
+      setEditingId(null);
+      setEditData(null);
+      fetchControls();
+    } catch {
+      toast.error("Error al actualizar control");
     }
   };
   
@@ -281,23 +305,13 @@ const AlphaControlsManagement: React.FC = () => {
 
   const startEdit = (control: AlphaControl) => {
     setEditingId(control.idAlphaControl!);
-    setNewControl(control);
-
-    // 🔹 Formatear inputs visibles
-    setDisplayInputs({
+    setEditData(control);
+    setEditDisplayInputs({
       alphaIncome: formatDisplay(control.alphaIncome),
       unitPrice: formatDisplay(control.unitPrice),
       outcome: formatDisplay(control.outcome),
       salePrice: formatDisplay(control.salePrice),
     });
-
-    // 🔹 Ajustar automáticamente el estado del cierre de mes
-    setIsMonthlyClose(control.fk_idFoodProvider === null);
-
-    toast("Modo edición activado ✏️");
-
-    // 🔹 Scroll al formulario superior
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const deleteControl = async (id: number) => {
@@ -556,11 +570,9 @@ const AlphaControlsManagement: React.FC = () => {
       </div>
 
 
-      {/* FORMULARIO (crear / editar) */}
+      {/* FORMULARIO (crear) */}
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">
-          {editingId ? "Editar Control de Alfalfa" : "Agregar Nuevo Control"}
-        </h2>
+        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Control</h2>
 
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
           <div>
@@ -658,30 +670,12 @@ const AlphaControlsManagement: React.FC = () => {
             </label>
 
             <div className="col-span-full flex justify-end gap-3">
-              {editingId ? (
-                <button
-                  onClick={handleSubmit}
-                  className="inline-flex items-center gap-2 px-4 h-9 rounded-[23px] border border-blue-500/70 bg-blue-500/12 text-blue-400 font-semibold tracking-wide text-sm shadow-[0_0_14px_rgba(59,130,246,0.35)] ring-1 ring-blue-500/20 transition-all duration-300 hover:bg-blue-500/20"
-                >
-                  <Save size={16} /> Guardar Cambios
-                </button>
-              ) : (
-                <button type="button" onClick={handleSubmit} className="group relative cursor-pointer">
-                  <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[23px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-4 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
-                    <Plus size={15} /> Agregar
-                  </div>
-                  <div className="absolute inset-0 z-0 h-full w-full rounded-[23px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
-                </button>
-              )}
-
-              {editingId && (
-                <button
-                  onClick={resetForm}
-                  className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-2"
-                >
-                  <X size={20} /> Cancelar
-                </button>
-              )}
+              <button type="button" onClick={handleSubmit} className="group relative cursor-pointer">
+                <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[23px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-4 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+                  <Plus size={15} /> Agregar
+                </div>
+                <div className="absolute inset-0 z-0 h-full w-full rounded-[23px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+              </button>
             </div>
           </div>
         </div>
@@ -788,6 +782,58 @@ const AlphaControlsManagement: React.FC = () => {
           </table>
         )}
       </div>
+
+      {editingId !== null && editData && createPortal(
+        <div
+          className="fixed inset-0 lg:left-80 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => { setEditingId(null); setEditData(null); }}
+        >
+          <div
+            className="w-full max-w-4xl max-h-[95vh] overflow-y-auto rounded-2xl border border-[#167C79]/60 bg-[#0f172a] p-6 shadow-[0_25px_80px_rgba(0,0,0,0.6)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-[#F8F4E3] mb-6">Editar Control de Alfalfa</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div>
+                <label className="text-sm mb-1 block">FECHA</label>
+                <input type="date" value={editData.date} onChange={(e) => setEditData({ ...editData, date: e.target.value })} className="w-full" />
+              </div>
+              <div>
+                <label className="text-sm mb-1 block">PROVEEDOR</label>
+                <select
+                  value={editData.fk_idFoodProvider ?? ""}
+                  onChange={(e) => setEditData({ ...editData, fk_idFoodProvider: e.target.value ? Number(e.target.value) : null })}
+                  className="w-full p-2 rounded-md text-white bg-gray-700"
+                >
+                  <option value="">-- Sin proveedor --</option>
+                  {foodProviders.map((p) => <option key={p.idFoodProvider} value={p.idFoodProvider}>{p.supplierName}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm mb-1 block">INGRESO KLG.</label>
+                <input type="text" placeholder="0,00" value={editDisplayInputs.alphaIncome} onChange={(e) => handleEditDynamicInput("alphaIncome", e.target.value)} className="w-full p-2 rounded bg-gray-700 text-white" />
+              </div>
+              <div>
+                <label className="text-sm mb-1 block">PRECIO UNITARIO Bs.</label>
+                <input type="text" placeholder="0,00" value={editDisplayInputs.unitPrice} onChange={(e) => handleEditDynamicInput("unitPrice", e.target.value)} className="w-full p-2 rounded bg-gray-700 text-white" />
+              </div>
+              <div>
+                <label className="text-sm mb-1 block">EGRESO KLG.</label>
+                <input type="text" placeholder="0,00" value={editDisplayInputs.outcome} onChange={(e) => handleEditDynamicInput("outcome", e.target.value)} className="w-full p-2 rounded bg-gray-700 text-white" />
+              </div>
+              <div>
+                <label className="text-sm mb-1 block">PRECIO VENTA Bs.</label>
+                <input type="text" placeholder="0,00" value={editDisplayInputs.salePrice} onChange={(e) => handleEditDynamicInput("salePrice", e.target.value)} className="w-full p-2 rounded bg-gray-700 text-white" />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3 border-t border-slate-700 pt-4">
+              <CancelButton onClick={() => { setEditingId(null); setEditData(null); }} />
+              <SaveButton onClick={updateControl} children="Guardar cambios" />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 

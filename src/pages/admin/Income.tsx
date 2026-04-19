@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Save, Trash2, Loader, X } from 'lucide-react';
-import { AddButton, ExportButton, AdminSection } from '../../components/ui/admin-buttons';
+import { Edit, Trash2, Loader } from 'lucide-react';
+import { AddButton, ExportButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -26,6 +27,7 @@ const IncomeManagement = () => {
     period: '',
   });
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingIncome, setEditingIncome] = useState<Income | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [filterMonth, setFilterMonth] = useState("");
   const [exporting, setExporting] = useState(false);
@@ -151,13 +153,7 @@ const IncomeManagement = () => {
 
       toast.success("Ingreso actualizado correctamente ✅");
 
-      // 🧼 Limpiar formulario y salir del modo edición
-      setNewIncome({
-        date: "",
-        description: "",
-        amountBsCaptureType: 0,
-        period: "",
-      });
+      setEditingIncome(null);
       setEditingId(null);
 
       fetchIncomes();
@@ -294,15 +290,7 @@ const IncomeManagement = () => {
 
       {/* === Formulario principal (crear / editar) === */}
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">
-          {editingId ? "Editar Ingreso" : "Agregar Nuevo Ingreso"}
-        </h2>
-        {editingId && (
-          <div className="bg-yellow-800/30 border border-yellow-500 text-yellow-300 px-4 py-2 rounded-md mb-4 text-sm flex items-center gap-2 animate-fade-in">
-            <Edit size={16} /> 
-            <span>Estás editando un gasto existente. Modifica los datos y guarda los cambios.</span>
-          </div>
-        )}
+        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Ingreso</h2>
         <div className="flex flex-wrap gap-4 items-end justify-between">
           <div className="flex flex-wrap gap-4">
             <div>
@@ -362,37 +350,7 @@ const IncomeManagement = () => {
             </div>
           </div>
 
-          {/* Botón dinámico */}
-          {editingId ? (
-            <div className="flex gap-2">
-              <button
-                onClick={() =>
-                  updateIncome(editingId, {
-                    ...newIncome,
-                  })
-                }
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md font-semibold flex items-center justify-center gap-1 text-sm h-[36px]"
-              >
-                <Save size={16} /> Guardar cambios
-              </button>
-              <button
-                onClick={() => {
-                  setEditingId(null);
-                  setNewIncome({
-                    date: "",
-                    description: "",
-                    amountBsCaptureType: 0,
-                    period: "",
-                  });
-                }}
-                className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-md flex items-center gap-2"
-              >
-                <X size={16} /> Cancelar
-              </button>
-            </div>
-          ) : (
-            <AddButton onClick={createIncome} className="ml-auto" />
-          )}
+          <AddButton onClick={createIncome} className="ml-auto" />
         </div>
 
         {/* === Filtro + Exportar PDF === */}
@@ -448,16 +406,13 @@ const IncomeManagement = () => {
                   <button
                     onClick={() => {
                       setEditingId(income.idIncome!);
-
-                      // 🧠 Convertir punto decimal a coma solo para mostrar en el input
                       const displayAmount = income.amountBsCaptureType
                         ? String(income.amountBsCaptureType).replace(".", ",")
                         : "";
-
-                      setNewIncome({
+                      setEditingIncome({
                         date: income.date,
                         description: income.description,
-                        amountBsCaptureType: displayAmount as any, // guardamos como string visible
+                        amountBsCaptureType: displayAmount as any,
                         period: income.period,
                       });
                     }}
@@ -488,6 +443,65 @@ const IncomeManagement = () => {
           </div>
         )}
       </AdminSection>
+
+      {editingId !== null && editingIncome && createPortal(
+        <div
+          className="fixed inset-0 lg:left-80 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => { setEditingId(null); setEditingIncome(null); }}
+        >
+          <div
+            className="w-full max-w-2xl max-h-[95vh] overflow-y-auto rounded-2xl border border-[#167C79]/60 bg-[#0f172a] p-6 shadow-[0_25px_80px_rgba(0,0,0,0.6)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-[#F8F4E3] mb-6">Editar Ingreso</h3>
+            <div className="flex flex-wrap gap-4">
+              <div>
+                <label className="block mb-1 text-white">Fecha <span className="text-red-500">*</span></label>
+                <input
+                  type="date"
+                  value={editingIncome.date}
+                  onChange={(e) => setEditingIncome({ ...editingIncome, date: e.target.value })}
+                  className="select-field"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-white">Descripción <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  placeholder="Descripción"
+                  value={editingIncome.description}
+                  onChange={(e) => setEditingIncome({ ...editingIncome, description: e.target.value })}
+                  className="select-field"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-white">Monto <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  placeholder="Ej: 1.000,50"
+                  value={editingIncome.amountBsCaptureType}
+                  onChange={(e) => setEditingIncome({ ...editingIncome, amountBsCaptureType: e.target.value as any })}
+                  className="select-field"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-white">Periodo <span className="text-red-500">*</span></label>
+                <input
+                  type="date"
+                  value={editingIncome.period}
+                  onChange={(e) => setEditingIncome({ ...editingIncome, period: e.target.value })}
+                  className="select-field"
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3 border-t border-slate-700 pt-4">
+              <CancelButton onClick={() => { setEditingId(null); setEditingIncome(null); }} />
+              <SaveButton onClick={() => updateIncome(editingId, editingIncome)} children="Guardar cambios" />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 
