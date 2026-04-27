@@ -8,7 +8,7 @@ import {
   FileText,
 } from "lucide-react";
 import { confirmDialog } from '../../utils/confirmDialog';
-import { AddButton, ExportButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
+import { AddButton, ExportButton, ClearButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dayjs from "dayjs";
@@ -68,7 +68,8 @@ const HorseAssignmentsManagement = () => {
   });
   const [loading, setLoading] = useState<boolean>(true);
   const [exporting, setExporting] = useState<boolean>(false);
-  const [filterMonth, setFilterMonth] = useState<string>("");
+  const [filterFrom, setFilterFrom] = useState<string>("");
+  const [filterTo, setFilterTo] = useState<string>("");
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
 
   const EXCLUDED_ROLES = ["secretaria", "administrador", "recepcionista"];
@@ -96,7 +97,11 @@ const HorseAssignmentsManagement = () => {
       const res = await fetch(`${API_URL}with_details`);
       if (!res.ok) throw new Error("Error al obtener asignaciones");
       const data = await res.json();
-      setAssignments(data);
+      const sorted = [...data].sort(
+        (a: HorseAssignment, b: HorseAssignment) =>
+          (b.idHorseAssignments ?? 0) - (a.idHorseAssignments ?? 0)
+      );
+      setAssignments(sorted);
     } catch {
       toast.error("No se pudo cargar asignaciones.");
     } finally {
@@ -313,14 +318,14 @@ const HorseAssignmentsManagement = () => {
             { align: "center" }
             );
 
-            // === Subtítulo (mes / general) ===
+            // === Subtítulo (rango / general) ===
             doc.setFontSize(12);
             doc.text(
-            filterMonth
-                ? `${dayjs(filterMonth).format("MMMM / YYYY").toUpperCase()}`
+            filterFrom || filterTo
+                ? `${filterFrom ? dayjs(filterFrom).format("DD/MM/YYYY") : "..."} — ${filterTo ? dayjs(filterTo).format("DD/MM/YYYY") : "..."}`
                 : "REPORTE GENERAL",
             doc.internal.pageSize.getWidth() / 2,
-            145, // 🔽 también más abajo
+            145,
             { align: "center" }
             );
 
@@ -336,9 +341,12 @@ const HorseAssignmentsManagement = () => {
             doc.text(`Fecha: ${fecha}  Hora: ${hora}`, 40, 165); // 🔽 bajada debajo del subtítulo
 
             // === Filtrar y agrupar datos ===
-            const filtered = filterMonth
-            ? assignments.filter((a) => a.assignmentDate.startsWith(filterMonth))
-            : assignments;
+            const filtered = assignments.filter((a) => {
+              const d = a.assignmentDate;
+              if (filterFrom && d < filterFrom) return false;
+              if (filterTo && d > filterTo) return false;
+              return true;
+            });
 
             const groupedByEmployee: Record<string, number> = {};
             filtered.forEach((a) => {
@@ -388,9 +396,10 @@ const HorseAssignmentsManagement = () => {
             doc.text(`TOTAL CABALLOS: ${totalCaballos}`, 60, y);
 
             // === Guardar ===
-            doc.save(
-            `Caballerizos_${dayjs(filterMonth || new Date()).format("YYYY_MM")}.pdf`
-            );
+            const suffix = filterFrom
+              ? `${dayjs(filterFrom).format("YYYY_MM_DD")}_${dayjs(filterTo || filterFrom).format("YYYY_MM_DD")}`
+              : dayjs().format("YYYY_MM_DD");
+            doc.save(`Caballerizos_${suffix}.pdf`);
             toast.success("PDF generado correctamente 🎉");
         } catch (e) {
             console.error(e);
@@ -487,17 +496,37 @@ const HorseAssignmentsManagement = () => {
       </AdminSection>
 
       {/* === FILTRO + BOTÓN PDF === */}
-      <div className="flex justify-end items-center gap-3 mb-6">
-        <input
-          type="month"
-          value={filterMonth}
-          onChange={(e) => setFilterMonth(e.target.value)}
-          className="select-field"
-        />
-        <ExportButton onClick={exportPDF} disabled={exporting}>
-          <FileText size={18} />
-          {exporting ? "Generando..." : "Exportar PDF"}
-        </ExportButton>
+      <div className="bg-white/5 rounded-xl px-5 py-6 mb-6 shadow-inner">
+        <div className="flex flex-wrap items-end justify-between gap-5">
+          <span className="text-base font-semibold text-teal-400 self-center whitespace-nowrap">Exportar Reporte</span>
+          <div className="flex flex-wrap items-end gap-5 ml-auto">
+          <div className="flex flex-col gap-1 px-5">
+            <label className="text-xs text-gray-400">Desde</label>
+            <input
+              type="date"
+              value={filterFrom}
+              onChange={(e) => setFilterFrom(e.target.value)}
+              className="select-field w-44"
+            />
+          </div>
+          <div className="flex flex-col gap-1 px-5">
+            <label className="text-xs text-gray-400">Hasta</label>
+            <input
+              type="date"
+              value={filterTo}
+              onChange={(e) => setFilterTo(e.target.value)}
+              className="select-field w-44"
+            />
+          </div>
+          <ExportButton onClick={exportPDF} disabled={exporting}>
+            <FileText size={18} />
+            {exporting ? "Generando..." : "Exportar PDF"}
+          </ExportButton>
+          <ClearButton onClick={() => { setFilterFrom(""); setFilterTo(""); }}>
+            Limpiar
+          </ClearButton>
+          </div>
+        </div>
       </div>
 
       {/* === TABLA === */}

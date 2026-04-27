@@ -148,7 +148,7 @@ const Employees = () => {
       if (!positionsResponse.ok) throw new Error(`Error al obtener posiciones: ${positionsResponse.statusText}`);
       const positionsData = await positionsResponse.json();
 
-      setEmployees(employeesData);
+      setEmployees([...employeesData].sort((a: Employee, b: Employee) => (b.idEmployee ?? 0) - (a.idEmployee ?? 0)));
       setPositions(positionsData);
 
       if (!editingId) {
@@ -183,6 +183,11 @@ const Employees = () => {
   // Crear empleado (solo desde el formulario principal)
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (Number(newEmployee.salary) >= 100000) {
+      toast.error("El salario debe ser menor a 100,000 BOB");
+      return;
+    }
 
     // Validar si se quiere crear cuenta
     if (userAccount.createAccount) {
@@ -292,6 +297,10 @@ const Employees = () => {
   // Actualizar empleado (desde el modal)
   const handleUpdate = async () => {
     if (!editingId || !editingData) return;
+    if (Number(editingData.salary) >= 100000) {
+      toast.error("El salario debe ser menor a 100,000 BOB");
+      return;
+    }
     try {
       setCreatingAccount(true);
 
@@ -388,7 +397,10 @@ const Employees = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     let newValue: string | number | boolean = value;
-    if (type === "number") {
+    if (name === "ci" || name === "phoneNumber") {
+      const digits = value.replace(/\D/g, '').slice(0, 8);
+      newValue = digits === '' ? 0 : Number(digits);
+    } else if (type === "number") {
       newValue = value === '' ? 0 : Number(value);
     } else if (name === "status") {
       newValue = (e.target as HTMLInputElement).checked;
@@ -400,7 +412,10 @@ const Employees = () => {
     if (!editingData) return;
     const { name, value, type } = e.target;
     let newValue: string | number | boolean = value;
-    if (type === "number") {
+    if (name === "ci" || name === "phoneNumber") {
+      const digits = value.replace(/\D/g, '').slice(0, 8);
+      newValue = digits === '' ? 0 : Number(digits);
+    } else if (type === "number") {
       newValue = value === '' ? 0 : Number(value);
     } else if (name === "status") {
       newValue = (e.target as HTMLInputElement).checked;
@@ -577,15 +592,15 @@ const Employees = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label htmlFor="fullName">Nombre Completo</label>
-            <input type="text" placeholder="Nombre Completo" id="fullName" name="fullName" value={newEmployee.fullName} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
+            <input type="text" placeholder="" id="fullName" name="fullName" value={newEmployee.fullName} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
           </div>
           <div>
             <label htmlFor="ci">C.I.</label>
-            <input type="number" placeholder="C.I." id="ci" name="ci" value={newEmployee.ci} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
+            <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="" id="ci" name="ci" value={newEmployee.ci === 0 ? '' : String(newEmployee.ci)} onChange={handleInputChange} maxLength={8} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
           </div>
           <div>
             <label htmlFor="phoneNumber">Número de Teléfono</label>
-            <input type="number" placeholder="Número de Teléfono" id="phoneNumber" name="phoneNumber" value={newEmployee.phoneNumber} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
+            <input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="" id="phoneNumber" name="phoneNumber" value={newEmployee.phoneNumber === 0 ? '' : String(newEmployee.phoneNumber)} onChange={handleInputChange} maxLength={8} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
           </div>
           <div>
             <label htmlFor="startContractDate">Fecha de Contrato (Inicio)</label>
@@ -607,13 +622,14 @@ const Employees = () => {
             <label htmlFor="salary">Salario</label>
             <input
               type="number"
-              placeholder="Salario"
+              placeholder=""
               id="salary"
               name="salary"
-              value={newEmployee.salary}
+              value={newEmployee.salary === 0 ? '' : newEmployee.salary}
               onChange={handleInputChange}
               step="0.01"
               min="0"
+              max={99999.99}
               inputMode="decimal"
               className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
               required
@@ -683,7 +699,7 @@ const Employees = () => {
               style={{
                 borderWidth: '2px',
                 borderStyle: 'solid',
-                borderColor: userAccount.createAccount ? '#9333ea' : '#ea580c',
+                borderColor: userAccount.createAccount ? '#9333ea' : '#7a7a7a',
                 transition: 'border-color 550ms cubic-bezier(0.4,0,0.2,1)',
               }}
             >
@@ -691,10 +707,10 @@ const Employees = () => {
               <span
                 className="absolute inset-0"
                 style={{
-                  backgroundColor: userAccount.createAccount ? '#7e22ce' : '#c2410c',
+                  backgroundColor: userAccount.createAccount ? '#7e22ce' : '#7a7a7a',
                   boxShadow: userAccount.createAccount
                     ? 'inset 0 0 22px rgba(168,85,247,0.55)'
-                    : 'inset 0 0 22px rgba(249,115,22,0.55)',
+                    : 'inset 0 0 22px rgba(161, 161, 161, 0.55)',
                   transition: 'background-color 550ms cubic-bezier(0.4,0,0.2,1), box-shadow 550ms cubic-bezier(0.4,0,0.2,1)',
                 }}
               />
@@ -721,10 +737,10 @@ const Employees = () => {
                 <span
                   className="absolute top-[6px] left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full"
                   style={{
-                    backgroundColor: userAccount.createAccount ? '#c084fc' : '#fb923c',
+                    backgroundColor: userAccount.createAccount ? '#c084fc' : '#7a7a7a',
                     boxShadow: userAccount.createAccount
                       ? '0 0 5px rgba(168,85,247,0.9)'
-                      : '0 0 5px rgba(249,115,22,0.9)',
+                      : '0 0 5px rgba(161, 161, 161, 0.55)',
                     transition: 'background-color 550ms cubic-bezier(0.4,0,0.2,1), box-shadow 550ms cubic-bezier(0.4,0,0.2,1)',
                   }}
                 />
@@ -949,22 +965,28 @@ const Employees = () => {
               <div>
                 <label htmlFor="edit-ci" className="block mb-1 text-sm text-slate-300">C.I.</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   id="edit-ci"
                   name="ci"
-                  value={editingData.ci}
+                  value={editingData.ci === 0 ? '' : String(editingData.ci)}
                   onChange={handleEditingDataChange}
+                  maxLength={8}
                   className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
               </div>
               <div>
                 <label htmlFor="edit-phoneNumber" className="block mb-1 text-sm text-slate-300">Número de Teléfono</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   id="edit-phoneNumber"
                   name="phoneNumber"
-                  value={editingData.phoneNumber}
+                  value={editingData.phoneNumber === 0 ? '' : String(editingData.phoneNumber)}
                   onChange={handleEditingDataChange}
+                  maxLength={8}
                   className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
               </div>
@@ -1018,10 +1040,11 @@ const Employees = () => {
                   type="number"
                   id="edit-salary"
                   name="salary"
-                  value={editingData.salary}
+                  value={editingData.salary === 0 ? '' : editingData.salary}
                   onChange={handleEditingDataChange}
                   step="0.01"
                   min="0"
+                  max={99999.99}
                   inputMode="decimal"
                   className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />

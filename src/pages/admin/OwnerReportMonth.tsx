@@ -1386,26 +1386,22 @@ const OwnerReportMonthManagement = () => {
           )}
         </div>
 
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="mt-8 flex justify-end gap-3">
           <button onClick={createReport} className="group relative cursor-pointer">
-            <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[23px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-4 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+            <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[10px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-10 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
               <Plus size={15} /> Crear Reporte
             </div>
-            <div className="absolute inset-0 z-0 h-full w-full rounded-[23px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+            <div className="absolute inset-0 z-0 h-full w-full rounded-[10px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
           </button>
         </div>
       </div>
 
       <AdminSection>
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mt-2">
           <div>
             <h3 className="text-lg font-semibold text-teal-300">Filtrar reportes por periodo</h3>
-            <p className="text-xs text-slate-300">
-              Selecciona mes y anio inicial/final para limitar la lista y descargar los reportes en
-              bloque.
-            </p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-6">
             <div className="flex flex-col">
               <label className="text-xs text-slate-300 mb-1">Desde</label>
               <input
@@ -1424,22 +1420,25 @@ const OwnerReportMonthManagement = () => {
                 className="select-field rounded-md px-3 py-2 border border-slate-600"
               />
             </div>
-            <div className="flex items-end gap-2">
+            <div className="flex items-end gap-6">
               <ExportButton onClick={handleDownloadFilteredReports}>
                 Descargar filtrados
               </ExportButton>
               <button
                 onClick={handleResetFilters}
-                className="w-full"
+                className="group relative cursor-pointer"
               >
-                Limpiar
+                <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[10px] border border-[#ef4444]/70 bg-[#ef4444]/12 px-8 font-semibold text-[#ef4444] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(239,68,68,0.35)] ring-1 ring-[#ef4444]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+                  Limpiar
+                </div>
+                <div className="absolute inset-0 z-0 h-full w-full rounded-[10px] bg-[#ef4444]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(239,68,68,0.6),14px_14px_rgba(239,68,68,0.4),21px_21px_rgba(239,68,68,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
               </button>
             </div>
           </div>
         </div>
         {isReversedRange && (
           <p className="mt-3 text-xs text-red-300">
-            El mes inicial es posterior al final. Se invertir  el rango autom ticamente para el
+            El mes inicial es posterior al final. Se invertir  el rango automaticamente para el
             filtrado.
           </p>
         )}

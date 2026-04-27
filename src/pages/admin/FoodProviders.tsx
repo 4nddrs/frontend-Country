@@ -36,7 +36,9 @@ const FoodProvidersManagement = () => {
       const res = await fetch(API_URL);
       if (!res.ok) throw new Error('Error al obtener proveedores');
       const data = await res.json();
-      setProviders(data);
+      const list: FoodProvider[] = Array.isArray(data) ? data : [];
+      list.sort((a, b) => (b.idFoodProvider ?? 0) - (a.idFoodProvider ?? 0));
+      setProviders(list);
     } catch {
       toast.error('No se pudo cargar proveedores.');
     } finally {
@@ -131,7 +133,7 @@ const FoodProvidersManagement = () => {
               type="number"
               name="cellphoneNumber"
               placeholder="Ej: 76543210"
-              value={newProvider.cellphoneNumber}
+              value={newProvider.cellphoneNumber === 0 ? '' : newProvider.cellphoneNumber}
               onChange={e => setNewProvider({ ...newProvider, cellphoneNumber: Number(e.target.value) })}
               className="w-full"
             />
@@ -148,7 +150,9 @@ const FoodProvidersManagement = () => {
             />
           </div>
         </div>
-        <AddButton onClick={createProvider} className="mt-4" />
+        <div className="flex justify-end mt-7">
+          <AddButton onClick={createProvider} className="px-16 justify-center" />
+        </div>
       </AdminSection>
       <AdminSection>
         {loading ? (

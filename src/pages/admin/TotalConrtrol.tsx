@@ -730,14 +730,16 @@ const TotalControlManagement = () => {
       if (!res.ok) throw new Error('Error al obtener controles');
       const data = await res.json();
       const normalizedData: TotalControl[] = Array.isArray(data)
-        ? data.map((item: any) =>
-            applyDerivedValues(
-              createInitialControl({
-                ...item,
-                period: normalizeDateForInput(item?.period),
-              })
+        ? data
+            .map((item: any) =>
+              applyDerivedValues(
+                createInitialControl({
+                  ...item,
+                  period: normalizeDateForInput(item?.period),
+                })
+              )
             )
-          )
+            .sort((a, b) => (b.idTotalControl ?? 0) - (a.idTotalControl ?? 0))
         : [];
       setControls(normalizedData);
     } catch {
@@ -1386,17 +1388,17 @@ const TotalControlManagement = () => {
             />
           </div>
         </div>
-        <div className="mt-6 flex justify-center gap-3 px-6 pb-6">
+        <div className="mt-6 flex justify-end gap-3 px-6 pb-6">
           <button onClick={createControl} className="group relative cursor-pointer">
-            <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[23px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-4 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+            <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[10px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-16 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
               <Plus size={15} /> Agregar
             </div>
-            <div className="absolute inset-0 z-0 h-full w-full rounded-[23px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+            <div className="absolute inset-0 z-0 h-full w-full rounded-[10px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
           </button>
         </div>
       </div>
       <AdminSection>
-        <div className="flex flex-col gap-4 w-full md:flex-row">
+        <div className="flex flex-wrap items-end gap-4 w-full">
           <div className="w-full md:w-auto">
             <label htmlFor="filterMonth" className="block mb-1 text-sm font-semibold text-teal-300">
               Filtrar por mes
@@ -1409,9 +1411,7 @@ const TotalControlManagement = () => {
               onChange={(e) => {
                 const value = e.target.value;
                 setFilterMonth(value);
-                if (value) {
-                  setFilterYear("");
-                }
+                if (value) setFilterYear("");
               }}
               className="select-field w-full md:w-56"
             />
@@ -1427,28 +1427,23 @@ const TotalControlManagement = () => {
               onChange={(e) => {
                 const value = e.target.value;
                 setFilterYear(value);
-                if (value) {
-                  setFilterMonth("");
-                }
+                if (value) setFilterMonth("");
               }}
               className="select-field w-full md:w-48"
             >
               <option value="">-- Todos los años --</option>
               {availableYears.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
+                <option key={year} value={year}>{year}</option>
               ))}
             </select>
           </div>
+          <div className="md:ml-auto">
+            <ExportButton onClick={exportFilteredPDF} disabled={exporting}>
+              {exporting && <Loader size={18} className="animate-spin" />}
+              {exporting ? "Generando PDF..." : "Exportar PDF"}
+            </ExportButton>
+          </div>
         </div>
-        <ExportButton
-          onClick={exportFilteredPDF}
-          disabled={exporting}
-        >
-          {exporting && <Loader size={18} className="animate-spin" />}
-          {exporting ? "Generando PDF..." : "Exportar PDF"}
-        </ExportButton>
       </AdminSection>
       <AdminSection>
         {loading ? (

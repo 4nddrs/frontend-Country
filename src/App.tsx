@@ -1,6 +1,7 @@
 // src/App.tsx
 import { useEffect, useRef, useState } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { supabase } from './supabaseClient';
 import MainLayout from './components/MainLayout';
 import AuthForm from './components/AuthForm';
@@ -293,6 +294,15 @@ export default function App() {
 
   return (
     <>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: { background: '#1e293b', color: '#f1f5f9', border: '1px solid #334155' },
+          success: { iconTheme: { primary: '#34d399', secondary: '#1e293b' } },
+          error:   { iconTheme: { primary: '#f87171', secondary: '#1e293b' } },
+          duration: 3000,
+        }}
+      />
       <SignOutModal />
       <Routes>
         {/* Ruta pública para reset password */}

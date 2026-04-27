@@ -72,9 +72,8 @@ const HorsesManagement = () => {
   const [races, setRaces] = useState<any[]>([]);
   const [nutritionalPlans, setNutritionalPlans] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [horses, setHorses] = useState<Horse[]>([]);
+  const [allHorses, setAllHorses] = useState<Horse[]>([]);
   const [horsePage, setHorsePage] = useState<number>(1);
-  const [horseHasNext, setHorseHasNext] = useState<boolean>(false);
   const horsePageSize = 9;
   const [newHorse, setNewHorse] = useState<Omit<Horse, 'idHorse'>>({ ...initialHorse });
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -136,17 +135,15 @@ const HorsesManagement = () => {
     }
   };
 
-  const fetchHorses = async (page: number) => {
+  const fetchHorses = async (page: number = 1) => {
     setLoading(true);
     try {
-      const skip = (page - 1) * horsePageSize;
-      const res = await fetch(`${API_URL}?skip=${skip}&limit=${horsePageSize}`);
+      const res = await fetch(`${API_URL}?skip=0&limit=9999`);
       if (!res.ok) throw new Error('Error al obtener los caballos');
-      const data = await res.json();
-      const sorted = [...data].sort((a: Horse, b: Horse) => (b.idHorse ?? 0) - (a.idHorse ?? 0));
-      setHorses(sorted);
+      const data: Horse[] = await res.json();
+      const sorted = [...data].sort((a, b) => (b.idHorse ?? 0) - (a.idHorse ?? 0));
+      setAllHorses(sorted);
       setHorsePage(page);
-      setHorseHasNext(sorted.length === horsePageSize);
     } catch (error) {
       toast.error('No se pudo cargar la lista de caballos.');
     } finally {
@@ -241,15 +238,21 @@ const HorsesManagement = () => {
       if (selectedPhotoFile) {
         const formData = new FormData();
         formData.append('image', selectedPhotoFile);
-        await fetch(`${API_URL}${createdHorse.idHorse}/image`, {
+        const imgRes = await fetch(`${API_URL}${createdHorse.idHorse}/image`, {
           method: 'POST',
           body: formData,
         });
-        await fetchHorses(1);
+        if (imgRes.ok) {
+          const updated = await imgRes.json().catch(() => null);
+          const withImage = updated ?? createdHorse;
+          setAllHorses(prev => [withImage, ...prev]);
+        } else {
+          setAllHorses(prev => [createdHorse, ...prev]);
+        }
       } else {
-        setHorses(prev => [createdHorse, ...prev]);
-        setHorsePage(1);
+        setAllHorses(prev => [createdHorse, ...prev]);
       }
+      setHorsePage(1);
 
       toast.success('Caballo creado exitosamente!');
       setNewHorse({ ...initialHorse });
@@ -302,7 +305,18 @@ const HorsesManagement = () => {
       setEditingId(null);
       setEditingHorseData(null);
       clearEditFile();
-      fetchHorses(horsePage);
+
+      if (editPhotoFile) {
+        const imgRes = await fetch(`${API_URL}${id}/image`).catch(() => null);
+        const refreshed: Horse | null = imgRes?.ok ? await imgRes.json().catch(() => null) : null;
+        setAllHorses(prev => prev.map(h =>
+          h.idHorse === id
+            ? { ...h, ...horseDataToUpdate, ...(refreshed ? { image_url: refreshed.image_url } : {}) }
+            : h
+        ));
+      } else {
+        setAllHorses(prev => prev.map(h => h.idHorse === id ? { ...h, ...horseDataToUpdate } : h));
+      }
 
     } catch {
       toast.error('No se pudo actualizar el caballo.');
@@ -321,7 +335,12 @@ const HorsesManagement = () => {
       const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Error al eliminar el caballo');
       toast.success('Caballo eliminado');
-      fetchHorses(Math.max(1, horsePage));
+      setAllHorses(prev => {
+        const next = prev.filter(h => h.idHorse !== id);
+        const maxPage = Math.max(1, Math.ceil(next.length / horsePageSize));
+        setHorsePage(p => Math.min(p, maxPage));
+        return next;
+      });
     } catch (error) {
       toast.error('No se pudo eliminar el caballo.');
     }
@@ -363,9 +382,25 @@ const HorsesManagement = () => {
     }
   };
 
-  // Total caballos (para mostrar y PDF)
-  const totalCaballos = useMemo(() => horses.length, [horses]);
   const isEditModalOpen = editingId !== null && editingHorseData !== null;
+
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(allHorses.length / horsePageSize)),
+    [allHorses.length]
+  );
+
+  const horseHasNext = horsePage < totalPages;
+
+  const pagedHorses = useMemo(() => {
+    const start = (horsePage - 1) * horsePageSize;
+    return allHorses.slice(start, start + horsePageSize);
+  }, [allHorses, horsePage]);
+
+  const pageNumbers = useMemo(() => {
+    const start = Math.max(1, horsePage - 2);
+    const end = Math.min(totalPages, start + 4);
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  }, [horsePage, totalPages]);
 
   useEffect(() => {
     if (!isEditModalOpen) return;
@@ -384,39 +419,31 @@ const HorsesManagement = () => {
   const exportHorsesPDF = async () => {
     try {
       setExporting(true);
+
       const doc = new jsPDF({ orientation: 'landscape', unit: 'pt' });
 
-      // LOGO (opcional)
       try {
         if (logoDataUrl) {
           const margin = 40;
           const w = 120;
           const h = 70;
           const pageW = doc.internal.pageSize.getWidth();
-          const x = pageW - w - margin;
-          const y = 20;
-          doc.addImage(logoDataUrl, 'PNG', x, y, w, h);
+          doc.addImage(logoDataUrl, 'PNG', pageW - w - margin, 20, w, h);
         }
       } catch (e) {
         console.warn('No se pudo dibujar el logo:', e);
       }
 
-      const titulo = 'Reporte de Caballos y Duenos';
       const now = dayjs().format('YYYY-MM-DD HH:mm');
-
-      // Titulo centrado
       const pageW = doc.internal.pageSize.getWidth();
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
-      doc.text(titulo, pageW / 2, 50, { align: 'center' });
-
-      // Subtitulos
+      doc.text('Reporte de Caballos y Duenos', pageW / 2, 50, { align: 'center' });
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.text(`Generado: ${now}`, 40, 70);
 
-      // Tabla
-      const body = horses.map(h => ([
+      const body = allHorses.map(h => [
         h.horseName,
         getOwnerName(h.fk_idOwner),
         h.birthdate ? new Date(h.birthdate).toLocaleDateString() : '',
@@ -426,42 +453,36 @@ const HorsesManagement = () => {
         boolTxt(h.box),
         boolTxt(h.section),
         boolTxt(h.basket),
-      ]));
+      ]);
 
       autoTable(doc, {
         startY: 110,
         theme: 'striped',
-        head: [['Caballo','Dueno','Nacimiento','Sexo','Color','Pasaporte','Box','Seccion','Canasta']],
+        head: [['Caballo', 'Dueno', 'Nacimiento', 'Sexo', 'Color', 'Pasaporte', 'Box', 'Seccion', 'Canasta']],
         body,
-        styles: { fontSize: 9, cellPadding: 6 }, // cuerpo blanco por defecto
+        styles: { fontSize: 9, cellPadding: 6 },
         headStyles: {
-          fillColor: [38, 72, 131], // #264883
+          fillColor: [38, 72, 131],
           textColor: [255, 255, 255],
           fontStyle: 'bold',
         },
-
-        // Pie TOTAL CABALLOS
+        showFoot: 'lastPage',
         foot: [[
           {
             content: 'TOTAL',
             colSpan: 5,
-            styles: {
-              halign: 'left', // a la izquierda
-              fontStyle: 'bold',
-              cellPadding: { left: 6, top: 6, right: 6, bottom: 6 }
-            }
+            styles: { halign: 'left', fontStyle: 'bold', cellPadding: { left: 6, top: 6, right: 6, bottom: 6 } },
           },
           {
-            content: `${totalCaballos} CABALLOS`,
+            content: `${allHorses.length} CABALLOS`,
             colSpan: 4,
-            styles: { halign: 'center', fontStyle: 'bold' }
+            styles: { halign: 'center', fontStyle: 'bold' },
           },
         ]],
         footStyles: {
-          fillColor: [38, 72, 131], // #264883
+          fillColor: [38, 72, 131],
           textColor: [255, 255, 255],
         },
-
         didDrawPage: (data) => {
           const pageCount = doc.getNumberOfPages();
           doc.setFontSize(9);
@@ -743,7 +764,7 @@ const HorsesManagement = () => {
     <div className="mt-4 flex items-center justify-end gap-3">
       <ExportButton
         onClick={exportHorsesPDF}
-        disabled={loading || exporting || horses.length === 0}
+        disabled={loading || exporting || allHorses.length === 0}
       >
         {exporting ? 'Exportando...' : 'Exportar PDF'}
       </ExportButton>
@@ -753,22 +774,35 @@ const HorsesManagement = () => {
 
       {/* Lista de caballos */}
       <AdminSection>
-        <div className="flex items-center justify-between mb-4 text-sm text-gray-300">
-          <span>Pagina {horsePage}</span>
-          <div className="flex items-center gap-2">
+        <div className="flex justify-end mb-4">
+          <div className="flex space-x-1">
             <button
               onClick={() => fetchHorses(Math.max(1, horsePage - 1))}
               disabled={horsePage === 1 || loading}
-              className="px-3 py-1 rounded-md border border-gray-600 bg-gray-700 disabled:opacity-50"
+              className="rounded-full border border-[#3CC9F6]/50 py-2 px-3 text-center text-sm text-[#3CC9F6]/60 transition-all hover:border-[#3CC9F6]/80 hover:text-[#3CC9F6] hover:bg-[#3CC9F6]/10 disabled:pointer-events-none disabled:opacity-30 ml-2"
             >
-              Anterior
+              Prev
             </button>
+            {pageNumbers.map(p => (
+              <button
+                key={p}
+                onClick={() => fetchHorses(p)}
+                disabled={loading}
+                className={`min-w-9 rounded-full py-2 px-3.5 border text-center text-sm transition-all disabled:pointer-events-none disabled:opacity-30 ml-2 ${
+                  p === horsePage
+                    ? 'bg-[#3CC9F6]/15 border-[#3CC9F6]/70 text-[#3CC9F6] shadow-[0_0_14px_rgba(60,201,246,0.4)] ring-1 ring-[#3CC9F6]/20'
+                    : 'border-[#3CC9F6]/40 text-[#3CC9F6]/60 hover:border-[#3CC9F6]/70 hover:text-[#3CC9F6] hover:bg-[#3CC9F6]/10'
+                }`}
+              >
+                {p}
+              </button>
+            ))}
             <button
               onClick={() => fetchHorses(horsePage + 1)}
               disabled={!horseHasNext || loading}
-              className="px-3 py-1 rounded-md border border-gray-600 bg-gray-700 disabled:opacity-50"
+              className="rounded-full border border-[#3CC9F6]/50 py-2 px-3 text-center text-sm text-[#3CC9F6]/60 transition-all hover:border-[#3CC9F6]/80 hover:text-[#3CC9F6] hover:bg-[#3CC9F6]/10 disabled:pointer-events-none disabled:opacity-30 ml-2"
             >
-              Siguiente
+              Next
             </button>
           </div>
         </div>
@@ -787,7 +821,7 @@ const HorsesManagement = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {horses.map(horse => (
+            {pagedHorses.map(horse => (
               <div key={horse.idHorse} className="rounded-2xl border border-slate-600/70 bg-slate-700/80 p-4 shadow-[0_8px_24px_rgba(0,0,0,0.35)] backdrop-blur-sm flex flex-col transition-transform duration-200 hover:-translate-y-1">
                 <>
                   <div className="flex-grow mb-4">

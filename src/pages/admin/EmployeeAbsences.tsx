@@ -61,7 +61,11 @@ const EmployeeAbsencesManagement = () => {
       const res = await fetch(API_URL);
       if (!res.ok) throw new Error('Error al obtener ausencias');
       const data = await res.json();
-      setAbsences(data);
+      const sorted = [...data].sort(
+        (a: EmployeeAbsence, b: EmployeeAbsence) =>
+          (b.idEmployeeAbsence ?? 0) - (a.idEmployeeAbsence ?? 0)
+      );
+      setAbsences(sorted);
     } catch {
       toast.error('No se pudo cargar ausencias.');
     } finally {
@@ -167,27 +171,34 @@ const EmployeeAbsencesManagement = () => {
               className="w-full"
             />
           </div>
-          <div className="flex flex-col">
-            <label className="block text-gray-400 mb-1">Tipo de Ausencia</label>
-            <div className="flex gap-4 p-2 rounded-md bg-gray-700 border border-gray-600 items-center">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={newAbsence.isVacation}
-                  onChange={e => setNewAbsence({ ...newAbsence, isVacation: e.target.checked, absent: !e.target.checked })}
-                  className="rounded text-blue-500 bg-gray-600 border-gray-500 focus:ring-blue-500"
-                />
-                Vacaciones
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={newAbsence.absent}
-                  onChange={e => setNewAbsence({ ...newAbsence, absent: e.target.checked, isVacation: !e.target.checked })}
-                  className="rounded text-blue-500 bg-gray-600 border-gray-500 focus:ring-blue-500"
-                />
-                Ausente
-              </label>
+          <div className="flex flex-col gap-2">
+            <label className="block mb-2 text-sm font-medium text-slate-300">Tipo de Ausencia</label>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { key: 'isVacation', label: 'Vacaciones' },
+                { key: 'absent',     label: 'Ausente' },
+              ] as const).map(({ key, label }) => (
+                <label
+                  key={key}
+                  className={`flex items-center justify-center gap-2 cursor-pointer rounded-lg border px-3 py-2 text-sm font-medium transition-all duration-200
+                    ${newAbsence[key]
+                      ? 'border-purple-400/70 bg-purple-500/15 text-purple-300 shadow-[0_0_8px_rgba(168,85,247,0.3)]'
+                      : 'border-slate-600/60 bg-slate-800/50 text-slate-400 hover:border-slate-500'}`}
+                >
+                  <input
+                    type="checkbox"
+                    className="hidden"
+                    checked={newAbsence[key]}
+                    onChange={() => setNewAbsence({
+                      ...newAbsence,
+                      isVacation: key === 'isVacation',
+                      absent: key === 'absent',
+                    })}
+                  />
+                  <span className={`h-2 w-2 rounded-full ${newAbsence[key] ? 'bg-purple-400' : 'bg-slate-600'}`} />
+                  {label}
+                </label>
+              ))}
             </div>
           </div>
           <div className="flex flex-col">
@@ -335,27 +346,34 @@ const EmployeeAbsencesManagement = () => {
                     className="w-full p-2 rounded-md bg-gray-700"
                   />
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block mb-1 text-sm font-medium">Tipo de Ausencia</label>
-                  <div className="flex gap-4 p-2 rounded-md bg-gray-600 border border-gray-500 items-center">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={editingData!.isVacation}
-                        onChange={e => setEditingData({ ...editingData!, isVacation: e.target.checked, absent: !e.target.checked })}
-                        className="rounded text-blue-500 bg-gray-500 border-gray-400 focus:ring-blue-500"
-                      />
-                      Vacaciones
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={editingData!.absent}
-                        onChange={e => setEditingData({ ...editingData!, absent: e.target.checked, isVacation: !e.target.checked })}
-                        className="rounded text-blue-500 bg-gray-500 border-gray-400 focus:ring-blue-500"
-                      />
-                      Ausente
-                    </label>
+                <div className="md:col-span-2 flex flex-col gap-2">
+                  <label className="block mb-2 text-sm font-medium text-slate-300">Tipo de Ausencia</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([
+                      { key: 'isVacation', label: 'Vacaciones' },
+                      { key: 'absent',     label: 'Ausente' },
+                    ] as const).map(({ key, label }) => (
+                      <label
+                        key={key}
+                        className={`flex items-center justify-center gap-2 cursor-pointer rounded-lg border px-3 py-2 text-sm font-medium transition-all duration-200
+                          ${editingData![key]
+                            ? 'border-purple-400/70 bg-purple-500/15 text-purple-300 shadow-[0_0_8px_rgba(168,85,247,0.3)]'
+                            : 'border-slate-600/60 bg-slate-800/50 text-slate-400 hover:border-slate-500'}`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="hidden"
+                          checked={editingData![key]}
+                          onChange={() => setEditingData({
+                            ...editingData!,
+                            isVacation: key === 'isVacation',
+                            absent: key === 'absent',
+                          })}
+                        />
+                        <span className={`h-2 w-2 rounded-full ${editingData![key] ? 'bg-purple-400' : 'bg-slate-600'}`} />
+                        {label}
+                      </label>
+                    ))}
                   </div>
                 </div>
                 <div>

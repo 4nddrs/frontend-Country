@@ -2,6 +2,9 @@
 import { useEffect, useState } from 'react';
 import { supabase, supabaseAdmin } from '../../supabaseClient';
 import { CheckCircle2, XCircle, Users, Mail, Calendar, Loader2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { confirmDialog } from '../../utils/confirmDialog';
+import iconImg from '../../assets/icon.jpg';
 
 export default function PendingUsers() {
   const [pending, setPending] = useState<any[]>([]);
@@ -11,17 +14,18 @@ export default function PendingUsers() {
   // 🔹 Cargar usuarios pendientes
   const fetchPending = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('erp_user')
-      .select('*')
-      .eq('isapproved', false);
-
-    if (error) {
-      console.error('❌ Error al obtener pendientes:', error);
-    } else {
+    try {
+      const { data, error } = await supabase
+        .from('erp_user')
+        .select('*')
+        .eq('isapproved', false);
+      if (error) throw error;
       setPending(data || []);
+    } catch (err) {
+      console.error('❌ Error al obtener pendientes:', err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // 🔹 Aprobar usuario
@@ -29,97 +33,78 @@ export default function PendingUsers() {
     try {
       setProcessingUserId(user.uid);
 
-      // 🧩 Validación previa
       if (!user?.uid || typeof user.uid !== 'string') {
-        alert('⚠️ Error: el usuario no tiene un uid válido.');
-        setProcessingUserId(null);
+        toast.error('El usuario no tiene un uid válido.');
         return;
       }
 
-      // ✅ 1. Confirmar correo en Auth (marca el email como verificado)
       const { error: confirmError } = await supabaseAdmin.auth.admin.updateUserById(
         user.uid,
         { email_confirm: true }
       );
-
       if (confirmError) {
-        console.error('Error confirmando correo:', confirmError);
-        alert('❌ Error confirmando correo: ' + confirmError.message);
-        setProcessingUserId(null);
+        toast.error('Error confirmando correo: ' + confirmError.message);
         return;
       }
 
-      // ✅ 2. Actualizar el registro en erp_user
       const { error: updateError } = await supabaseAdmin
         .from('erp_user')
-        .update({
-          isapproved: true,
-          approved_at: new Date().toISOString(),
-        })
+        .update({ isapproved: true, approved_at: new Date().toISOString() })
         .eq('uid', user.uid);
-
       if (updateError) {
-        console.error('❌ Error al actualizar usuario:', updateError);
-        alert('❌ Error aprobando usuario: ' + updateError.message);
-        setProcessingUserId(null);
+        toast.error('Error aprobando usuario: ' + updateError.message);
         return;
       }
 
-      alert(`✅ Usuario "${user.username}" aprobado con éxito.`);
-      setProcessingUserId(null);
-      fetchPending(); // refrescar la lista
+      toast.success(`Usuario "${user.username}" aprobado con éxito.`);
+      await fetchPending();
     } catch (err: any) {
       console.error('Error inesperado:', err);
-      alert('❌ Error inesperado: ' + err.message);
+      toast.error('Error inesperado: ' + err.message);
+    } finally {
       setProcessingUserId(null);
     }
   };
 
   // 🔹 Rechazar usuario
   const rejectUser = async (user: any) => {
-    if (!confirm(`¿Estás seguro de rechazar a "${user.username}"? Esta acción no se puede deshacer.`)) {
-      return;
-    }
+    const confirmed = await confirmDialog({
+      title: `¿Rechazar a "${user.username}"?`,
+      description: 'Esta acción eliminará al usuario y no se puede deshacer.',
+      confirmText: 'Rechazar',
+      cancelText: 'Cancelar',
+    });
+    if (!confirmed) return;
 
     try {
       setProcessingUserId(user.uid);
 
-      // 🧩 Validación previa
       if (!user?.uid || typeof user.uid !== 'string') {
-        alert('⚠️ Error: el usuario no tiene un uid válido.');
-        setProcessingUserId(null);
+        toast.error('El usuario no tiene un uid válido.');
         return;
       }
 
-      // ✅ 1. Eliminar usuario de Auth
       const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(user.uid);
-
       if (deleteAuthError) {
-        console.error('Error eliminando usuario de Auth:', deleteAuthError);
-        alert('❌ Error eliminando usuario de Auth: ' + deleteAuthError.message);
-        setProcessingUserId(null);
+        toast.error('Error eliminando usuario de Auth: ' + deleteAuthError.message);
         return;
       }
 
-      // ✅ 2. Eliminar registro en erp_user
       const { error: deleteError } = await supabaseAdmin
         .from('erp_user')
         .delete()
         .eq('uid', user.uid);
-
       if (deleteError) {
-        console.error('❌ Error al eliminar usuario:', deleteError);
-        alert('❌ Error eliminando usuario: ' + deleteError.message);
-        setProcessingUserId(null);
+        toast.error('Error eliminando usuario: ' + deleteError.message);
         return;
       }
 
-      alert(`✅ Usuario "${user.username}" rechazado y eliminado.`);
-      setProcessingUserId(null);
-      fetchPending(); // refrescar la lista
+      toast.success(`Usuario "${user.username}" rechazado y eliminado.`);
+      await fetchPending();
     } catch (err: any) {
       console.error('Error inesperado:', err);
-      alert('❌ Error inesperado: ' + err.message);
+      toast.error('Error inesperado: ' + err.message);
+    } finally {
       setProcessingUserId(null);
     }
   };
@@ -156,74 +141,86 @@ export default function PendingUsers() {
           </div>
         </div>
       ) : (
-        /* Users List */
-        <div className="space-y-4">
+        /* Users Grid */
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {pending.map((u) => {
             const isProcessing = processingUserId === u.uid;
-            const formattedDate = u.created_at 
-              ? new Date(u.created_at).toLocaleDateString('es-ES', { 
-                  day: 'numeric', 
-                  month: 'short', 
-                  year: 'numeric' 
+            const formattedDate = u.created_at
+              ? new Date(u.created_at).toLocaleDateString('es-ES', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
                 })
               : 'Fecha desconocida';
 
             return (
               <div
                 key={u.uid || u.username}
-                className="bg-white/5 p-6 rounded-2xl text-[#F8F4E3] hover:bg-white/10 transition-all duration-200"
+                className="rounded-[22px] overflow-hidden bg-[#131313] shadow-[0_12px_40px_rgba(0,0,0,0.6)] border border-white/[0.06] hover:-translate-y-1.5 transition-transform duration-300"
               >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  {/* User Info */}
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-start gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-[#167C79]/30 border border-[#167C79] flex items-center justify-center flex-shrink-0">
-                        <Users className="w-6 h-6 text-teal-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-xl font-bold text-[#bdab62] mb-1">
-                          {u.username}
-                        </h3>
-                        <div className="flex flex-col gap-1.5">
-                          <div className="flex items-center gap-2 text-gray-300">
-                            <Mail className="w-4 h-4 flex-shrink-0 text-teal-400" />
-                            <span className="text-sm truncate">{u.email}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-gray-400">
-                            <Calendar className="w-4 h-4 flex-shrink-0" />
-                            <span className="text-sm">Registrado: {formattedDate}</span>
-                          </div>
-                        </div>
-                      </div>
+                {/* Banner imagen — tab derecho */}
+                <div className="relative h-36 overflow-hidden">
+                  <img src={iconImg} alt="banner" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-transparent to-black/20" />
+                  <div className="absolute top-3 right-3 text-right leading-tight">
+                    <p className="text-white text-xs font-semibold drop-shadow-md">Country Hipica</p>
+                    <p className="text-white/60 text-[10px] drop-shadow">Solicitud de acceso</p>
+                  </div>
+                </div>
+
+                {/* Cuerpo oscuro con elevación tipo carpeta:
+                    -mt sube el bloque sobre la imagen,
+                    rounded-tr-[28px] crea el tab izquierdo cuadrado / derecho curvo */}
+                <div className="-mt-1 rounded-tr-[28px] bg-[#131313] px-5 pt-5 pb-5 space-y-4">
+                  {/* Título + subtítulo */}
+                  <div className="mt-4">
+                    <h3 className="text-base font-bold text-[#F8F4E3] leading-tight">{u.username}</h3>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <Mail className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                      <span className="text-xs text-slate-500 truncate">{u.email}</span>
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-3 md:flex-shrink-0">
+                  {/* Espacio interior (imita el cuerpo vacío de la tarjeta de referencia) */}
+                  <div className="h-4" />
+
+                  {/* Pie: estado + fecha */}
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <span className="text-2xl font-bold text-[#F8F4E3] leading-none">
+                        <Users className="inline w-5 h-5 mb-0.5 mr-1 text-slate-400" />
+                      </span>
+                      <span className="text-xs text-slate-500 ml-1">Pendiente</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-slate-500">
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span className="text-xs">{formattedDate}</span>
+                    </div>
+                  </div>
+
+                  {/* Botones */}
+                  <div className="flex gap-2">
                     <button
                       onClick={() => approveUser(u)}
                       disabled={isProcessing}
-                      className="w-full"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold
+                        border border-[#167C79]/60 bg-[#167C79]/10 text-teal-300
+                        hover:bg-[#167C79]/20 shadow-[0_0_10px_rgba(22,124,121,0.2)]
+                        disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
-                      {isProcessing ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <CheckCircle2 className="w-5 h-5" />
-                      )}
-                      <span>Aprobar</span>
+                      {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                      Aprobar
                     </button>
-
                     <button
                       onClick={() => rejectUser(u)}
                       disabled={isProcessing}
-                      className="w-full"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold
+                        border border-[#bdab62]/50 bg-[#bdab62]/8 text-[#bdab62]
+                        hover:bg-[#bdab62]/15 shadow-[0_0_10px_rgba(189,171,98,0.15)]
+                        disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
-                      {isProcessing ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <XCircle className="w-5 h-5" />
-                      )}
-                      <span>Rechazar</span>
+                      {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
+                      Rechazar
                     </button>
                   </div>
                 </div>

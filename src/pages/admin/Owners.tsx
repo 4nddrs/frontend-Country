@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Toaster, toast } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Upload, RotateCcw } from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
 import noPhoto from '../../assets/noPhoto.png';
@@ -37,9 +37,8 @@ const EMPTY_FORM: OwnerFormData = {
 const PLACEHOLDER = noPhoto;
 
 const OwnersManagement = () => {
-  const [owners, setOwners] = useState<Owner[]>([]);
+  const [allOwners, setAllOwners] = useState<Owner[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [hasNextPage, setHasNextPage] = useState<boolean>(false);
   const pageSize = 9;
 
   const [newOwner, setNewOwner] = useState<OwnerFormData>(EMPTY_FORM);
@@ -103,6 +102,24 @@ const OwnersManagement = () => {
 
   const isEditModalOpen = editingId !== null && editingOwnerData !== null;
 
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(allOwners.length / pageSize)),
+    [allOwners.length]
+  );
+
+  const hasNextPage = currentPage < totalPages;
+
+  const pagedOwners = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return allOwners.slice(start, start + pageSize);
+  }, [allOwners, currentPage]);
+
+  const pageNumbers = useMemo(() => {
+    const start = Math.max(1, currentPage - 2);
+    const end = Math.min(totalPages, start + 4);
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  }, [currentPage, totalPages]);
+
   useEffect(() => {
     if (!isEditModalOpen) return;
     const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') handleCancelEdit(); };
@@ -114,17 +131,15 @@ const OwnersManagement = () => {
     fetchOwners(1);
   }, []);
 
-  const fetchOwners = async (page: number) => {
+  const fetchOwners = async (page: number = 1) => {
     setLoading(true);
     try {
-      const skip = (page - 1) * pageSize;
-      const res = await fetch(`${API_URL}?skip=${skip}&limit=${pageSize}`);
+      const res = await fetch(`${API_URL}?skip=0&limit=9999`);
       if (!res.ok) throw new Error();
       const data: Owner[] = await res.json();
       const sorted = [...data].sort((a, b) => (b.idOwner ?? 0) - (a.idOwner ?? 0));
-      setOwners(sorted);
+      setAllOwners(sorted);
       setCurrentPage(page);
-      setHasNextPage(sorted.length === pageSize);
     } catch {
       toast.error('No se pudo cargar la lista de propietarios.');
     } finally {
@@ -144,6 +159,14 @@ const OwnersManagement = () => {
       toast.error('Por favor, completa Apellido, Primer Nombre y C.I.');
       return;
     }
+    if (String(newOwner.ci).length !== 8) {
+      toast.error('El C.I. debe tener exactamente 8 dígitos.');
+      return;
+    }
+    if (newOwner.phoneNumber && String(newOwner.phoneNumber).length !== 8) {
+      toast.error('El teléfono debe tener exactamente 8 dígitos.');
+      return;
+    }
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
@@ -154,11 +177,9 @@ const OwnersManagement = () => {
       const createdOwner: Owner = await res.json();
       if (newImageFile) {
         await uploadImage(createdOwner.idOwner!, newImageFile);
-        await fetchOwners(1);
-      } else {
-        setOwners((prev) => [createdOwner, ...prev]);
-        setCurrentPage(1);
       }
+      setAllOwners(prev => [createdOwner, ...prev]);
+      setCurrentPage(1);
       toast.success('Propietario creado!');
       setNewOwner(EMPTY_FORM);
       clearNewFile();
@@ -169,6 +190,14 @@ const OwnersManagement = () => {
 
   const updateOwner = async (id: number) => {
     if (!editingOwnerData) return;
+    if (String(editingOwnerData.ci).length !== 8) {
+      toast.error('El C.I. debe tener exactamente 8 dígitos.');
+      return;
+    }
+    if (editingOwnerData.phoneNumber && String(editingOwnerData.phoneNumber).length !== 8) {
+      toast.error('El teléfono debe tener exactamente 8 dígitos.');
+      return;
+    }
     try {
       const { image_url, idOwner, ...dataToSend } = editingOwnerData;
       const res = await fetch(`${API_URL}${id}`, {
@@ -184,7 +213,9 @@ const OwnersManagement = () => {
       setEditingId(null);
       setEditingOwnerData(null);
       clearEditFile();
-      fetchOwners(currentPage);
+      setAllOwners(prev => prev.map(o =>
+        o.idOwner === id ? { ...o, ...dataToSend } : o
+      ));
     } catch {
       toast.error('No se pudo actualizar el propietario.');
     }
@@ -202,7 +233,12 @@ const OwnersManagement = () => {
       const res = await fetch(`${API_URL}${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
       toast.success('Propietario eliminado!');
-      fetchOwners(Math.max(1, currentPage));
+      setAllOwners(prev => {
+        const next = prev.filter(o => o.idOwner !== id);
+        const maxPage = Math.max(1, Math.ceil(next.length / pageSize));
+        setCurrentPage(p => Math.min(p, maxPage));
+        return next;
+      });
     } catch {
       toast.error('No se pudo eliminar el propietario.');
     }
@@ -222,8 +258,7 @@ const OwnersManagement = () => {
 
   return (
     <div className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
-      <Toaster position="top-right" toastOptions={{ style: { background: '#334155', color: 'white' } }} />
-      <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Propietarios</h1>
+<h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Propietarios</h1>
 
       {/* Formulario de creación */}
       <AdminSection>
@@ -253,16 +288,32 @@ const OwnersManagement = () => {
         {/* Fila 2 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
-            <label className="block text-sm text-slate-300 mb-1">Cédula de Identidad</label>
-            <input type="number" placeholder="C.I." value={newOwner.ci || ''}
-              onChange={e => setNewOwner({ ...newOwner, ci: Number(e.target.value) })}
-              className="w-full p-2 rounded-md bg-gray-700" />
+            <label className="block text-sm text-slate-300 mb-1">Cédula de Identidad <span className="text-slate-500 text-xs">(8 dígitos)</span></label>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder=""
+              value={newOwner.ci === 0 ? '' : String(newOwner.ci)}
+              onChange={e => {
+                const raw = e.target.value.replace(/\D/g, '').slice(0, 8);
+                setNewOwner({ ...newOwner, ci: raw === '' ? 0 : Number(raw) });
+              }}
+              className="w-full p-2 rounded-md bg-gray-700"
+            />
           </div>
           <div>
-            <label className="block text-sm text-slate-300 mb-1">Teléfono</label>
-            <input type="number" placeholder="Teléfono" value={newOwner.phoneNumber || ''}
-              onChange={e => setNewOwner({ ...newOwner, phoneNumber: Number(e.target.value) })}
-              className="w-full p-2 rounded-md bg-gray-700" />
+            <label className="block text-sm text-slate-300 mb-1">Teléfono <span className="text-slate-500 text-xs">(8 dígitos)</span></label>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder=""
+              value={newOwner.phoneNumber === 0 ? '' : String(newOwner.phoneNumber)}
+              onChange={e => {
+                const raw = e.target.value.replace(/\D/g, '').slice(0, 8);
+                setNewOwner({ ...newOwner, phoneNumber: raw === '' ? 0 : Number(raw) });
+              }}
+              className="w-full p-2 rounded-md bg-gray-700"
+            />
           </div>
           <div>
             <label className="block text-sm text-slate-300 mb-1">Foto del Propietario</label>
@@ -309,18 +360,35 @@ const OwnersManagement = () => {
 
       {/* Lista de propietarios */}
       <AdminSection>
-        <div className="flex items-center justify-between mb-4 text-sm text-gray-300">
-          <span>Página {currentPage}</span>
-          <div className="flex items-center gap-2">
-            <button onClick={() => fetchOwners(Math.max(1, currentPage - 1))}
+        <div className="flex justify-end mb-4">
+          <div className="flex space-x-1">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1 || loading}
-              className="px-3 py-1 rounded-md border border-gray-600 bg-gray-700 disabled:opacity-50">
-              Anterior
+              className="rounded-full border border-[#3CC9F6]/50 py-2 px-3 text-center text-sm text-[#3CC9F6]/60 transition-all hover:border-[#3CC9F6]/80 hover:text-[#3CC9F6] hover:bg-[#3CC9F6]/10 disabled:pointer-events-none disabled:opacity-30 ml-2"
+            >
+              Prev
             </button>
-            <button onClick={() => fetchOwners(currentPage + 1)}
+            {pageNumbers.map(p => (
+              <button
+                key={p}
+                onClick={() => setCurrentPage(p)}
+                disabled={loading}
+                className={`min-w-9 rounded-full py-2 px-3.5 border text-center text-sm transition-all disabled:pointer-events-none disabled:opacity-30 ml-2 ${
+                  p === currentPage
+                    ? 'bg-[#3CC9F6]/15 border-[#3CC9F6]/70 text-[#3CC9F6] shadow-[0_0_14px_rgba(60,201,246,0.4)] ring-1 ring-[#3CC9F6]/20'
+                    : 'border-[#3CC9F6]/40 text-[#3CC9F6]/60 hover:border-[#3CC9F6]/70 hover:text-[#3CC9F6] hover:bg-[#3CC9F6]/10'
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              onClick={() => setCurrentPage(p => p + 1)}
               disabled={!hasNextPage || loading}
-              className="px-3 py-1 rounded-md border border-gray-600 bg-gray-700 disabled:opacity-50">
-              Siguiente
+              className="rounded-full border border-[#3CC9F6]/50 py-2 px-3 text-center text-sm text-[#3CC9F6]/60 transition-all hover:border-[#3CC9F6]/80 hover:text-[#3CC9F6] hover:bg-[#3CC9F6]/10 disabled:pointer-events-none disabled:opacity-30 ml-2"
+            >
+              Next
             </button>
           </div>
         </div>
@@ -338,7 +406,7 @@ const OwnersManagement = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {owners.map(owner => (
+            {pagedOwners.map(owner => (
               <div key={owner.idOwner} className="bg-gray-700 p-4 rounded-md shadow-lg flex flex-col justify-between">
                 <div>
                   <img
@@ -415,16 +483,30 @@ const OwnersManagement = () => {
                     className="w-full p-2 rounded-md bg-gray-700" />
                 </div>
                 <div>
-                  <label className="block mb-1">C.I.</label>
-                  <input type="number" value={editingOwnerData.ci}
-                    onChange={e => setEditingOwnerData({ ...editingOwnerData, ci: Number(e.target.value) })}
-                    className="w-full p-2 rounded-md bg-gray-700" />
+                  <label className="block mb-1">C.I. <span className="text-slate-500 text-xs">(8 dígitos)</span></label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={editingOwnerData.ci === 0 ? '' : String(editingOwnerData.ci)}
+                    onChange={e => {
+                      const raw = e.target.value.replace(/\D/g, '').slice(0, 8);
+                      setEditingOwnerData({ ...editingOwnerData, ci: raw === '' ? 0 : Number(raw) });
+                    }}
+                    className="w-full p-2 rounded-md bg-gray-700"
+                  />
                 </div>
                 <div>
-                  <label className="block mb-1">Teléfono</label>
-                  <input type="number" value={editingOwnerData.phoneNumber}
-                    onChange={e => setEditingOwnerData({ ...editingOwnerData, phoneNumber: Number(e.target.value) })}
-                    className="w-full p-2 rounded-md bg-gray-700" />
+                  <label className="block mb-1">Teléfono <span className="text-slate-500 text-xs">(8 dígitos)</span></label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={editingOwnerData.phoneNumber === 0 ? '' : String(editingOwnerData.phoneNumber)}
+                    onChange={e => {
+                      const raw = e.target.value.replace(/\D/g, '').slice(0, 8);
+                      setEditingOwnerData({ ...editingOwnerData, phoneNumber: raw === '' ? 0 : Number(raw) });
+                    }}
+                    className="w-full p-2 rounded-md bg-gray-700"
+                  />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block mb-1 text-sm font-medium text-slate-300">Foto</label>

@@ -4,7 +4,7 @@ import {
   useCallback,
 } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import Sidebar from "../../components/Sidebar";
 import { PerfilCaballerizo } from "./PerfilCaballerizo";
 import { TareasCaballerizo } from "./TareasCaballerizo";
@@ -24,7 +24,7 @@ import {
 
 
 const DEFAULT_STATUS_OPTIONS = [
-  "Pendiente",
+  "Asignada",
   "En progreso",
   "Completada",
   "Cancelada",
@@ -35,7 +35,7 @@ const normalizeStatus = (status?: string | null): string => {
   if (value.includes("cancel")) return "Cancelada";
   if (value.includes("complet")) return "Completada";
   if (value.includes("progreso") || value.includes("proceso")) return "En progreso";
-  return "Pendiente";
+  return "Asignada";
 };
 
 const buildCategoriesMap = (
@@ -182,7 +182,6 @@ const CaballerizoDashboard = () => {
           />
         </Routes>
       </div>
-      <Toaster position="bottom-right" />
     </div>
   );
 };

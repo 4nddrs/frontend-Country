@@ -33,8 +33,8 @@ const RacesManagement = () => {
     try {
       const res = await fetch(API_URL);
       if (!res.ok) throw new Error('Error al obtener razas');
-      const data = await res.json();
-      setRaces(data);
+      const data: Race[] = await res.json();
+      setRaces(data.sort((a, b) => (b.idRace ?? 0) - (a.idRace ?? 0)));
     } catch {
       toast.error('No se pudo cargar razas.');
     } finally {

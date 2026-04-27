@@ -39,7 +39,7 @@ const ShiftTypesManagement = () => {
       const res = await fetch(API_URL);
       if (!res.ok) throw new Error('Error al obtener tipos de turno');
       const data = await res.json();
-      setShiftTypes(data);
+      setShiftTypes([...data].sort((a: ShiftType, b: ShiftType) => (b.idShiftType ?? 0) - (a.idShiftType ?? 0)));
     } catch {
       toast.error('No se pudieron cargar los tipos de turno.');
     } finally {
@@ -119,23 +119,29 @@ const ShiftTypesManagement = () => {
 
       <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Tipo de Turno</h2>
-        <div className="flex gap-4 flex-wrap">
-          <input
-            type="text"
-            name="shiftName"
-            placeholder="Nombre del turno"
-            value={newShiftType.shiftName}
-            onChange={e => setNewShiftType({ ...newShiftType, shiftName: e.target.value })}
-            className="select-field flex-1 placeholder-gray-400"
-          />
-          <input
-            type="text"
-            name="description"
-            placeholder="Descripción"
-            value={newShiftType.description}
-            onChange={e => setNewShiftType({ ...newShiftType, description: e.target.value })}
-            className="select-field flex-1 placeholder-gray-400"
-          />
+        <div className="flex gap-4 flex-wrap items-end">
+          <div className="flex-1 min-w-[180px]">
+            <label className="block mb-1 text-sm text-slate-300">Nombre del turno <span className="text-slate-500 font-normal"></span></label>
+            <input
+              type="text"
+              name="shiftName"
+              placeholder="Ej: Mañana..."
+              value={newShiftType.shiftName}
+              onChange={e => setNewShiftType({ ...newShiftType, shiftName: e.target.value })}
+              className="select-field w-full placeholder-gray-400"
+            />
+          </div>
+          <div className="flex-1 min-w-[180px]">
+            <label className="block mb-1 text-sm text-slate-300">Descripción <span className="text-slate-500 font-normal"></span></label>
+            <input
+              type="text"
+              name="description"
+              placeholder="Ej: Turno de 06:00 a 14:00..."
+              value={newShiftType.description}
+              onChange={e => setNewShiftType({ ...newShiftType, description: e.target.value })}
+              className="select-field w-full placeholder-gray-400"
+            />
+          </div>
           <AddButton onClick={createShiftType} />
         </div>
       </AdminSection>

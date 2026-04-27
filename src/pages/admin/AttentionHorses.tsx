@@ -1,13 +1,17 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import type { ChangeEvent } from 'react';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Trash2, Loader, FileDown, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Edit, Trash2, Loader, FileDown, ChevronUp, ChevronDown, X} from 'lucide-react';
 import { ExportButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  Cell, ResponsiveContainer,
+} from 'recharts';
 
 const BASE_URL = 'http://localhost:8000';
 const API_URL = `${BASE_URL}/attention_horses/`;
@@ -185,6 +189,20 @@ const AttentionHorsesManagement = () => {
     [filteredAttentions],
   );
 
+  const horsesChartData = useMemo(() => {
+    const counts: Record<number, number> = {};
+    attentions.forEach(a => {
+      counts[a.fk_idHorse] = (counts[a.fk_idHorse] ?? 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([id, count]) => ({
+        id: Number(id),
+        name: horses.find(h => h.idHorse === Number(id))?.horseName ?? `#${id}`,
+        count,
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [attentions, horses]);
+
   const fetchHorses = async () => {
     try {
       const res = await fetch(`${BASE_URL}/horses/`);
@@ -232,7 +250,9 @@ const AttentionHorsesManagement = () => {
         throw new Error('Error al obtener atenciones');
       }
       const data = await res.json();
-      setAttentions(Array.isArray(data) ? data : []);
+      const list = Array.isArray(data) ? data : [];
+      list.sort((a: AttentionHorse, b: AttentionHorse) => (b.idAttentionHorse ?? 0) - (a.idAttentionHorse ?? 0));
+      setAttentions(list);
     } catch {
       toast.error('No se pudo cargar atenciones.');
     } finally {
@@ -302,6 +322,10 @@ const AttentionHorsesManagement = () => {
     }
     if (!form.fk_idHorse) {
       toast.error('El caballo es obligatorio.');
+      return false;
+    }
+    if (!form.fk_idMedicine) {
+      toast.error('La medicina es obligatoria.');
       return false;
     }
     if (!form.fk_idEmployee) {
@@ -375,10 +399,6 @@ const AttentionHorsesManagement = () => {
         isEditing ? 'No se pudo actualizar atención.' : 'No se pudo crear atención.',
       );
     }
-  };
-
-  const handleCancelEdit = () => {
-    resetForm();
   };
 
   const clearFilters = () => {
@@ -477,6 +497,7 @@ const AttentionHorsesManagement = () => {
             },
           ],
         ],
+        showFoot: 'lastPage',
         footStyles: {
           fillColor: [38, 72, 131],
           textColor: [255, 255, 255],
@@ -583,22 +604,22 @@ const AttentionHorsesManagement = () => {
       <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Atención</h2>
 
-        <div className="flex gap-4 flex-wrap">
-          <div className="flex-1 min-w-[200px]">
+        {/* Fila 1: 4 campos (Descripción más ancha) */}
+        <div className="grid grid-cols-5 gap-4 mb-4">
+          <div>
             <label htmlFor="date" className="block mb-1">
               Fecha <span className="text-red-400">*</span>
             </label>
             <input
               type="date"
               name="date"
-              placeholder="Fecha"
               value={newAttention.date}
               onChange={e => setNewAttention({ ...newAttention, date: e.target.value })}
               className="w-full"
               required
             />
           </div>
-          <div className="flex-1 min-w-[200px]">
+          <div>
             <label htmlFor="dose" className="block mb-1">
               Dosis <span className="text-red-400">*</span>
             </label>
@@ -612,7 +633,7 @@ const AttentionHorsesManagement = () => {
               required
             />
           </div>
-          <div className="flex-1 min-w-[200px]">
+          <div>
             <label htmlFor="cost" className="block mb-1">
               Costo <span className="text-red-400">*</span>
             </label>
@@ -627,7 +648,7 @@ const AttentionHorsesManagement = () => {
               required
             />
           </div>
-          <div className="flex-1 min-w-[200px]">
+          <div className="col-span-2">
             <label htmlFor="description" className="block mb-1">
               Descripción <span className="text-red-400">*</span>
             </label>
@@ -641,7 +662,10 @@ const AttentionHorsesManagement = () => {
               required
             />
           </div>
-          <div className="flex-1 min-w-[200px]">
+        </div>
+        {/* Fila 2: 3 selectores + botón */}
+        <div className="grid grid-cols-4 gap-4">
+          <div>
             <label htmlFor="fk_idHorse" className="block mb-1">
               Caballo <span className="text-red-400">*</span>
             </label>
@@ -654,15 +678,13 @@ const AttentionHorsesManagement = () => {
             >
               <option value={0}>-- Selecciona caballo --</option>
               {horses.map(horse => (
-                <option key={horse.idHorse} value={horse.idHorse}>
-                  {horse.horseName}
-                </option>
+                <option key={horse.idHorse} value={horse.idHorse}>{horse.horseName}</option>
               ))}
             </select>
           </div>
-          <div className="flex-1 min-w-[200px]">
+          <div>
             <label htmlFor="fk_idMedicine" className="block mb-1">
-              Medicina (opcional)
+              Medicina <span className="text-red-400">*</span>
             </label>
             <select
               name="fk_idMedicine"
@@ -674,16 +696,15 @@ const AttentionHorsesManagement = () => {
                 })
               }
               className="w-full"
+              required
             >
-              <option value="">-- Sin medicina --</option>
+              <option value="">Ninguno</option>
               {medicines.map(med => (
-                <option key={med.idMedicine} value={med.idMedicine}>
-                  {med.name}
-                </option>
+                <option key={med.idMedicine} value={med.idMedicine}>{med.name}</option>
               ))}
             </select>
           </div>
-          <div className="flex-1 min-w-[200px]">
+          <div>
             <label htmlFor="fk_idEmployee" className="block mb-1">
               Empleado <span className="text-red-400">*</span>
             </label>
@@ -698,26 +719,185 @@ const AttentionHorsesManagement = () => {
             >
               <option value={0}>-- Selecciona empleado --</option>
               {employees.map(emp => (
-                <option key={emp.idEmployee} value={emp.idEmployee}>
-                  {emp.fullName}
-                </option>
+                <option key={emp.idEmployee} value={emp.idEmployee}>{emp.fullName}</option>
               ))}
             </select>
           </div>
-          <div className="flex items-end gap-2">
+          <div className="flex items-end justify-end">
             <button type="button" onClick={submitAttention} className="group relative cursor-pointer">
-              <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[23px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-4 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+              <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[10px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-16 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
                 <Plus size={15} /> Agregar
               </div>
-              <div className="absolute inset-0 z-0 h-full w-full rounded-[23px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+              <div className="absolute inset-0 z-0 h-full w-full rounded-[10px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
             </button>
           </div>
         </div>
       </AdminSection>
+      {/* ── Dashboard de atenciones por caballo ── */}
+      <div className="relative mb-6 overflow-hidden rounded-2xl border border-white/[0.07] bg-gradient-to-br from-[#0a1628] via-[#0d1f3c] to-[#0a1220] shadow-[0_8px_48px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.05)] p-6">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h2 className="text-lg font-semibold text-white/90 tracking-wide">
+              Atenciones médicas por caballo
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">Conteo total de registros · todos los periodos</p>
+          </div>
+          <div className="flex items-center gap-4 text-xs text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block w-3 h-3 rounded-sm bg-orange-500/80" />
+              ≤ 5 atenciones
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block w-3 h-3 rounded-sm bg-blue-500/80" />
+              &gt; 5 atenciones
+            </span>
+          </div>
+        </div>
+
+        {horsesChartData.length === 0 ? (
+          <div className="flex items-center justify-center h-48 text-slate-500 text-sm">
+            Sin datos de atenciones registradas.
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart
+              data={horsesChartData}
+              margin={{ top: 16, right: 20, left: -10, bottom: 56 }}
+              barCategoryGap="28%"
+            >
+              <defs>
+                <filter id="glow-orange" x="-60%" y="-60%" width="220%" height="220%">
+                  <feGaussianBlur stdDeviation="5" result="blur1" />
+                  <feGaussianBlur stdDeviation="10" result="blur2" in="SourceGraphic" />
+                  <feMerge>
+                    <feMergeNode in="blur2" />
+                    <feMergeNode in="blur1" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+                <filter id="glow-blue" x="-60%" y="-60%" width="220%" height="220%">
+                  <feGaussianBlur stdDeviation="5" result="blur1" />
+                  <feGaussianBlur stdDeviation="10" result="blur2" in="SourceGraphic" />
+                  <feMerge>
+                    <feMergeNode in="blur2" />
+                    <feMergeNode in="blur1" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+                <linearGradient id="bar-orange" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="rgba(253,186,116,0.95)" />
+                  <stop offset="50%" stopColor="rgba(249,115,22,0.85)" />
+                  <stop offset="100%" stopColor="rgba(194,65,12,0.6)" />
+                </linearGradient>
+                <linearGradient id="bar-blue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="rgba(147,210,255,0.95)" />
+                  <stop offset="50%" stopColor="rgba(59,130,246,0.85)" />
+                  <stop offset="100%" stopColor="rgba(29,78,216,0.6)" />
+                </linearGradient>
+              </defs>
+
+              <CartesianGrid
+                strokeDasharray="3 6"
+                stroke="rgba(255,255,255,0.04)"
+                vertical={false}
+              />
+
+              <XAxis
+                dataKey="name"
+                tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 500 }}
+                tickLine={false}
+                axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
+                angle={-35}
+                textAnchor="end"
+                interval={0}
+                dy={6}
+              />
+
+              <YAxis
+                allowDecimals={false}
+                tick={{ fill: '#64748b', fontSize: 11 }}
+                tickLine={false}
+                axisLine={false}
+                width={32}
+              />
+
+              <Tooltip
+                cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  const d = payload[0].payload as { name: string; count: number };
+                  const isHigh = d.count > 5;
+                  return (
+                    <div className="rounded-xl border border-white/10 bg-[#0d1f3c]/95 backdrop-blur px-4 py-3 shadow-2xl text-sm">
+                      <p className="font-semibold text-white mb-1">{d.name}</p>
+                      <p className={`font-bold text-lg ${isHigh ? 'text-blue-400' : 'text-orange-400'}`}>
+                        {d.count} {d.count === 1 ? 'atención' : 'atenciones'}
+                      </p>
+                      <p className="text-xs mt-1 text-slate-500">
+                        {isHigh ? 'Nivel alto · azul' : 'Nivel bajo · naranja'}
+                      </p>
+                    </div>
+                  );
+                }}
+              />
+
+              <Bar
+                dataKey="count"
+                radius={[6, 6, 2, 2]}
+                maxBarSize={52}
+                isAnimationActive
+                animationDuration={900}
+                animationEasing="ease-out"
+                label={{
+                  position: 'top',
+                  fill: '#cbd5e1',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  formatter: (v: React.ReactNode) => (Number(v) > 0 ? v : ''),
+                }}
+              >
+                {horsesChartData.map((entry) => (
+                  <Cell
+                    key={entry.id}
+                    fill={entry.count <= 5 ? 'url(#bar-orange)' : 'url(#bar-blue)'}
+                    filter={entry.count <= 5 ? 'url(#glow-orange)' : 'url(#glow-blue)'}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+
+        {/* Stat pills */}
+        {horsesChartData.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-3 mt-5 pt-4 border-t border-white/[0.05]">
+            <div className="rounded-lg bg-white/[0.04] border border-white/[0.06] px-4 py-2 text-center">
+              <p className="text-xs text-slate-500">Caballos</p>
+              <p className="text-base font-bold text-white">{horsesChartData.length}</p>
+            </div>
+            <div className="rounded-lg bg-white/[0.04] border border-white/[0.06] px-4 py-2 text-center">
+              <p className="text-xs text-slate-500">Total atenciones</p>
+              <p className="text-base font-bold text-white">{attentions.length}</p>
+            </div>
+            <div className="rounded-lg bg-white/[0.04] border border-white/[0.06] px-4 py-2 text-center">
+              <p className="text-xs text-slate-500">Mayor registro</p>
+              <p className="text-base font-bold text-orange-400">{horsesChartData[0]?.name}</p>
+            </div>
+            <div className="rounded-lg bg-white/[0.04] border border-white/[0.06] px-4 py-2 text-center">
+              <p className="text-xs text-slate-500">Máx. atenciones</p>
+              <p className={`text-base font-bold ${horsesChartData[0]?.count > 5 ? 'text-blue-400' : 'text-orange-400'}`}>
+                {horsesChartData[0]?.count ?? 0}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Exportacion a PDF</h2>
-        <div className="flex flex-wrap items-end gap-4">
-          <div className="min-w-[200px]">
+        <h2 className="text-xl font-semibold mb-4 text-teal-400">Filtros y Exportación</h2>
+        <div className="flex flex-nowrap items-end gap-4">
+          <div className="flex-1">
             <label htmlFor="filterHorse" className="block mb-1 text-gray-300">
               Filtrar por caballo
             </label>
@@ -735,7 +915,7 @@ const AttentionHorsesManagement = () => {
               ))}
             </select>
           </div>
-          <div className="min-w-[180px]">
+          <div className="flex-1">
             <label htmlFor="filterStartDate" className="block mb-1 text-gray-300">
               Fecha desde
             </label>
@@ -747,7 +927,7 @@ const AttentionHorsesManagement = () => {
               className="w-full"
             />
           </div>
-          <div className="min-w-[180px]">
+          <div className="flex-1">
             <label htmlFor="filterEndDate" className="block mb-1 text-gray-300">
               Fecha hasta
             </label>
@@ -759,7 +939,16 @@ const AttentionHorsesManagement = () => {
               className="w-full"
             />
           </div>
-          <div className="flex gap-2">
+          {(filterHorse || filterStartDate || filterEndDate) && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="flex items-center gap-1 px-3 py-2 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-800 transition text-sm"
+            >
+              <X size={16} /> Limpiar
+            </button>
+          )}
+          <div className="ml-auto">
             <ExportButton
               onClick={exportFilteredPDF}
               disabled={exporting || loading}
@@ -767,24 +956,10 @@ const AttentionHorsesManagement = () => {
               {exporting ? <Loader size={18} className="animate-spin" /> : <FileDown size={18} />}
               Generar PDF
             </ExportButton>
-            {(filterHorse || filterStartDate || filterEndDate) && (
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="w-full"
-              >
-                <X size={18} /> Limpiar
-              </button>
-            )}
-          </div>
-          <div className="ml-auto text-right">
-            <p className="text-sm text-gray-400">Total filtrado</p>
-            <p className="text-2xl font-semibold text-teal-300">
-              {formatCostForDisplay(totalFilteredCost) || '0,00'} Bs
-            </p>
           </div>
         </div>
       </AdminSection>
+
       <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Registros</h2>
         {loading ? (
@@ -924,9 +1099,9 @@ const AttentionHorsesManagement = () => {
                 </select>
               </div>
               <div className="flex-1 min-w-[200px]">
-                <label className="block mb-1">Medicina (opcional)</label>
+                <label className="block mb-1">Medicina <span className="text-red-400">*</span></label>
                 <select value={editAttention.fk_idMedicine === '' ? '' : editAttention.fk_idMedicine} onChange={(e) => setEditAttention({ ...editAttention, fk_idMedicine: e.target.value ? Number(e.target.value) : '' })} className="w-full">
-                  <option value="">-- Sin medicina --</option>
+                  <option value="">Ninguno</option>
                   {medicines.map(med => <option key={med.idMedicine} value={med.idMedicine}>{med.name}</option>)}
                 </select>
               </div>

@@ -54,7 +54,7 @@ const ShiftEmployedsManagement = () => {
       const res = await fetch(API_URL);
       if (!res.ok) throw new Error('Error al obtener turnos empleados');
       const data = await res.json();
-      setShifts(data);
+      setShifts([...data].sort((a: ShiftEmployed, b: ShiftEmployed) => (b.idShiftEmployed ?? 0) - (a.idShiftEmployed ?? 0)));
     } catch {
       toast.error('No se pudo cargar turnos empleados.');
     } finally {
@@ -139,34 +139,34 @@ const ShiftEmployedsManagement = () => {
 
       <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Turno</h2>
-        <div className="flex gap-4 flex-wrap">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label htmlFor="startDateTime" className="block mb-1">Inicio</label>
+            <label className="block mb-1 text-sm text-slate-300">Inicio del turno</label>
             <input
               type="datetime-local"
               name="startDateTime"
               value={newShift.startDateTime}
               onChange={e => setNewShift({ ...newShift, startDateTime: e.target.value })}
-              className="select-field flex-1 placeholder-gray-400"
+              className="select-field w-full"
             />
           </div>
           <div>
-            <label htmlFor="endDateTime" className="block mb-1">Fin</label>
+            <label className="block mb-1 text-sm text-slate-300">Fin del turno</label>
             <input
               type="datetime-local"
               name="endDateTime"
               value={newShift.endDateTime}
               onChange={e => setNewShift({ ...newShift, endDateTime: e.target.value })}
-              className="select-field flex-1 placeholder-gray-400"
+              className="select-field w-full"
             />
           </div>
           <div>
-            <label htmlFor="fk_idShiftType" className="block mb-1">Tipo de Turno</label>
+            <label className="block mb-1 text-sm text-slate-300">Tipo de turno</label>
             <select
               name="fk_idShiftType"
               value={newShift.fk_idShiftType}
               onChange={e => setNewShift({ ...newShift, fk_idShiftType: Number(e.target.value) })}
-              className="select-field flex-1"
+              className="select-field w-full"
             >
               <option value="">-- Selecciona tipo de turno --</option>
               {shiftTypes.map(type => (
@@ -174,6 +174,8 @@ const ShiftEmployedsManagement = () => {
               ))}
             </select>
           </div>
+        </div>
+        <div className="mt-5 flex justify-end">
           <AddButton onClick={createShift} />
         </div>
       </AdminSection>
@@ -253,7 +255,7 @@ const ShiftEmployedsManagement = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block mb-1 text-sm font-medium">Inicio</label>
+                  <label className="block mb-1 text-sm font-medium">Inicio del turno</label>
                   <input
                     type="datetime-local"
                     value={editingData!.startDateTime}
@@ -262,7 +264,7 @@ const ShiftEmployedsManagement = () => {
                   />
                 </div>
                 <div>
-                  <label className="block mb-1 text-sm font-medium">Fin</label>
+                  <label className="block mb-1 text-sm font-medium">Fin del turno</label>
                   <input
                     type="datetime-local"
                     value={editingData!.endDateTime}

@@ -66,8 +66,8 @@ const NutritionalPlanDetailsManagement = () => {
     try {
       const res = await fetch(API_URL);
       if (!res.ok) throw new Error('Error al obtener detalles');
-      const data = await res.json();
-      setDetails(data);
+      const data: NutritionalPlanDetail[] = await res.json();
+      setDetails(data.sort((a, b) => (b.idDetail ?? 0) - (a.idDetail ?? 0)));
     } catch {
       toast.error('No se pudo cargar detalles.');
     } finally {
@@ -105,10 +105,11 @@ const NutritionalPlanDetailsManagement = () => {
 
   const createDetail = async () => {
     try {
+      const payload = { ...newDetail, period: newDetail.period ? `${newDetail.period}-01` : '' };
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newDetail),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('Error al crear detalle');
       toast.success('Detalle creado!');
@@ -124,6 +125,7 @@ const NutritionalPlanDetailsManagement = () => {
     const payload = {
       ...editingData,
       totalConsumption: editingData.consumptionKlg * editingData.daysConsumptionMonth,
+      period: editingData.period ? `${editingData.period}-01` : '',
     };
     try {
       const res = await fetch(`${API_URL}${id}`, {
@@ -163,7 +165,7 @@ const NutritionalPlanDetailsManagement = () => {
     setEditingId(detail.idDetail!);
     setEditingData({
       ...detail,
-      period: detail.period?.slice(0, 10) || '',
+      period: detail.period?.slice(0, 7) || '',
     });
   };
 
@@ -215,7 +217,7 @@ const NutritionalPlanDetailsManagement = () => {
           <div>
             <label className="block mb-1">Periodo</label>
             <input
-              type="date"
+              type="month"
               name="period"
               value={newDetail.period}
               onChange={e => setNewDetail({ ...newDetail, period: e.target.value })}
@@ -298,7 +300,7 @@ const NutritionalPlanDetailsManagement = () => {
                           <li><strong>Consumo (Kg):</strong> {detail.consumptionKlg}</li>
                           <li><strong>Días/mes:</strong> {detail.daysConsumptionMonth}</li>
                           <li><strong>Total consumo:</strong> {detail.totalConsumption}</li>
-                          <li><strong>Periodo:</strong> {detail.period?.slice(0, 10)}</li>
+                          <li><strong>Periodo:</strong> {detail.period?.slice(0, 7)}</li>
                         </ul>
                       </div>
                     )}
@@ -388,7 +390,7 @@ const NutritionalPlanDetailsManagement = () => {
                 <div>
                   <label className="block mb-1 text-sm font-medium">Periodo</label>
                   <input
-                    type="date"
+                    type="month"
                     value={editingData!.period}
                     onChange={e => setEditingData({ ...editingData!, period: e.target.value })}
                     className="w-full p-2 rounded-md bg-gray-700"

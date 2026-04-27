@@ -437,12 +437,21 @@ const AlphaControlsManagement: React.FC = () => {
       );
       const ganancia = totalIngresoBs - totalCompraBs;
 
+      // === Asegurar que los totales quepan en la última página ===
+      const mainFinalY = (doc as any).lastAutoTable.finalY;
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const summaryNeeds = 220;
+      const summaryStartY =
+        pageHeight - mainFinalY - 40 < summaryNeeds
+          ? (doc.addPage(), 40)
+          : mainFinalY + 10;
+
       // === Fila de pie (totales generales) ===
-      const totalsBlue: [number, number, number] = [113, 146, 190]; 
-      const leftOffset = 50; 
+      const totalsBlue: [number, number, number] = [113, 146, 190];
+      const leftOffset = 50;
 
       autoTable(doc, {
-        startY: (doc as any).lastAutoTable.finalY + 10,
+        startY: summaryStartY,
         margin: { left: leftOffset },
         body: [
           [
@@ -619,7 +628,7 @@ const AlphaControlsManagement: React.FC = () => {
 
           {[
             { label: "INGRESO KLG.", field: "alphaIncome" },
-            { label: "PRECIO UNITARIO Bs.", field: "unitPrice" },
+            { label: "PRECIO UNITARIO COMPRA Bs.", field: "unitPrice" },
             { label: "EGRESO KLG.", field: "outcome" },
             { label: "PRECIO VENTA Bs.", field: "salePrice" },
           ].map(({ label, field }) => {
@@ -659,7 +668,7 @@ const AlphaControlsManagement: React.FC = () => {
           })}
           
           <div className="col-span-full flex justify-between items-center mt-4">
-            <label className="flex items-center gap-2 text-sm text-gray-300">
+            <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={isMonthlyClose}
@@ -667,14 +676,19 @@ const AlphaControlsManagement: React.FC = () => {
                 className="w-4 h-4 accent-teal-500"
               />
               Cierre de mes
+              {isMonthlyClose && (
+                <span className="rounded-full border border-yellow-400/60 bg-yellow-400/15 px-2 py-0.5 text-xs font-semibold text-yellow-300 tracking-wide">
+                  CIERRE DE MES
+                </span>
+              )}
             </label>
 
             <div className="col-span-full flex justify-end gap-3">
               <button type="button" onClick={handleSubmit} className="group relative cursor-pointer">
-                <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[23px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-4 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+                <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[10px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-16 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
                   <Plus size={15} /> Agregar
                 </div>
-                <div className="absolute inset-0 z-0 h-full w-full rounded-[23px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+                <div className="absolute inset-0 z-0 h-full w-full rounded-[10px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
               </button>
             </div>
           </div>
@@ -814,7 +828,7 @@ const AlphaControlsManagement: React.FC = () => {
                 <input type="text" placeholder="0,00" value={editDisplayInputs.alphaIncome} onChange={(e) => handleEditDynamicInput("alphaIncome", e.target.value)} className="w-full p-2 rounded bg-gray-700 text-white" />
               </div>
               <div>
-                <label className="text-sm mb-1 block">PRECIO UNITARIO Bs.</label>
+                <label className="text-sm mb-1 block">PRECIO UNITARIO COMPRA Bs.</label>
                 <input type="text" placeholder="0,00" value={editDisplayInputs.unitPrice} onChange={(e) => handleEditDynamicInput("unitPrice", e.target.value)} className="w-full p-2 rounded bg-gray-700 text-white" />
               </div>
               <div>

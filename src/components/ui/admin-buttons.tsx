@@ -55,6 +55,28 @@ export const ExportButton = ({
   </button>
 );
 
+export const ClearButton = ({
+  onClick,
+  children,
+  disabled = false,
+  className = '',
+  type = 'button',
+  title,
+}: AdminButtonProps) => (
+  <button
+    type={type}
+    onClick={disabled ? undefined : onClick}
+    aria-disabled={disabled}
+    title={title}
+    className={`group relative ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
+  >
+    <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[10px] border border-[#f87171]/70 bg-[#f87171]/12 px-16 font-semibold text-[#f87171] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(248,113,113,0.35)] ring-1 ring-[#f87171]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+      {children}
+    </div>
+    <div className="absolute inset-0 z-0 h-full w-full rounded-[10px] bg-[#f87171]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(248,113,113,0.6),14px_14px_rgba(248,113,113,0.4),21px_21px_rgba(248,113,113,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+  </button>
+);
+
 export const SaveButton = ({
   onClick,
   children = 'Guardar',

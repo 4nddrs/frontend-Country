@@ -68,7 +68,9 @@ const ApplicationProceduresManagement = () => {
       const res = await fetch(API_URL);
       if (!res.ok) throw new Error('Error al obtener procedimientos');
       const data = await res.json();
-      setProcedures(data);
+      const list: ApplicationProcedure[] = Array.isArray(data) ? data : [];
+      list.sort((a, b) => (b.idApplicationProcedure ?? 0) - (a.idApplicationProcedure ?? 0));
+      setProcedures(list);
     } catch {
       toast.error('No se pudo cargar procedimientos.');
     } finally {
@@ -203,8 +205,8 @@ const ApplicationProceduresManagement = () => {
               ))}
             </select>
           </div>
-          <div className="flex items-end justify-end col-span-1 md:col-span-2 lg:col-span-1">
-            <AddButton onClick={createProcedure} className="w-full justify-center" />
+          <div className="flex items-end justify-end col-span-1 md:col-span-2 lg:col-span-3">
+            <AddButton onClick={createProcedure} className="px-16 justify-center" />
           </div>
         </div>
       </AdminSection>
@@ -225,7 +227,7 @@ const ApplicationProceduresManagement = () => {
 
                 <div className="px-6 pb-6 space-y-4 text-sm text-slate-200">
                   <div className="text-center space-y-1">
-                    <h3 className="text-lg font-semibold text-pink-300">{proc.executionDate?.slice(0, 10)}</h3>
+                    <h3 className="text-lg font-semibold text-pink-300">{horses.find(h => h.idHorse === proc.fk_idHorse)?.horseName || proc.fk_idHorse}</h3>
                   </div>
 
                   <div className="space-y-2 text-center">

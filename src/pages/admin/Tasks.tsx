@@ -38,6 +38,41 @@ const TasksManagement = () => {
 
   const isEditModalOpen = editingId !== null && editingData !== null;
 
+  const STATUS_OPTIONS = ['Asignada', 'En progreso', 'Completada', 'Cancelada'];
+
+  const getStatusStyles = (status: string) => {
+    switch (status) {
+      case 'En progreso':
+        return {
+          card: 'from-amber-500/10 hover:shadow-[0_0_12px_rgba(245,158,11,0.25)]',
+          dot: 'bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.6)]',
+          title: 'text-amber-300',
+          toggle: 'border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/15',
+        };
+      case 'Completada':
+        return {
+          card: 'from-emerald-500/10 hover:shadow-[0_0_12px_rgba(16,185,129,0.25)]',
+          dot: 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.6)]',
+          title: 'text-emerald-300',
+          toggle: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/15',
+        };
+      case 'Cancelada':
+        return {
+          card: 'from-rose-500/10 hover:shadow-[0_0_12px_rgba(244,63,94,0.25)]',
+          dot: 'bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.6)]',
+          title: 'text-rose-300',
+          toggle: 'border-rose-500/40 bg-rose-500/10 text-rose-300 hover:bg-rose-500/15',
+        };
+      default: // Pendiente
+        return {
+          card: 'from-slate-500/10 hover:shadow-[0_0_12px_rgba(148,163,184,0.25)]',
+          dot: 'bg-slate-400 shadow-[0_0_12px_rgba(148,163,184,0.6)]',
+          title: 'text-slate-300',
+          toggle: 'border-slate-500/40 bg-slate-500/10 text-slate-300 hover:bg-slate-500/15',
+        };
+    }
+  };
+
   useEffect(() => {
     if (!isEditModalOpen) return;
     const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') handleCancelEdit(); };
@@ -51,7 +86,7 @@ const TasksManagement = () => {
       const res = await fetch(API_URL);
       if (!res.ok) throw new Error('Error al obtener tareas');
       const data = await res.json();
-      setTasks(data);
+      setTasks([...data].sort((a: Task, b: Task) => (b.idTask ?? 0) - (a.idTask ?? 0)));
     } catch {
       toast.error('No se pudo cargar tareas.');
     } finally {
@@ -167,54 +202,67 @@ const TasksManagement = () => {
 
       <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Tarea</h2>
-        <div className="flex gap-4 flex-wrap">
-          <div className="flex-1">
-            <label className="text-sm mb-1 block">Nombre de la tarea</label>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div>
+            <label className="block mb-1 text-sm text-slate-300">Nombre de la tarea</label>
             <input type="text" name="taskName" value={newTask.taskName}
+              placeholder="Ej: Alimentar caballos..."
               onChange={e => setNewTask({ ...newTask, taskName: e.target.value })}
-              className="select-field flex-1 placeholder-gray-400" />
+              className="select-field w-full placeholder-gray-400" />
           </div>
-          <div className="flex-1">
-            <label className="text-sm mb-1 block">Descripción</label>
+          <div>
+            <label className="block mb-1 text-sm text-slate-300">Descripción</label>
             <input type="text" name="description" value={newTask.description}
+              placeholder="Ej: Descripción de la tarea..."
               onChange={e => setNewTask({ ...newTask, description: e.target.value })}
-              className="select-field flex-1 placeholder-gray-400" />
+              className="select-field w-full placeholder-gray-400" />
           </div>
-          <div className="flex-1">
-            <label className="text-sm mb-1 block">Fecha de asignación</label>
+          <div>
+            <label className="block mb-1 text-sm text-slate-300">Fecha de asignación</label>
             <input type="date" name="assignmentDate" value={newTask.assignmentDate}
               onChange={e => setNewTask({ ...newTask, assignmentDate: e.target.value })}
-              className="select-field flex-1 placeholder-gray-400" />
+              className="select-field w-full placeholder-gray-400" />
           </div>
-          <div className="flex-1">
-            <label className="text-sm mb-1 block">Fecha de finalización</label>
+          <div>
+            <label className="block mb-1 text-sm text-slate-300">Fecha de finalización</label>
             <input type="date" name="completionDate" value={newTask.completionDate}
               onChange={e => setNewTask({ ...newTask, completionDate: e.target.value })}
-              className="select-field flex-1 placeholder-gray-400" />
+              className="select-field w-full placeholder-gray-400" />
           </div>
-          <div className="flex-1">
-            <label className="text-sm mb-1 block">Estado</label>
-            <input type="text" name="taskStatus" value={newTask.taskStatus}
+          <div>
+            <label className="block mb-1 text-sm text-slate-300">Estado</label>
+            <select value={newTask.taskStatus}
               onChange={e => setNewTask({ ...newTask, taskStatus: e.target.value })}
-              className="select-field flex-1 placeholder-gray-400" />
+              className="select-field w-full">
+              <option value="">-- Selecciona un estado --</option>
+              {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
           </div>
-          <select value={newTask.fk_idTaskCategory}
-            onChange={e => setNewTask({ ...newTask, fk_idTaskCategory: Number(e.target.value) })}
-            className="select-field flex-1">
-            <option value="">-- Selecciona una categoría --</option>
-            {categories.map(cat => (
-              <option key={cat.idTaskCategory} value={cat.idTaskCategory}>{cat.categoryName}</option>
-            ))}
-          </select>
-          <select value={newTask.fk_idEmployee || ''}
-            onChange={e => setNewTask({ ...newTask, fk_idEmployee: Number(e.target.value) || undefined })}
-            className="select-field flex-1">
-            <option value="">-- Selecciona un empleado --</option>
-            {employees.map(emp => (
-              <option key={emp.idEmployee} value={emp.idEmployee}>{emp.fullName}</option>
-            ))}
-          </select>
-          <AddButton onClick={createTask} />
+          <div>
+            <label className="block mb-1 text-sm text-slate-300">Categoría</label>
+            <select value={newTask.fk_idTaskCategory}
+              onChange={e => setNewTask({ ...newTask, fk_idTaskCategory: Number(e.target.value) })}
+              className="select-field w-full">
+              <option value="">-- Selecciona una categoría --</option>
+              {categories.map(cat => (
+                <option key={cat.idTaskCategory} value={cat.idTaskCategory}>{cat.categoryName}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block mb-1 text-sm text-slate-300">Empleado</label>
+            <select value={newTask.fk_idEmployee || ''}
+              onChange={e => setNewTask({ ...newTask, fk_idEmployee: Number(e.target.value) || undefined })}
+              className="select-field w-full">
+              <option value="">-- Selecciona un empleado --</option>
+              {employees.map(emp => (
+                <option key={emp.idEmployee} value={emp.idEmployee}>{emp.fullName}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-end justify-end lg:col-start-3">
+            <AddButton onClick={createTask} />
+          </div>
         </div>
       </AdminSection>
 
@@ -229,13 +277,14 @@ const TasksManagement = () => {
               const isExpanded = expanded[task.idTask ?? 0] ?? false;
               const categoryName = categories.find(c => c.idTaskCategory === task.fk_idTaskCategory)?.categoryName || `Categoría #${task.fk_idTaskCategory}`;
               const employeeName = employees.find(e => e.idEmployee === task.fk_idEmployee)?.fullName || 'Sin asignar';
+              const st = getStatusStyles(task.taskStatus);
               return (
                 <div
                   key={task.idTask}
-                  className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-pink-500/10 via-slate-900/60 to-slate-900/90 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-pink-500/20"
+                  className={`rounded-2xl border border-slate-800/60 bg-gradient-to-br ${st.card} via-slate-900/60 to-slate-900/90 shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1`}
                 >
                   <div className="flex flex-col items-center gap-2 py-5">
-                    <span className="h-4 w-4 rounded-full bg-pink-500 shadow-[0_0_12px_rgba(236,72,153,0.6)]" />
+                    <span className={`h-4 w-4 rounded-full ${st.dot}`} />
                     <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
                       {task.taskStatus || 'Tarea'}
                     </span>
@@ -243,7 +292,7 @@ const TasksManagement = () => {
 
                   <div className="px-6 pb-6 space-y-4 text-sm text-slate-200">
                     <div className="text-center space-y-1">
-                      <h3 className="text-lg font-semibold text-pink-300">{task.taskName}</h3>
+                      <h3 className={`text-lg font-semibold ${st.title}`}>{task.taskName}</h3>
                       <p className="text-slate-400">
                         Asignada: <span className="font-medium text-slate-200">{task.assignmentDate?.slice(0, 10)}</span>
                       </p>
@@ -251,7 +300,7 @@ const TasksManagement = () => {
 
                     <button
                       onClick={() => setExpanded(prev => ({ ...prev, [task.idTask ?? 0]: !prev[task.idTask ?? 0] }))}
-                      className="flex w-full items-center justify-center gap-2 rounded-lg border border-pink-500/40 bg-pink-500/10 py-2 text-sm font-medium text-pink-300 transition hover:bg-pink-500/15"
+                      className={`flex w-full items-center justify-center gap-2 rounded-lg border py-2 text-sm font-medium transition ${st.toggle}`}
                     >
                       {isExpanded ? <><ChevronUp size={16} /> Ver menos</> : <><ChevronDown size={16} /> Ver más</>}
                     </button>
@@ -344,9 +393,12 @@ const TasksManagement = () => {
                 </div>
                 <div>
                   <label className="block mb-1">Estado</label>
-                  <input type="text" value={editingData.taskStatus}
+                  <select value={editingData.taskStatus}
                     onChange={e => setEditingData({ ...editingData, taskStatus: e.target.value })}
-                    className="w-full p-2 rounded-md bg-gray-700" />
+                    className="w-full p-2 rounded-md bg-gray-700">
+                    <option value="">-- Selecciona un estado --</option>
+                    {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
                 </div>
                 <div>
                   <label className="block mb-1">Categoría</label>

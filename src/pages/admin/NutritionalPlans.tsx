@@ -35,7 +35,7 @@ const STATE_CONFIG: Record<string, { dot: string; text: string; bg: string; glow
     bg: 'bg-emerald-950/60 border border-emerald-500/30',
     glow: 'shadow-[0_0_12px_rgba(16,185,129,0.25)]',
     pulse: true,
-  },
+  },  
   'POR VENCER': {
     dot: 'bg-amber-400',
     text: 'text-amber-300',
@@ -95,8 +95,8 @@ const NutritionalPlansManagement = () => {
     try {
       const res = await fetch(API_URL);
       if (!res.ok) throw new Error('Error al obtener planes nutricionales');
-      const data = await res.json();
-      setPlans(data);
+      const data: NutritionalPlan[] = await res.json();
+      setPlans(data.sort((a, b) => (b.idNutritionalPlan ?? 0) - (a.idNutritionalPlan ?? 0)));
     } catch {
       toast.error('No se pudo cargar planes nutricionales.');
     } finally {

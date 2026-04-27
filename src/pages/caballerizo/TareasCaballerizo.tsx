@@ -29,7 +29,7 @@ const formatDate = (value?: string | null) => {
 };
 
 const getStatusLabel = (status?: string | null) => {
-  if (!status) return "Pendiente";
+  if (!status) return "Asignada";
   const lower = status.toLowerCase();
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 };
@@ -39,7 +39,7 @@ const normalizeStatus = (status?: string | null): string => {
   if (value.includes("cancel")) return "Cancelada";
   if (value.includes("complet")) return "Completada";
   if (value.includes("progreso") || value.includes("proceso")) return "En progreso";
-  return "Pendiente";
+  return "Asignada";
 };
 
 const resolveStatusBadge = (status?: string | null) => {
@@ -99,7 +99,7 @@ export function TareasCaballerizo({
   const categories = useMemo(() => categoryMap ?? {}, [categoryMap]);
   const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null);
 
-  const COLUMNS = ["Pendiente", "En progreso", "Completada", "Cancelada"];
+  const COLUMNS = ["Asignada", "En progreso", "Completada", "Cancelada"];
 
   const tasksByStatus = useMemo(() => {
     const grouped: Record<string, CaballerizoTask[]> = {};

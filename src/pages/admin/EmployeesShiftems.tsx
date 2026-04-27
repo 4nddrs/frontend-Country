@@ -76,7 +76,7 @@ const EmployeesShiftemManagement = () => {
       const res = await fetch(API_URL);
       if (!res.ok) throw new Error('Error al obtener relaciones empleados-turnos');
       const data = await res.json();
-      setEmps(data);
+      setEmps([...data].sort((a: EmployeesShiftem, b: EmployeesShiftem) => (b.idEmployeesShiftem ?? 0) - (a.idEmployeesShiftem ?? 0)));
     } catch {
       toast.error('No se pudo cargar relaciones empleados-turnos.');
     } finally {
@@ -173,30 +173,38 @@ const EmployeesShiftemManagement = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Empleados-Turnos</h1>
 
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Relación</h2>
-        <div className="flex gap-4 flex-wrap">
-          <select
-            name="fk_idEmployee"
-            value={newEmp.fk_idEmployee || ""}
-            onChange={e => setNewEmp({ ...newEmp, fk_idEmployee: e.target.value ? Number(e.target.value) : undefined })}
-            className="select-field flex-1"
-          >
-            <option value="">-- Selecciona empleado --</option>
-            {employees.map(emp => (
-              <option key={emp.idEmployee} value={emp.idEmployee}>{emp.fullName}</option>
-            ))}
-          </select>
-          <select
-            name="fk_idShiftEmployees"
-            value={newEmp.fk_idShiftEmployees || ""}
-            onChange={e => setNewEmp({ ...newEmp, fk_idShiftEmployees: e.target.value ? Number(e.target.value) : undefined })}
-            className="select-field flex-1"
-          >
-            <option value="">-- Selecciona turno empleado --</option>
-            {shiftEmployees.map(se => (
-              <option key={se.idShiftEmployed} value={se.idShiftEmployed}>{formatShiftOption(se)}</option>
-            ))}
-          </select>
+        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar asignación de Turno a un Empleado</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block mb-1 text-sm text-slate-300">Empleado</label>
+            <select
+              name="fk_idEmployee"
+              value={newEmp.fk_idEmployee || ""}
+              onChange={e => setNewEmp({ ...newEmp, fk_idEmployee: e.target.value ? Number(e.target.value) : undefined })}
+              className="select-field w-full"
+            >
+              <option value="">-- Selecciona empleado --</option>
+              {employees.map(emp => (
+                <option key={emp.idEmployee} value={emp.idEmployee}>{emp.fullName}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block mb-1 text-sm text-slate-300">Turno asignado</label>
+            <select
+              name="fk_idShiftEmployees"
+              value={newEmp.fk_idShiftEmployees || ""}
+              onChange={e => setNewEmp({ ...newEmp, fk_idShiftEmployees: e.target.value ? Number(e.target.value) : undefined })}
+              className="select-field w-full"
+            >
+              <option value="">-- Selecciona turno --</option>
+              {shiftEmployees.map(se => (
+                <option key={se.idShiftEmployed} value={se.idShiftEmployed}>{formatShiftOption(se)}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="mt-5 flex justify-end">
           <AddButton onClick={createEmp} />
         </div>
       </AdminSection>

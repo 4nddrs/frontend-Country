@@ -1,5 +1,4 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
 import Sidebar from '../components/Sidebar';
 import Dashboard from '../pages/admin/Dashboard';
 import Employees from '../pages/admin/Employee';
@@ -83,7 +82,6 @@ const MainLayout = ({ userRole }: MainLayoutProps) => {
           <Route path="/PendingUsers" element={<PendingUsers />} />
         </Routes>
       </main>
-      <Toaster position="bottom-right" />
     </div>
   );
 };

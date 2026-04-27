@@ -20,7 +20,7 @@ const normalizeOption = (option: string) => {
   if (value.includes("cancel")) return "Cancelada";
   if (value.includes("complet")) return "Completada";
   if (value.includes("progreso") || value.includes("proceso")) return "En progreso";
-  return "Pendiente";
+  return "Asignada";
 };
 
 const formatLabel = (option: string) => {
@@ -51,7 +51,7 @@ export function TaskStatusSelect({
   const currentValue =
     typeof value === "string" && value.length > 0
       ? normalizeOption(value)
-      : "Pendiente";
+      : "Asignada";
 
   return (
     <Select

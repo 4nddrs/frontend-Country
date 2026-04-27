@@ -34,7 +34,7 @@ const PositionManagement = () => {
       const res = await fetch(API_URL);
       if (!res.ok) throw new Error('Error al obtener posiciones');
       const data = await res.json();
-      setPositions(data);
+      setPositions([...data].sort((a: Position, b: Position) => (b.idPositionEmployee ?? 0) - (a.idPositionEmployee ?? 0)));
     } catch (err) {
       toast.error('No se pudo cargar posiciones.');
     } finally {
@@ -111,15 +111,18 @@ const PositionManagement = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Posiciones</h1>
       <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Posición</h2>
-        <div className="flex gap-4">
-          <input
-            type="text"
-            name="namePosition"
-            placeholder="Nombre de la posición"
-            value={newPosition.namePosition}
-            onChange={e => setNewPosition({ namePosition: e.target.value })}
-            className="select-field flex-1 placeholder-gray-400"
-          />
+        <div className="flex gap-4 items-end">
+          <div className="flex-1">
+            <label className="block mb-1 text-sm text-slate-300">Nombre de la posición <span className="text-slate-500 font-normal"></span></label>
+            <input
+              type="text"
+              name="namePosition"
+              placeholder="Ej: Caballerizo...."
+              value={newPosition.namePosition}
+              onChange={e => setNewPosition({ namePosition: e.target.value })}
+              className="select-field w-full placeholder-gray-400"
+            />
+          </div>
           <AddButton onClick={createPosition} />
         </div>
       </AdminSection>

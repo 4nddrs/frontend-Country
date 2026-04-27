@@ -59,7 +59,9 @@ const FoodStocksManagement = () => {
         stocksRes.json(),
         providersRes.json()
       ]);
-      setStocks(stocksData);
+      const list: FoodStock[] = Array.isArray(stocksData) ? stocksData : [];
+      list.sort((a, b) => (b.idFood ?? 0) - (a.idFood ?? 0));
+      setStocks(list);
       setFoodProviders(providersData);
     } catch (error) {
       toast.error('No se pudo cargar stocks o proveedores.');
@@ -148,39 +150,47 @@ const FoodStocksManagement = () => {
           </div>
           <div>
             <label className="block mb-1 text-sm font-medium">Cantidad en stock</label>
-            <input type="number" name="stock" placeholder="Ej: 100" value={newStock.stock}
+            <input type="number" name="stock" placeholder="Ej: 100" value={newStock.stock === 0 ? '' : newStock.stock}
               onChange={e => setNewStock({ ...newStock, stock: Number(e.target.value) })} className="w-full" />
           </div>
           <div>
             <label className="block mb-1 text-sm font-medium">Unidad de medida</label>
-            <select name="unitMeasurement" value={newStock.unitMeasurement}
-              onChange={e => setNewStock({ ...newStock, unitMeasurement: Number(e.target.value) })} className="w-full">
-              <option value={1}>Kilo</option>
-              <option value={2}>Cubo</option>
-              <option value={3}>Fardo</option>
-            </select>
+            <div className="relative">
+              <select name="unitMeasurement" value={newStock.unitMeasurement}
+                onChange={e => setNewStock({ ...newStock, unitMeasurement: Number(e.target.value) })} className="w-full appearance-none pr-8">
+                <option value={1}>Kilo</option>
+                <option value={2}>Cubo</option>
+                <option value={3}>Fardo</option>
+              </select>
+              <ChevronDown size={16} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400" />
+            </div>
           </div>
           <div>
             <label className="block mb-1 text-sm font-medium">Stock mínimo permitido</label>
-            <input type="number" name="minStock" placeholder="Ej: 10" value={newStock.minStock}
+            <input type="number" name="minStock" placeholder="Ej: 10" value={newStock.minStock === 0 ? '' : newStock.minStock}
               onChange={e => setNewStock({ ...newStock, minStock: Number(e.target.value) })} className="w-full" />
           </div>
           <div>
             <label className="block mb-1 text-sm font-medium">Stock máximo permitido</label>
-            <input type="number" name="maxStock" placeholder="Ej: 500" value={newStock.maxStock}
+            <input type="number" name="maxStock" placeholder="Ej: 500" value={newStock.maxStock === 0 ? '' : newStock.maxStock}
               onChange={e => setNewStock({ ...newStock, maxStock: Number(e.target.value) })} className="w-full" />
           </div>
           <div>
             <label className="block mb-1 text-sm font-medium">Proveedor asociado</label>
-            <select name="fk_idFoodProvider" value={newStock.fk_idFoodProvider}
-              onChange={e => setNewStock({ ...newStock, fk_idFoodProvider: Number(e.target.value) })} className="w-full">
-              {foodProviders.map(provider => (
-                <option key={provider.idFoodProvider} value={provider.idFoodProvider}>{provider.supplierName}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <select name="fk_idFoodProvider" value={newStock.fk_idFoodProvider}
+                onChange={e => setNewStock({ ...newStock, fk_idFoodProvider: Number(e.target.value) })} className="w-full appearance-none pr-8">
+                {foodProviders.map(provider => (
+                  <option key={provider.idFoodProvider} value={provider.idFoodProvider}>{provider.supplierName}</option>
+                ))}
+              </select>
+              <ChevronDown size={16} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400" />
+            </div>
           </div>
         </div>
-        <AddButton onClick={createStock} className="mt-4" />
+        <div className="flex justify-end mt-7">
+          <AddButton onClick={createStock} className="px-16 justify-center" />
+        </div>
       </AdminSection>
 
       <AdminSection>

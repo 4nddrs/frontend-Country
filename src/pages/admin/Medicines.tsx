@@ -119,6 +119,7 @@ const MedicinesManagement = () => {
           notifyDaysBefore: parsedNotify,
         };
       });
+      normalized.sort((a, b) => (b.idMedicine ?? 0) - (a.idMedicine ?? 0));
       setMedicines(normalized);
     } catch {
       toast.error('No se pudo cargar medicamentos.');
@@ -233,7 +234,7 @@ const MedicinesManagement = () => {
 
       <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Medicamento</h2>
-        <div className="flex gap-6 flex-wrap">
+        <div className="grid grid-cols-4 gap-4 mb-4">
           <div>
             <label className="block mb-1">Nombre del medicamento</label>
             <input
@@ -284,6 +285,8 @@ const MedicinesManagement = () => {
               className={NUMBER_INPUT_CLASSES}
             />
           </div>
+        </div>
+        <div className="grid grid-cols-5 gap-4">
           <div>
             <label className="block mb-1">Stock mínimo para alerta</label>
             <input
@@ -366,9 +369,9 @@ const MedicinesManagement = () => {
               ))}
             </select>
           </div>
-          <div className="w-full flex justify-center mt-4">
-            <AddButton onClick={createMedicine}>Agregar</AddButton>
-          </div>
+        </div>
+        <div className="w-full flex justify-end mt-8">
+          <AddButton onClick={createMedicine}>Agregar</AddButton>
         </div>
       </AdminSection>
 

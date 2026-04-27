@@ -35,7 +35,7 @@ const TaskCategoriesManagement = () => {
       const res = await fetch(API_URL);
       if (!res.ok) throw new Error('Error al obtener categorías');
       const data = await res.json();
-      setCategories(data);
+      setCategories([...data].sort((a: TaskCategory, b: TaskCategory) => (b.idTaskCategory ?? 0) - (a.idTaskCategory ?? 0)));
     } catch {
       toast.error('No se pudo cargar categorías.');
     } finally {
@@ -115,23 +115,29 @@ const TaskCategoriesManagement = () => {
 
       <AdminSection>
         <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Categoría</h2>
-        <div className="flex gap-4 flex-wrap">
-          <input
-            type="text"
-            name="categoryName"
-            placeholder="Nombre de la categoría"
-            value={newCategory.categoryName}
-            onChange={e => setNewCategory({ ...newCategory, categoryName: e.target.value })}
-            className="select-field flex-1 placeholder-gray-400"
-          />
-          <input
-            type="text"
-            name="description"
-            placeholder="Descripción"
-            value={newCategory.description}
-            onChange={e => setNewCategory({ ...newCategory, description: e.target.value })}
-            className="select-field flex-1 placeholder-gray-400"
-          />
+        <div className="flex gap-4 flex-wrap items-end">
+          <div className="flex-1 min-w-[180px]">
+            <label className="block mb-1 text-sm text-slate-300">Nombre de la categoría</label>
+            <input
+              type="text"
+              name="categoryName"
+              placeholder="Ej: Alimentación..."
+              value={newCategory.categoryName}
+              onChange={e => setNewCategory({ ...newCategory, categoryName: e.target.value })}
+              className="select-field w-full placeholder-gray-400"
+            />
+          </div>
+          <div className="flex-1 min-w-[180px]">
+            <label className="block mb-1 text-sm text-slate-300">Descripción</label>
+            <input
+              type="text"
+              name="description"
+              placeholder="Ej: Tareas relacionadas con la alimentación..."
+              value={newCategory.description}
+              onChange={e => setNewCategory({ ...newCategory, description: e.target.value })}
+              className="select-field w-full placeholder-gray-400"
+            />
+          </div>
           <AddButton onClick={createCategory} />
         </div>
       </AdminSection>

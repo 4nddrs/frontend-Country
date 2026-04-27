@@ -125,6 +125,9 @@ const AlphaConsumptionControl: React.FC = () => {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: ReportData = await res.json();
+      if (data?.rows) {
+        data.rows = [...data.rows].sort((a, b) => b.horse_id - a.horse_id);
+      }
       setReport(data);
     } catch (e: any) {
       console.error(e);
@@ -338,7 +341,12 @@ const AlphaConsumptionControl: React.FC = () => {
           <div className="flex items-end">
             <button
               onClick={() => fetchReport(period, foodId)}
-              className="w-full p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-semibold"
+              className="w-full h-9 rounded-[10px] font-semibold tracking-wide text-sm text-[#3CC9F6]
+                         border border-[#3CC9F6]/70 bg-[#3CC9F6]/12
+                         shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20
+                         hover:bg-[#3CC9F6]/20 hover:shadow-[0_0_20px_rgba(60,201,246,0.55)]
+                         transition-all duration-300
+                         disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!period || loadingReport}
             >
               {loadingReport ? "Actualizando..." : "Actualizar"}
@@ -362,29 +370,29 @@ const AlphaConsumptionControl: React.FC = () => {
           <AdminSection>
             <h2 className="text-xl font-semibold mb-4">Resumen</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              <div className="bg-gray-700 p-4 rounded-md">
-                <div className="text-xs text-gray-300">COMEN SECCIÓN</div>
-                <div className="text-2xl font-bold">{totals?.comen} CABALLOS</div>
+              <div className="bg-emerald-500/15 border border-emerald-400/40 p-4 rounded-md shadow-[0_0_12px_rgba(52,211,153,0.15)]">
+                <div className="text-xs text-emerald-300 font-medium tracking-wide">COMEN SECCIÓN</div>
+                <div className="text-2xl font-bold text-emerald-300">{totals?.comen} <span className="text-sm font-normal">CABALLOS</span></div>
               </div>
-              <div className="bg-gray-700 p-4 rounded-md">
-                <div className="text-xs text-gray-300">NO COMEN SECCIÓN</div>
-                <div className="text-2xl font-bold">{totals?.no_comen} CABALLOS</div>
+              <div className="bg-rose-500/15 border border-rose-400/40 p-4 rounded-md shadow-[0_0_12px_rgba(251,113,133,0.15)]">
+                <div className="text-xs text-rose-300 font-medium tracking-wide">NO COMEN SECCIÓN</div>
+                <div className="text-2xl font-bold text-rose-300">{totals?.no_comen} <span className="text-sm font-normal">CABALLOS</span></div>
               </div>
-              <div className="bg-gray-700 p-4 rounded-md">
-                <div className="text-xs text-gray-300">CABALLOS DE ESCUELA</div>
-                <div className="text-2xl font-bold">{totals?.caballos_escuela}</div>
+              <div className="bg-violet-500/15 border border-violet-400/40 p-4 rounded-md shadow-[0_0_12px_rgba(167,139,250,0.15)]">
+                <div className="text-xs text-violet-300 font-medium tracking-wide">CABALLOS DE ESCUELA</div>
+                <div className="text-2xl font-bold text-violet-300">{totals?.caballos_escuela}</div>
               </div>
-              <div className="bg-gray-700 p-4 rounded-md">
-                <div className="text-xs text-gray-300">TOTAL CABALLOS</div>
-                <div className="text-2xl font-bold">{totals?.total_caballos}</div>
+              <div className="bg-sky-500/15 border border-sky-400/40 p-4 rounded-md shadow-[0_0_12px_rgba(56,189,248,0.15)]">
+                <div className="text-xs text-sky-300 font-medium tracking-wide">TOTAL CABALLOS</div>
+                <div className="text-2xl font-bold text-sky-300">{totals?.total_caballos}</div>
               </div>
-              <div className="bg-gray-700 p-4 rounded-md">
-                <div className="text-xs text-gray-300">TOTAL KLG</div>
-                <div className="text-2xl font-bold">{totals?.total_klg}</div>
+              <div className="bg-amber-500/15 border border-amber-400/40 p-4 rounded-md shadow-[0_0_12px_rgba(251,191,36,0.15)]">
+                <div className="text-xs text-amber-300 font-medium tracking-wide">TOTAL KLG</div>
+                <div className="text-2xl font-bold text-amber-300">{totals?.total_klg}</div>
               </div>
-              <div className="bg-gray-700 p-4 rounded-md">
-                <div className="text-xs text-gray-300">TOTAL KLG MES</div>
-                <div className="text-2xl font-bold">{totals?.total_klg_mes}</div>
+              <div className="bg-teal-500/15 border border-teal-400/40 p-4 rounded-md shadow-[0_0_12px_rgba(45,212,191,0.15)]">
+                <div className="text-xs text-teal-300 font-medium tracking-wide">TOTAL KLG MES</div>
+                <div className="text-2xl font-bold text-teal-300">{totals?.total_klg_mes}</div>
               </div>
             </div>
           </AdminSection>
