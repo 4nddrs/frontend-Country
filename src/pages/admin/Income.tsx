@@ -9,6 +9,7 @@ import autoTable from "jspdf-autotable";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
+import AnimatedBackground from '../../components/ui/AnimatedBackground';
 
 const API_URL = 'http://localhost:8000/income/';
 
@@ -370,7 +371,7 @@ const IncomeManagement = () => {
         <div className="mt-6 border-t border-slate-600/50" />
 
         {/* === Gráfico de ingresos — estilo Sales Overview === */}
-        <div className="mt-6 rounded-xl bg-[#0d1b2e] p-5 border border-blue-900/30">
+        <AnimatedBackground className="mt-6 rounded-xl border border-blue-900/30">
           {/* Header del gráfico: título izq, filtro der */}
           <div className="flex items-start justify-between mb-5">
             <div>
@@ -455,7 +456,7 @@ const IncomeManagement = () => {
               />
             </AreaChart>
           </ResponsiveContainer>
-        </div>
+        </AnimatedBackground>
 
         {/* Separador visual + exportar PDF */}
         <div className="flex flex-wrap items-center justify-end mt-6 pt-4 border-t border-slate-600">

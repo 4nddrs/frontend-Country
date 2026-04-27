@@ -10,6 +10,7 @@ import { confirmDialog } from '../../utils/confirmDialog';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
+import AnimatedBackground from '../../components/ui/AnimatedBackground';
 
 const API_URL = "http://localhost:8000/salary_payments/";
 const EMPLOYEES_URL = "http://localhost:8000/employees/";
@@ -95,7 +96,7 @@ function SalaryAreaChart({ data, filterMonth, onFilterChange, formatCurrency }: 
   const { gradientId, borderColor, gradientColor, strokeColor, activeDotFill, activeDotStroke, tooltipItemColor, tooltipLabel } = CHART_CONFIG;
 
   return (
-    <div className={`mt-6 rounded-xl bg-[#0d1b2e] p-5 border ${borderColor}`}>
+    <AnimatedBackground className={`mt-6 rounded-xl border ${borderColor}`}>
       <div className="flex items-start justify-between mb-5">
         <div>
           <p className="text-sm font-semibold text-white">Resumen de Pagos de Salario</p>
@@ -162,7 +163,7 @@ function SalaryAreaChart({ data, filterMonth, onFilterChange, formatCurrency }: 
           />
         </AreaChart>
       </ResponsiveContainer>
-    </div>
+    </AnimatedBackground>
   );
 }
 
