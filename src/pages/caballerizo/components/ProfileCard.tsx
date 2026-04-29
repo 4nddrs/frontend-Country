@@ -11,8 +11,8 @@ interface ProfileCardProps {
   employee: CaballerizoEmployee;
   onViewTasks: () => void;
   onViewHorses: () => void;
-  onEditPhoto: (file: File) => void;
-  isUpdatingPhoto: boolean;
+  onEditPhoto?: (file: File) => void;
+  isUpdatingPhoto?: boolean;
 }
 
 const formatDate = (value?: string | null) => {
@@ -45,7 +45,7 @@ export function ProfileCard({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      onEditPhoto(file);
+      onEditPhoto?.(file);
       // reset value to allow selecting same file twice
       event.target.value = "";
     }

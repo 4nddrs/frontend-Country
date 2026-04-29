@@ -28,12 +28,6 @@ const formatDate = (value?: string | null) => {
   }).format(date);
 };
 
-const getStatusLabel = (status?: string | null) => {
-  if (!status) return "Asignada";
-  const lower = status.toLowerCase();
-  return lower.charAt(0).toUpperCase() + lower.slice(1);
-};
-
 const normalizeStatus = (status?: string | null): string => {
   const value = (status ?? "").trim().toLowerCase();
   if (value.includes("cancel")) return "Cancelada";
@@ -42,19 +36,6 @@ const normalizeStatus = (status?: string | null): string => {
   return "Asignada";
 };
 
-const resolveStatusBadge = (status?: string | null) => {
-  const normalized = (status ?? "").toLowerCase();
-  if (normalized.includes("complet")) {
-    return "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
-  }
-  if (normalized.includes("progreso") || normalized.includes("progres")) {
-    return "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40";
-  }
-  if (normalized.includes("cancel")) {
-    return "bg-red-500/20 text-red-200 border border-red-500/40";
-  }
-  return "bg-slate-800/60 text-slate-200 border border-slate-700/60";
-};
 
 const resolveColumnColor = (status: string): { bg: string; border: string; icon: React.ReactNode } => {
   const normalized = normalizeStatus(status);

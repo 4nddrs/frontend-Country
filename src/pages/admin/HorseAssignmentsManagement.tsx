@@ -210,17 +210,6 @@ const HorseAssignmentsManagement = () => {
         }
     };
 
-
-    const cancelEdit = () => {
-        setEditingId(null);
-        setForm({
-        fk_idEmployee: "",
-        fk_idHorse: "",
-        assignmentDate: "",
-        endDate: "",
-        });
-    };
-
     // === Cargar datos al editar ===
     const startEdit = (a: HorseAssignment) => {
         setEditingId(a.idHorseAssignments!);

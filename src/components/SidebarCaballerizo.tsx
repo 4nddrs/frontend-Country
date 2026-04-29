@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { handleSignOut } from "../utils/auth";
-import { useCurrentUser, useErpUser } from "../hooks/useUserData";
 import {
   ClipboardList,
   LogOut,
@@ -31,8 +30,6 @@ export default function SidebarCaballerizo() {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const location = useLocation();
-  const { data: user } = useCurrentUser();
-  const { data: erpUser } = useErpUser(user?.id);
 
   const filteredMenuItems = useMemo(() => {
     if (!searchTerm) return menuItems;
