@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 
 export interface DashboardStats {
   totalHorses: number;
@@ -49,7 +49,7 @@ export interface DashboardResponse {
   dailyFinancials?: DailyFinancial[];
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://api.countryclub.doc-ia.cloud';
 
 const fetchDashboard = async (): Promise<DashboardResponse> => {
   const response = await fetch(`${API_BASE}/dashboard`);

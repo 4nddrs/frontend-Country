@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Loader } from "lucide-react";
 import { ExportButton, AdminSection } from '../../components/ui/admin-buttons';
@@ -7,7 +7,7 @@ import autoTable from "jspdf-autotable";
 import dayjs from "dayjs";
 
 
-const API_URL = 'http://localhost:8000/alpha_consumption_control/';
+const API_URL = 'https://api.countryclub.doc-ia.cloud/alpha_consumption_control/';
 
 // Ruta pública del logo (en public/image/LogoHipica.png)
 const LOGO_URL = `${import.meta.env.BASE_URL}image/LogoHipica.png`;

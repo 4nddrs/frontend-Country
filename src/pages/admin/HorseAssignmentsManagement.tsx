@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
 import {
@@ -13,9 +13,9 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dayjs from "dayjs";
 
-const API_URL = "http://localhost:8000/horse_assignments/";
-const EMPLOYEES_URL = "http://localhost:8000/employees/";
-const HORSES_URL = "http://localhost:8000/horses/";
+const API_URL = "https://api.countryclub.doc-ia.cloud/horse_assignments/";
+const EMPLOYEES_URL = "https://api.countryclub.doc-ia.cloud/employees/";
+const HORSES_URL = "https://api.countryclub.doc-ia.cloud/horses/";
 
 interface HorseAssignment {
   idHorseAssignments?: number;

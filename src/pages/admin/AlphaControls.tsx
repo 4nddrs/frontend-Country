@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
 import { Plus, Trash2, Loader, Edit, FileText } from "lucide-react";
@@ -18,7 +18,7 @@ declare module "jspdf" {
 }
 
 
-const API_URL = "http://localhost:8000/alpha_controls/";
+const API_URL = "https://api.countryclub.doc-ia.cloud/alpha_controls/";
 
 interface ProviderLite {
   idFoodProvider: number;
@@ -119,7 +119,7 @@ const AlphaControlsManagement: React.FC = () => {
   // ===== Fetch datos =====
   const fetchFoodProviders = async () => {
     try {
-      const res = await fetch("http://localhost:8000/food-providers/");
+      const res = await fetch("https://api.countryclub.doc-ia.cloud/food-providers/");
       if (!res.ok) throw new Error();
       const data = await res.json();
       setFoodProviders(data);

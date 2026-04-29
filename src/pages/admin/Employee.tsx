@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import jsPDF from 'jspdf';
@@ -16,7 +16,7 @@ import { confirmDialog } from '../../utils/confirmDialog';
 import noPhoto from '../../assets/noPhoto.png';
 
 
-const API_URL = 'http://localhost:8000';
+const API_URL = 'https://api.countryclub.doc-ia.cloud';
 const PLACEHOLDER = noPhoto;
 
 // ====== LOGO (según tu indicación) ======

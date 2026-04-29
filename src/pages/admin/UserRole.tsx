@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import { confirmDialog } from '../../utils/confirmDialog';
 import { Edit, Trash2, Loader } from 'lucide-react';
 import { AddButton, SaveButton, CancelButton, AdminSection } from '../../components/ui/admin-buttons';
 
-const API_URL = 'http://localhost:8000/user_roles/';
+const API_URL = 'https://api.countryclub.doc-ia.cloud/user_roles/';
 
 interface UserRole {
   idUserRole?: number;

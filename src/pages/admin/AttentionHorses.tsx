@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import type { ChangeEvent } from 'react';
 import { toast } from 'react-hot-toast';
@@ -13,7 +13,7 @@ import {
   Cell, ResponsiveContainer,
 } from 'recharts';
 
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = 'https://api.countryclub.doc-ia.cloud';
 const API_URL = `${BASE_URL}/attention_horses/`;
 
 interface AttentionHorse {

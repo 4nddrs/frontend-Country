@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader } from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
 import { AddButton, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 
-const API_URL = 'http://localhost:8000/race/';
+const API_URL = 'https://api.countryclub.doc-ia.cloud/race/';
 
 interface Race {
   idRace?: number;

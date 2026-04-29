@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Plus, Save, X } from "lucide-react";
 import jsPDF from 'jspdf';
@@ -6,9 +6,9 @@ import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
 
 
-const API_URL = "http://localhost:8000/tip_payments/";
-const EMPLOYEES_URL = "http://localhost:8000/employees/";
-const EXPENSES_URL = "http://localhost:8000/expenses/";
+const API_URL = "https://api.countryclub.doc-ia.cloud/tip_payments/";
+const EMPLOYEES_URL = "https://api.countryclub.doc-ia.cloud/employees/";
+const EXPENSES_URL = "https://api.countryclub.doc-ia.cloud/expenses/";
 
 interface EmployeeLite {
     idEmployee: number;

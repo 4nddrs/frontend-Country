@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+﻿import { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { ChangeEvent } from 'react';
 import dayjs from 'dayjs';
@@ -11,9 +11,9 @@ import { confirmDialog } from '../../utils/confirmDialog';
 import { ExportButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 
 
-const API_URL = 'http://localhost:8000/owner_report_month/';
-const OWNERS_URL = 'http://localhost:8000/owner/';
-const HORSES_URL = 'http://localhost:8000/horses/';
+const API_URL = 'https://api.countryclub.doc-ia.cloud/owner_report_month/';
+const OWNERS_URL = 'https://api.countryclub.doc-ia.cloud/owner/';
+const HORSES_URL = 'https://api.countryclub.doc-ia.cloud/horses/';
 
 const TABLE_ACCENT_COLOR: [number, number, number] = [38, 72, 131];
 const TABLE_ACCENT_TEXT: [number, number, number] = [255, 255, 255];

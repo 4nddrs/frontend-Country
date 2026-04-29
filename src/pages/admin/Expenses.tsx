@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader } from 'lucide-react';
@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 import AnimatedBackground from '../../components/ui/AnimatedBackground';
 
-const API_URL = 'http://localhost:8000/expenses/';
+const API_URL = 'https://api.countryclub.doc-ia.cloud/expenses/';
 
 interface Expense {
   idExpenses?: number;

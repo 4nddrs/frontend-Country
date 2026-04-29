@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader, ChevronUp, ChevronDown } from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 
-const API_URL = 'http://localhost:8000/food-stock/';
+const API_URL = 'https://api.countryclub.doc-ia.cloud/food-stock/';
 
 interface FoodProvider {
   idFoodProvider: number;
@@ -52,7 +52,7 @@ const FoodStocksManagement = () => {
     try {
       const [stocksRes, providersRes] = await Promise.all([
         fetch(API_URL),
-        fetch('http://localhost:8000/food-providers/')
+        fetch('https://api.countryclub.doc-ia.cloud/food-providers/')
       ]);
       if (!stocksRes.ok || !providersRes.ok) throw new Error('Error al obtener datos');
       const [stocksData, providersData] = await Promise.all([

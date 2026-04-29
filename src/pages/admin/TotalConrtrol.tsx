@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import type { ChangeEvent } from 'react';
 import { toast } from 'react-hot-toast';
@@ -9,7 +9,7 @@ import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
 import { confirmDialog } from '../../utils/confirmDialog';
 
-const API_URL = 'http://localhost:8000/total_control/';
+const API_URL = 'https://api.countryclub.doc-ia.cloud/total_control/';
 const BOX_CHARGE = 100;
 const SECTION_CHARGE = 200;
 
@@ -530,7 +530,7 @@ const TotalControlManagement = () => {
 
   const fetchOwners = async () => {
     try {
-      const res = await fetch("http://localhost:8000/owner/");
+      const res = await fetch("https://api.countryclub.doc-ia.cloud/owner/");
       if (!res.ok) throw new Error("Error al obtener propietarios");
       const data = await res.json();
       setOwners(data);
@@ -541,7 +541,7 @@ const TotalControlManagement = () => {
 
   const fetchAllHorses = async () => {
     try {
-      const res = await fetch("http://localhost:8000/horses/");
+      const res = await fetch("https://api.countryclub.doc-ia.cloud/horses/");
       if (!res.ok) throw new Error("Error al obtener caballos");
       const data = await res.json();
 
@@ -561,7 +561,7 @@ const TotalControlManagement = () => {
 
   const fetchHorsesByOwner = async (ownerId: number) => {
     try {
-      const res = await fetch(`http://localhost:8000/horses/by_owner/${ownerId}`);
+      const res = await fetch(`https://api.countryclub.doc-ia.cloud/horses/by_owner/${ownerId}`);
       if (!res.ok) throw new Error("Error al obtener caballos del propietario");
       const data = await res.json();
       setHorses(data);
@@ -583,7 +583,7 @@ const TotalControlManagement = () => {
 
   const fetchEditHorsesByOwner = async (ownerId: number) => {
     try {
-      const res = await fetch(`http://localhost:8000/horses/by_owner/${ownerId}`);
+      const res = await fetch(`https://api.countryclub.doc-ia.cloud/horses/by_owner/${ownerId}`);
       if (!res.ok) throw new Error("Error al obtener caballos del propietario");
       const data = await res.json();
       setEditHorses(data);

@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader, ChevronUp, ChevronDown } from 'lucide-react';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 
-const API_URL = 'http://localhost:8000/erp_users/';
+const API_URL = 'https://api.countryclub.doc-ia.cloud/erp_users/';
 
 interface ErpUser {
   uid?: string;
@@ -46,7 +46,7 @@ const ErpUsersManagement = () => {
 
   const fetchUserRoles = async () => {
     try {
-      const res = await fetch("http://localhost:8000/user_roles/");
+      const res = await fetch("https://api.countryclub.doc-ia.cloud/user_roles/");
       if (!res.ok) throw new Error("Error al obtener roles de usuario");
       const data = await res.json();
       setUserRoles(data);

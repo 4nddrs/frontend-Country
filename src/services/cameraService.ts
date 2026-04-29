@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8000';
+﻿const API_BASE = 'https://api.countryclub.doc-ia.cloud';
 
 export interface Camera {
   idCamera: number;

@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader, ChevronUp, ChevronDown } from 'lucide-react';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 
-const API_URL = 'http://localhost:8000/nutritional-plan-details/';
+const API_URL = 'https://api.countryclub.doc-ia.cloud/nutritional-plan-details/';
 
 interface NutritionalPlanDetail {
   idDetail?: number;
@@ -77,7 +77,7 @@ const NutritionalPlanDetailsManagement = () => {
 
   const fetchFoods = async () => {
     try {
-      const res = await fetch("http://localhost:8000/food-stock/");
+      const res = await fetch("https://api.countryclub.doc-ia.cloud/food-stock/");
       if (!res.ok) throw new Error("Error al obtener comidas");
       const data = await res.json();
       setFoods(data);
@@ -88,7 +88,7 @@ const NutritionalPlanDetailsManagement = () => {
 
   const fetchNutritionalPlans = async () => {
     try {
-      const res = await fetch("http://localhost:8000/nutritional-plans/");
+      const res = await fetch("https://api.countryclub.doc-ia.cloud/nutritional-plans/");
       if (!res.ok) throw new Error("Error al obtener planes nutricionales");
       const data = await res.json();
       setNutritionalPlans(data);

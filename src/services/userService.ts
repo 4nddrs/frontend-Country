@@ -1,7 +1,7 @@
-import { supabase } from '../supabaseClient';
+﻿import { supabase } from '../supabaseClient';
 import type { User } from '@supabase/supabase-js';
 
-const API_URL = 'http://localhost:8000';
+const API_URL = 'https://api.countryclub.doc-ia.cloud';
 
 export interface Owner {
   idOwner: number;

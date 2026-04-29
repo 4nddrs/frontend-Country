@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { Video, VideoOff, Power, PowerOff, Plus, Pencil, Trash2, X, Save, RefreshCw } from "lucide-react";
 import { supabase } from "../../supabaseClient";
 import {
@@ -199,7 +199,7 @@ export function UserCamera() {
         } = await supabase.auth.getSession();
         if (!session?.user?.id) return;
         const uid = session.user.id;
-        const res = await fetch("http://localhost:8000/owner/");
+        const res = await fetch("https://api.countryclub.doc-ia.cloud/owner/");
         if (!res.ok) return;
         const owners: { idOwner: number; uid: string }[] = await res.json();
         const match = owners.find((o) => o.uid === uid);

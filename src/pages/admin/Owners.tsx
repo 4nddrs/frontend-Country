@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+﻿import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Upload, RotateCcw } from 'lucide-react';
@@ -6,7 +6,7 @@ import { confirmDialog } from '../../utils/confirmDialog';
 import noPhoto from '../../assets/noPhoto.png';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 
-const API_URL = 'http://localhost:8000/owner/';
+const API_URL = 'https://api.countryclub.doc-ia.cloud/owner/';
 
 interface Owner {
   idOwner?: number;

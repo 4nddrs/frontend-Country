@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader, ChevronUp, ChevronDown } from 'lucide-react';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 
-const API_URL = 'http://localhost:8000/medicines/';
+const API_URL = 'https://api.countryclub.doc-ia.cloud/medicines/';
 const MEDICATION_TYPE_OPTIONS = [
   'Antibióticos',
   'Antiinflamatorios y analgésicos',
@@ -82,7 +82,7 @@ const MedicinesManagement = () => {
   const [horses, setHorses] = useState<any[]>([]);
   const fetchHorses = async () => {
     try {
-      const res = await fetch("http://localhost:8000/horses/");
+      const res = await fetch("https://api.countryclub.doc-ia.cloud/horses/");
       if (!res.ok) throw new Error("Error al obtener caballos");
       const data = await res.json();
       setHorses(data);

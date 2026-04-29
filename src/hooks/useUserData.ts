@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
 import type { User } from '@supabase/supabase-js';
 import { 
   getCurrentUser, 
@@ -33,7 +33,7 @@ export const useErpUser = (uid?: string) => {
     queryKey: ['erpUser', uid],
     queryFn: async () => {
       if (!uid) return null;
-      const response = await fetch(`http://localhost:8000/erp_users/${uid}`);
+      const response = await fetch(`https://api.countryclub.doc-ia.cloud/erp_users/${uid}`);
       if (!response.ok) return null;
       return response.json();
     },

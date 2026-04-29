@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader } from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 
-const API_URL = 'http://localhost:8000/application_procedures/';
+const API_URL = 'https://api.countryclub.doc-ia.cloud/application_procedures/';
 
 interface ApplicationProcedure {
   idApplicationProcedure?: number;
@@ -42,7 +42,7 @@ const ApplicationProceduresManagement = () => {
 
   const fetchScheduledProcedures = async () => {
     try {
-      const res = await fetch("http://localhost:8000/scheduled_procedures/");
+      const res = await fetch("https://api.countryclub.doc-ia.cloud/scheduled_procedures/");
       if (!res.ok) throw new Error("Error al obtener procedimientos programados");
       const data = await res.json();
       setScheduledProcedures(data);
@@ -53,7 +53,7 @@ const ApplicationProceduresManagement = () => {
 
   const fetchHorses = async () => {
     try {
-      const res = await fetch("http://localhost:8000/horses/");
+      const res = await fetch("https://api.countryclub.doc-ia.cloud/horses/");
       if (!res.ok) throw new Error("Error al obtener caballos");
       const data = await res.json();
       setHorses(data);

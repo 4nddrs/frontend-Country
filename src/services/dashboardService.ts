@@ -1,6 +1,6 @@
-// Dashboard Service - Servicio para obtener estadísticas y datos del dashboard
+﻿// Dashboard Service - Servicio para obtener estadísticas y datos del dashboard
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'https://api.countryclub.doc-ia.cloud';
 
 // Timeout para las peticiones (60 segundos para base de datos grandes)
 const FETCH_TIMEOUT = 60000;

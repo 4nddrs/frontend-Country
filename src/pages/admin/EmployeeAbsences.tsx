@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader, ChevronUp, ChevronDown } from 'lucide-react';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 
-const API_URL = 'http://localhost:8000/employee_absences/';
+const API_URL = 'https://api.countryclub.doc-ia.cloud/employee_absences/';
 
 interface EmployeeAbsence {
   idEmployeeAbsence?: number;
@@ -46,7 +46,7 @@ const EmployeeAbsencesManagement = () => {
 
   const fetchEmployees = async () => {
     try {
-      const res = await fetch("http://localhost:8000/employees/");
+      const res = await fetch("https://api.countryclub.doc-ia.cloud/employees/");
       if (!res.ok) throw new Error("Error al obtener empleados");
       const data = await res.json();
       setEmployees(data);

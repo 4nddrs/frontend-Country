@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import {
@@ -7,8 +7,8 @@ import {
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 
-const API_URL = 'http://localhost:8000/vaccination_plan/';
-const MEDICINES_URL = 'http://localhost:8000/medicines/';
+const API_URL = 'https://api.countryclub.doc-ia.cloud/vaccination_plan/';
+const MEDICINES_URL = 'https://api.countryclub.doc-ia.cloud/medicines/';
 
 interface VaccinationPlan {
   idVaccinationPlan?: number;

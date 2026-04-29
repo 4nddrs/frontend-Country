@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+﻿import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Upload, RotateCcw } from 'lucide-react';
@@ -11,7 +11,7 @@ import noPhoto from '../../assets/noPhoto.png';
 
 
 // URL de tu API backend
-const API_URL = 'http://localhost:8000/horses/'; 
+const API_URL = 'https://api.countryclub.doc-ia.cloud/horses/'; 
 
 const LOGO_URL = `${import.meta.env.BASE_URL}image/LogoHipica.png`;
 const urlToDataUrl = (url: string) =>
@@ -107,7 +107,7 @@ const HorsesManagement = () => {
 
   const fetchOwners = async () => {
     try {
-      const res = await fetch('http://localhost:8000/owner/');
+      const res = await fetch('https://api.countryclub.doc-ia.cloud/owner/');
       const data = await res.json();
       setOwners(data);
     } catch (err) {
@@ -117,7 +117,7 @@ const HorsesManagement = () => {
 
   const fetchRaces = async () => {
     try {
-      const res = await fetch('http://localhost:8000/race/');
+      const res = await fetch('https://api.countryclub.doc-ia.cloud/race/');
       const data = await res.json();
       setRaces(data);
     } catch (err) {
@@ -127,7 +127,7 @@ const HorsesManagement = () => {
 
   const fetchNutritionalPlans = async () => {
     try {
-      const res = await fetch('http://localhost:8000/nutritional-plans/');
+      const res = await fetch('https://api.countryclub.doc-ia.cloud/nutritional-plans/');
       const data = await res.json();
       setNutritionalPlans(data);
     } catch (err) {

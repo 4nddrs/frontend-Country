@@ -1,4 +1,4 @@
-// src/services/caballerizoService.ts
+﻿// src/services/caballerizoService.ts
 import { supabase } from '../supabaseClient';
 import type {
   CaballerizoEmployee,
@@ -8,7 +8,7 @@ import type {
   CaballerizoHorseAssignment,
 } from '../pages/caballerizo/types';
 
-const API_URL = "http://localhost:8000";
+const API_URL = "https://api.countryclub.doc-ia.cloud";
 
 // ==================== HELPERS ====================
 

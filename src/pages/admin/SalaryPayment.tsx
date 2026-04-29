@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+﻿import React, { useEffect, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
 import { Edit, Trash2 } from "lucide-react";
@@ -12,9 +12,9 @@ import {
 } from 'recharts';
 import AnimatedBackground from '../../components/ui/AnimatedBackground';
 
-const API_URL = "http://localhost:8000/salary_payments/";
-const EMPLOYEES_URL = "http://localhost:8000/employees/";
-const EXPENSES_URL = "http://localhost:8000/expenses/";
+const API_URL = "https://api.countryclub.doc-ia.cloud/salary_payments/";
+const EMPLOYEES_URL = "https://api.countryclub.doc-ia.cloud/employees/";
+const EXPENSES_URL = "https://api.countryclub.doc-ia.cloud/expenses/";
 
 interface EmployeeLite {
   idEmployee: number;

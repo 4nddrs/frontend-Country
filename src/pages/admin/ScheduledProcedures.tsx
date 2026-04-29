@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import {
@@ -7,7 +7,7 @@ import {
 import { confirmDialog } from '../../utils/confirmDialog';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 
-const API_URL = 'http://localhost:8000/scheduled_procedures/';
+const API_URL = 'https://api.countryclub.doc-ia.cloud/scheduled_procedures/';
 
 interface ScheduledProcedure {
   idScheduledProcedure?: number;
