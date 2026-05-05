@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import type { ChangeEvent } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Edit, Trash2, Loader, FileDown, ChevronUp, ChevronDown, X} from 'lucide-react';
-import { ExportButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
+import { AddButton, ExportButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -724,12 +724,7 @@ const AttentionHorsesManagement = () => {
             </select>
           </div>
           <div className="flex items-end justify-end">
-            <button type="button" onClick={submitAttention} className="group relative cursor-pointer">
-              <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[10px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-16 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
-                <Plus size={15} /> Agregar
-              </div>
-              <div className="absolute inset-0 z-0 h-full w-full rounded-[10px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
-            </button>
+            <AddButton onClick={submitAttention} />
           </div>
         </div>
       </AdminSection>

@@ -1387,11 +1387,12 @@ const OwnerReportMonthManagement = () => {
         </div>
 
         <div className="mt-8 flex justify-end gap-3">
-          <button onClick={createReport} className="group relative cursor-pointer">
-            <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[10px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-10 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
-              <Plus size={15} /> Crear Reporte
-            </div>
-            <div className="absolute inset-0 z-0 h-full w-full rounded-[10px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+          <button
+            type="button"
+            onClick={createReport}
+            className="inline-flex min-w-[180px] h-12 items-center justify-center gap-2 rounded border border-[#3CC9F6]/50 bg-neutral-950 px-7 py-3 text-base font-semibold text-[#3CC9F6] transition-all duration-300 hover:bg-[#3CC9F6]/15 hover:border-[#3CC9F6] hover:ring-2 hover:ring-[#3CC9F6]/60 hover:ring-offset-2 hover:ring-offset-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3CC9F6]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+          >
+            <Plus size={15} /> Crear Reporte
           </button>
         </div>
       </div>
@@ -1425,13 +1426,11 @@ const OwnerReportMonthManagement = () => {
                 Descargar filtrados
               </ExportButton>
               <button
+                type="button"
                 onClick={handleResetFilters}
-                className="group relative cursor-pointer"
+                className="inline-flex min-w-[130px] h-12 items-center justify-center rounded border border-[#ef4444]/50 bg-neutral-950 px-7 py-3 text-base font-semibold text-[#ef4444] transition-all duration-300 hover:bg-[#ef4444]/15 hover:border-[#ef4444] hover:ring-2 hover:ring-[#ef4444]/60 hover:ring-offset-2 hover:ring-offset-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ef4444]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
               >
-                <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[10px] border border-[#ef4444]/70 bg-[#ef4444]/12 px-8 font-semibold text-[#ef4444] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(239,68,68,0.35)] ring-1 ring-[#ef4444]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
-                  Limpiar
-                </div>
-                <div className="absolute inset-0 z-0 h-full w-full rounded-[10px] bg-[#ef4444]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(239,68,68,0.6),14px_14px_rgba(239,68,68,0.4),21px_21px_rgba(239,68,68,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+                Limpiar
               </button>
             </div>
           </div>

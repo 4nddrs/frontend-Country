@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { Plus, Save, X } from "lucide-react";
+import { Save, X } from "lucide-react";
+import { AddButton } from "../components/ui/admin-buttons";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
@@ -436,13 +437,7 @@ const SalaryPayments: React.FC = () => {
               </button>
             </>
           ) : (
-            <button
-              onClick={createItem}
-              disabled={saving}
-              className="bg-green-600 px-4 py-2 rounded inline-flex items-center gap-2"
-            >
-              <Plus size={18} /> Agregar
-            </button>
+            <AddButton onClick={createItem} disabled={saving} />
           )}
         </div>
       </div>
