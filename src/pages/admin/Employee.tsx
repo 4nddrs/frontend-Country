@@ -833,11 +833,14 @@ const Employees = () => {
             </ExportButton>
             <button
               type="submit"
-              disabled={creatingAccount}
-              className="inline-flex min-w-[200px] h-12 items-center justify-center gap-2 rounded border border-[#3CC9F6]/50 bg-neutral-950 px-7 py-3 text-base font-semibold text-[#3CC9F6] transition-all duration-300 hover:bg-[#3CC9F6]/15 hover:border-[#3CC9F6] hover:ring-2 hover:ring-[#3CC9F6]/60 hover:ring-offset-2 hover:ring-offset-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3CC9F6]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-disabled={creatingAccount}
+              className={`group relative ${creatingAccount ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
-              {creatingAccount ? <Loader size={18} className="animate-spin" /> : <UserPlus size={18} />}
-              {creatingAccount ? 'Creando...' : userAccount.createAccount ? 'Crear Empleado + Cuenta' : 'Agregar Empleado'}
+              <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[10px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-8 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+                {creatingAccount ? <Loader size={18} className="animate-spin" /> : <UserPlus size={18} />}
+                {creatingAccount ? 'Creando...' : userAccount.createAccount ? 'Crear Empleado + Cuenta' : 'Agregar Empleado'}
+              </div>
+              <div className="absolute inset-0 z-0 h-full w-full rounded-[10px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
             </button>
           </div>
         </div>

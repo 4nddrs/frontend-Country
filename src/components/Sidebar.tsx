@@ -38,7 +38,7 @@ type MenuSection = {
 
 const ADMIN_ROLES = [6];
 const CABALLERIZO_ROLES = [9];
-const VETERINARIO_ROLES = [8]; 
+const VETERINARIO_ROLES = [8]; // Rol para veterinarios
 
 // Sección: Caballos
 const caballosSection: MenuItem[] = [
@@ -124,6 +124,7 @@ const adminMenuSections: MenuSection[] = [
   { title: 'Empleados', items: empleadosSection },
   { title: 'Propietarios', items: propietariosSection },
   { title: 'Finanzas', items: finanzasSection },
+  { title: 'Salud y Sanidad', items: saludSection },
   { title: 'Alimentación', items: alimentacionSection },
   { title: 'Sistema', items: sistemaSection },
 ];
