@@ -23,13 +23,12 @@ export const AddButton = ({
     onClick={disabled ? undefined : onClick}
     aria-disabled={disabled}
     title={title}
-    className={`group relative ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
+    className={`relative h-12 min-w-[190px] overflow-hidden rounded bg-neutral-950 px-6 py-2.5 transition-all duration-300 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className} hover:bg-[#3CC9F6]/15 hover:ring-2 hover:ring-[#3CC9F6]/60 hover:ring-offset-2`}
   >
-    <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[10px] border border-[#3CC9F6]/70 bg-[#3CC9F6]/12 px-16 font-semibold text-[#3CC9F6] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+    <span className="relative inline-flex items-center gap-2 text-[#3CC9F6]">
       <Plus size={15} />
       {children}
-    </div>
-    <div className="absolute inset-0 z-0 h-full w-full rounded-[10px] bg-[#3CC9F6]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(60,201,246,0.6),14px_14px_rgba(60,201,246,0.4),21px_21px_rgba(60,201,246,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+    </span>
   </button>
 );
 
@@ -46,12 +45,11 @@ export const ExportButton = ({
     onClick={disabled ? undefined : onClick}
     aria-disabled={disabled}
     title={title}
-    className={`group relative ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
+    className={`relative h-12 min-w-[200px] overflow-hidden rounded bg-neutral-950 px-6 py-2.5 transition-all duration-300 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className} hover:bg-[#bdab62]/15 hover:ring-2 hover:ring-[#bdab62]/60 hover:ring-offset-2`}
   >
-    <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[10px] border border-[#bdab62]/70 bg-[#bdab62]/12 px-16 font-semibold text-[#bdab62] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(189,171,98,0.35)] ring-1 ring-[#bdab62]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+    <span className="relative inline-flex items-center gap-2 text-[#bdab62]">
       {children}
-    </div>
-    <div className="absolute inset-0 z-0 h-full w-full rounded-[10px] bg-[#bdab62]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(189,171,98,0.6),14px_14px_rgba(189,171,98,0.4),21px_21px_rgba(189,171,98,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+    </span>
   </button>
 );
 
@@ -68,12 +66,11 @@ export const ClearButton = ({
     onClick={disabled ? undefined : onClick}
     aria-disabled={disabled}
     title={title}
-    className={`group relative ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
+    className={`relative h-12 min-w-[150px] overflow-hidden rounded bg-neutral-950 px-6 py-2.5 transition-all duration-300 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className} hover:bg-[#ef4444]/15 hover:ring-2 hover:ring-[#ef4444]/60 hover:ring-offset-2`}
   >
-    <div className="relative z-10 inline-flex w-full h-9 items-center justify-center overflow-hidden rounded-[10px] border border-[#f87171]/70 bg-[#f87171]/12 px-16 font-semibold text-[#f87171] tracking-wide text-sm gap-2 shadow-[0_0_14px_rgba(248,113,113,0.35)] ring-1 ring-[#f87171]/20 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-active:translate-x-0 group-active:translate-y-0">
+    <span className="relative inline-flex items-center gap-2 text-[#ef4444]">
       {children}
-    </div>
-    <div className="absolute inset-0 z-0 h-full w-full rounded-[10px] bg-[#f87171]/8 transition-all duration-300 group-hover:-translate-x-5 group-hover:-translate-y-5 group-hover:[box-shadow:7px_7px_rgba(248,113,113,0.6),14px_14px_rgba(248,113,113,0.4),21px_21px_rgba(248,113,113,0.2)] group-active:translate-x-0 group-active:translate-y-0 group-active:shadow-none" />
+    </span>
   </button>
 );
 

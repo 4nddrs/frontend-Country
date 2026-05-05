@@ -124,9 +124,7 @@ const adminMenuSections: MenuSection[] = [
   { title: 'Empleados', items: empleadosSection },
   { title: 'Propietarios', items: propietariosSection },
   { title: 'Finanzas', items: finanzasSection },
-  { title: 'Salud y Sanidad', items: saludSection },
-  { title: 'Alimentación', items: alimentacionSection },
-  { title: 'Sistema', items: sistemaSection },
+  { title: 'Alimentación', items: alimentacionSection }
 ];
 
 const caballerizoMenuItemsBase: MenuItem[] = [
