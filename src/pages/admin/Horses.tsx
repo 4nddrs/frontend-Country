@@ -512,7 +512,7 @@ const HorsesManagement = () => {
       
       <AdminSection>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Agregar Nuevo Caballo</h2>
+          <h2 className="text-xl font-semibold mb-4 text-[#bdab62]">Agregar Nuevo Caballo</h2>
         </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 

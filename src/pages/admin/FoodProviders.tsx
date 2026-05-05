@@ -114,7 +114,7 @@ const FoodProvidersManagement = () => {
     <div className="bg-white/0 backdrop-blur-lg p-6 rounded-2xl mb-8 border border-[#167C79] shadow-[0_4px_20px_rgba(0,0,0,0.4)] text-[#F8F4E3]">
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Proveedores de Alimento</h1>
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Proveedor</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[#bdab62]">Agregar Nuevo Proveedor</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block mb-1 text-sm font-medium">Nombre del proveedor</label>

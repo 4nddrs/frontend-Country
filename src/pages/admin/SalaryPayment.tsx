@@ -562,7 +562,7 @@ const SalaryPayments: React.FC = () => {
 
       {/* === Sección superior: formulario + gráfico === */}
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Pago</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[#bdab62]">Agregar Pago</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
@@ -702,7 +702,7 @@ const SalaryPayments: React.FC = () => {
 
       {/* === Exportar PDF === */}
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Exportar PDF de Salarios</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[#bdab62]">Exportar PDF de Salarios</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>

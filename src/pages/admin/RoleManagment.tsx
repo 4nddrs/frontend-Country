@@ -132,7 +132,7 @@ const RoleManagement = () => {
         </h1>
       </div>
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Rol</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[#bdab62]">Agregar Nuevo Rol</h2>
         <div className="flex gap-4">
           <input
             type="text"

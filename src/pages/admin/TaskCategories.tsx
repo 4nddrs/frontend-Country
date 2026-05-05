@@ -114,7 +114,7 @@ const TaskCategoriesManagement = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Categorías de Tareas</h1>
 
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Categoría</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[#bdab62]">Agregar Nueva Categoría</h2>
         <div className="flex gap-4 flex-wrap items-end">
           <div className="flex-1 min-w-[180px]">
             <label className="block mb-1 text-sm text-slate-300">Nombre de la categoría</label>

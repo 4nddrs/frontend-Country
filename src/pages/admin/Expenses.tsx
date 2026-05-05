@@ -300,7 +300,7 @@ const ExpensesManagement = () => {
 
       {/* === Formulario principal === */}
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Gasto</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[#bdab62]">Agregar Nuevo Gasto</h2>
 
         {/* Inputs en una fila, botón al extremo derecho */}
         <div className="flex items-end gap-3 w-full overflow-x-auto py-5">

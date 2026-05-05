@@ -602,7 +602,7 @@ const AttentionHorsesManagement = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Atenciones a Caballos</h1>
       
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Atención</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[#bdab62]">Agregar Nueva Atención</h2>
 
         {/* Fila 1: 4 campos (Descripción más ancha) */}
         <div className="grid grid-cols-5 gap-4 mb-4">
@@ -895,7 +895,7 @@ const AttentionHorsesManagement = () => {
       </div>
 
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Filtros y Exportación</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[#bdab62]">Filtros y Exportación</h2>
         <div className="flex flex-nowrap items-end gap-4">
           <div className="flex-1">
             <label htmlFor="filterHorse" className="block mb-1 text-gray-300">
@@ -961,7 +961,7 @@ const AttentionHorsesManagement = () => {
       </AdminSection>
 
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Registros</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[#bdab62]">Registros</h2>
         {loading ? (
           <div className="flex items-center justify-center gap-2 text-xl text-gray-400">
             <Loader size={24} className="animate-spin" />

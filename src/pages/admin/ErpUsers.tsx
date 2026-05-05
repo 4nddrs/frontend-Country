@@ -141,7 +141,7 @@ const ErpUsersManagement = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Usuarios ERP</h1>
 
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Usuario</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[#bdab62]">Agregar Nuevo Usuario</h2>
         <div className="flex gap-4 flex-wrap">
           <input
             type="text"

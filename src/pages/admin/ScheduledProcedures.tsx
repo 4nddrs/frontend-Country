@@ -407,7 +407,7 @@ const ScheduledProceduresManagement = () => {
 
       {/* ── Formulario de registro ── */}
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-5 text-teal-400">Agregar Nuevo Procedimiento</h2>
+        <h2 className="text-xl font-semibold mb-5 text-[#bdab62]">Agregar Nuevo Procedimiento</h2>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[360px]">
           {/* Left: Month Calendar */}

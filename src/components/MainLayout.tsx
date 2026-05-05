@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Dashboard from '../pages/admin/Dashboard';
 import Employees from '../pages/admin/Employee';
@@ -33,6 +33,7 @@ import SalaryPayments from '../pages/admin/SalaryPayment';
 import TipPayment from '../pages/admin/TipPayment';
 import HorseAssignmentsManagement from '../pages/admin/HorseAssignmentsManagement';
 import PendingUsers from '../pages/admin/PendingUsers';
+import VeterinarioHome from '../pages/veterinario/VeterinarioHome';
 
 type MainLayoutProps = {
   userRole?: number | null;
@@ -47,7 +48,8 @@ const MainLayout = ({ userRole }: MainLayoutProps) => {
       <Sidebar userRole={userRole} />
       <main className={`flex-1 p-4 lg:p-8 overflow-y-auto lg:ml-80 ${isDashboardRoute ? '' : 'app-content'}`}>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={userRole === 8 ? <Navigate to="/vet/home" replace /> : <Dashboard />} />
+          <Route path="/vet/home" element={<VeterinarioHome />} />
           <Route path="/employee" element={<Employees />} />
           <Route path="/positions" element={<PositionManagement />} />
           <Route path="/food-providers" element={<FoodProvidersManagement />} />

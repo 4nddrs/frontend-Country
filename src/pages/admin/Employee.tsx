@@ -584,7 +584,7 @@ const Employees = () => {
       >
 
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-teal-300">
+          <h2 className="text-xl font-semibold mb-4 text-[#bdab62]">
             Crear Nuevo Empleado
           </h2>
         </div>

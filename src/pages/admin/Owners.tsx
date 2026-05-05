@@ -262,7 +262,7 @@ const OwnersManagement = () => {
 
       {/* Formulario de creación */}
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Propietario</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[#bdab62]">Agregar Nuevo Propietario</h2>
         {/* Fila 1 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>

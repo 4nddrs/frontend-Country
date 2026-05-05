@@ -148,7 +148,7 @@ const NutritionalPlanHorsesManagement = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Asignaciones de Planes Nutricionales a Caballos</h1>
 
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Asignación</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[#bdab62]">Agregar Nueva Asignación</h2>
         <div className="flex gap-4 flex-wrap">
           <input
             type="date"

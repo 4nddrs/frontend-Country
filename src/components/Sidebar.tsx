@@ -36,9 +36,9 @@ type MenuSection = {
   items: MenuItem[];
 };
 
-const ADMIN_ROLES = [6, 8];
+const ADMIN_ROLES = [6];
 const CABALLERIZO_ROLES = [9];
-const VETERINARIO_ROLES = [10]; // Nuevo rol para veterinarios
+const VETERINARIO_ROLES = [8]; // Rol para veterinarios
 
 // Sección: Caballos
 const caballosSection: MenuItem[] = [
@@ -87,6 +87,14 @@ const saludSection: MenuItem[] = [
   { label: 'Ejecución de Procedimientos Sanitarios', icon: <Syringe size={18} />, path: '/application-procedures', roles: [...ADMIN_ROLES, ...VETERINARIO_ROLES] },
 ];
 
+// Sección: Salud y Sanidad (solo para veterinarios)
+const saludVetSection: MenuItem[] = [
+  { label: 'Medicamentos', icon: <Syringe size={18} />, path: '/medicines', roles: VETERINARIO_ROLES },
+  { label: 'Gestión del Plan Sanitario (Vacunas)', icon: <Syringe size={18} />, path: '/VaccinationPlan', roles: VETERINARIO_ROLES },
+  { label: 'Procedimientos Sanitarios Programados', icon: <Syringe size={18} />, path: '/scheduled-procedures', roles: VETERINARIO_ROLES },
+  { label: 'Ejecución de Procedimientos Sanitarios', icon: <Syringe size={18} />, path: '/application-procedures', roles: VETERINARIO_ROLES },
+];
+
 // Sección: Alimentación
 const alimentacionSection: MenuItem[] = [
   { label: 'Proveedores de Comida', icon: <Package size={18} />, path: '/food-providers', roles: ADMIN_ROLES },
@@ -108,8 +116,7 @@ const caballosVetSection: MenuItem[] = [
 ];
 
 const veterinarioMenuSections: MenuSection[] = [
-  { title: 'Caballos', items: caballosVetSection },
-  { title: 'Salud y Sanidad', items: saludSection },
+  { title: 'Salud y Sanidad', items: saludVetSection },
 ];
 
 const adminMenuSections: MenuSection[] = [
@@ -128,10 +135,12 @@ const caballerizoMenuItemsBase: MenuItem[] = [
   { label: 'Caballos asignados', icon: <Trophy size={18} />, path: '/caballerizo/caballos', roles: CABALLERIZO_ROLES },
 ];
 
-const homeMenuItem: MenuItem = { label: 'Home', icon: <Home size={18} />, path: '/', roles: [...ADMIN_ROLES, ...VETERINARIO_ROLES] };
+const homeMenuItem: MenuItem = { label: 'Home', icon: <Home size={18} />, path: '/', roles: ADMIN_ROLES };
+const vetHomeMenuItem: MenuItem = { label: 'Home', icon: <Home size={18} />, path: '/vet/home', roles: VETERINARIO_ROLES };
 
 const menuItems: MenuItem[] = [
   homeMenuItem,
+  vetHomeMenuItem,
   ...adminMenuSections.flatMap(section => section.items),
   ...veterinarioMenuSections.flatMap(section => section.items),
   ...caballerizoMenuItemsBase,
@@ -213,6 +222,8 @@ const Sidebar = ({ userRole }: SidebarProps) => {
     userRole === 9 ? 'relative px-6 pb-4 -mt-24' : 'relative px-6 pb-2 mt-[-6.2rem]';
   const navSectionsClassName =
     userRole === 9 ? 'space-y-4' : VETERINARIO_ROLES.includes(userRole ?? 0) ? 'space-y-6' : 'space-y-6';
+  const isVeterinarian = VETERINARIO_ROLES.includes(userRole ?? 0);
+  const currentHomeItem = isVeterinarian ? vetHomeMenuItem : homeMenuItem;
 
   return (
     <>
@@ -262,12 +273,12 @@ const Sidebar = ({ userRole }: SidebarProps) => {
                             bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-400/30 
                             text-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.3)] backdrop-blur-sm">
                 <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-                {erpUser?.fk_idUserRole === 6 || erpUser?.fk_idUserRole === 8
+                {erpUser?.fk_idUserRole === 6
                   ? "Administrador"
+                  : erpUser?.fk_idUserRole === 8
+                  ? "Veterinario"
                   : erpUser?.fk_idUserRole === 9
                   ? "Caballerizo"
-                  : erpUser?.fk_idUserRole === 10
-                  ? "Veterinario"
                   : erpUser?.fk_idUserRole === 7
                   ? "Propietario"
                   : "Usuario"}
@@ -291,13 +302,13 @@ const Sidebar = ({ userRole }: SidebarProps) => {
           <nav className="relative flex-1 overflow-y-auto px-0 pb-8 soft-scrollbar">
             <div className={navSectionsClassName}>
               {/* Home - Siempre visible para admin */}
-              {userRole && ADMIN_ROLES.includes(userRole) && !searchTerm && (
+              {userRole && (ADMIN_ROLES.includes(userRole) || isVeterinarian) && !searchTerm && (
                 <div className="rounded-[32px] border border-white/10 bg-white/5 px-4 py-5 backdrop-blur-2xl shadow-inner shadow-black/20 mb-5">
                   <ul className="space-y-3">
                     {(() => {
-                      const isActive = location.pathname === homeMenuItem.path;
+                      const isActive = location.pathname === currentHomeItem.path;
                       return (
-                        <li key={homeMenuItem.path} className="group flex items-center px-1">
+                        <li key={currentHomeItem.path} className="group flex items-center px-1">
                           <span
                             className={`relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
                               isActive
@@ -305,10 +316,10 @@ const Sidebar = ({ userRole }: SidebarProps) => {
                                 : 'border-white/12 bg-sidebar-pill/60 text-sidebar-icon group-hover:border-sidebar-active-green/60 group-hover:bg-sidebar-active-green/8 group-hover:text-sidebar-active-green'
                             }`}
                           >
-                            {homeMenuItem.icon}
+                            {currentHomeItem.icon}
                           </span>
                           <Link
-                            to={homeMenuItem.path}
+                            to={currentHomeItem.path}
                             onClick={closeSidebar}
                             className={`group relative ml-2 flex-1 rounded-[23px] border pl-3 pr-4 py-2.5 transition-all duration-300 ${
                               isActive
@@ -323,7 +334,7 @@ const Sidebar = ({ userRole }: SidebarProps) => {
                                   : 'text-[#ffffff] group-hover:text-[#3CC9F6]'
                               }`}
                             >
-                              {homeMenuItem.label}
+                              {currentHomeItem.label}
                             </span>
                           </Link>
                         </li>
@@ -335,72 +346,119 @@ const Sidebar = ({ userRole }: SidebarProps) => {
 
               {/* Secciones agrupadas para admin y veterinario */}
               {userRole && (ADMIN_ROLES.includes(userRole) || VETERINARIO_ROLES.includes(userRole)) && !searchTerm ? (
-                filteredMenuSections.map((section, sectionIndex) => {
-                  const isExpanded = expandedSections[section.title] ?? false;
-                  return (
-                    <div key={sectionIndex} className="rounded-[32px] border border-white/10 bg-white/5 px-2 py-2 backdrop-blur-2xl shadow-inner shadow-black/20">
-                      {/* Header del bloque - clickeable */}
-                      <button
-                        onClick={() => toggleSection(section.title)}
-                        className="w-full flex items-center justify-between px-1.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors group"
-                      >
-                        <h3 className="text-xs font-bold tracking-[0.2em] text-[#bdab62] uppercase">
-                          {section.title}
-                        </h3>
-                        {isExpanded ? (
-                          <ChevronDown size={16} className="text-[#bdab62] transition-transform duration-300" />
-                        ) : (
-                          <ChevronRight size={16} className="text-[#bdab62] transition-transform duration-300" />
-                        )}
-                      </button>
-
-                      {/* Contenido desplegable */}
-                      <div
-                        className={`overflow-hidden transition-all duration-300 ${
-                          isExpanded ? 'max-h-[2000px] opacity-100 mt-3' : 'max-h-0 opacity-0'
-                        }`}
-                      >
-                        <ul className="space-y-3">
-                          {section.items.map((item) => {
-                            const isActive = location.pathname === item.path;
-                            return (
-                              <li key={item.path} className="group flex items-center px-1">
+                isVeterinarian ? (
+                  filteredMenuSections.map((section, sectionIndex) => (
+                    <div key={sectionIndex} className="rounded-[32px] border border-white/10 bg-white/5 px-4 py-5 backdrop-blur-2xl shadow-inner shadow-black/20">
+                      <h3 className="text-xs font-bold tracking-[0.2em] text-[#bdab62] uppercase mb-4">
+                        {section.title}
+                      </h3>
+                      <ul className="space-y-3">
+                        {section.items.map((item) => {
+                          const isActive = location.pathname === item.path;
+                          return (
+                            <li key={item.path} className="group flex items-center px-1">
+                              <span
+                                className={`relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
+                                  isActive
+                                    ? 'border-[#3CC9F6]/70 bg-[#3CC9F6]/12 text-[#3CC9F6] shadow-[0_0_10px_rgba(60,201,246,0.45)]'
+                                    : 'border-white/12 bg-sidebar-pill/60 text-sidebar-icon group-hover:border-sidebar-active-green/60 group-hover:bg-sidebar-active-green/8 group-hover:text-sidebar-active-green'
+                                }`}
+                              >
+                                {item.icon}
+                              </span>
+                              <Link
+                                to={item.path}
+                                onClick={closeSidebar}
+                                className={`group relative ml-2 flex-1 rounded-[23px] border pl-3 pr-4 py-2.5 transition-all duration-300 ${
+                                  isActive
+                                    ? 'border-[#3CC9F6]/70 bg-[#3CC9F6]/8 text-[#3CC9F6] shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20'
+                                    : 'border-transparent bg-sidebar-surface/70 text-sidebar-muted transition-transform hover:scale-[1.02] hover:border-[#08f2ff]/50 hover:bg-sidebar-surface/80'
+                                }`}
+                              >
                                 <span
-                                  className={`relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
+                                  className={`text-sm font-semibold tracking-wide transition-colors duration-300 ${
                                     isActive
-                                      ? 'border-[#3CC9F6]/70 bg-[#3CC9F6]/12 text-[#3CC9F6] shadow-[0_0_10px_rgba(60,201,246,0.45)]'
-                                      : 'border-white/12 bg-sidebar-pill/60 text-sidebar-icon group-hover:border-sidebar-active-green/60 group-hover:bg-sidebar-active-green/8 group-hover:text-sidebar-active-green'
+                                      ? 'text-[#3CC9F6]'
+                                      : 'text-[#ffffff] group-hover:text-[#3CC9F6]'
                                   }`}
                                 >
-                                  {item.icon}
+                                  {item.label}
                                 </span>
-                                <Link
-                                  to={item.path}
-                                  onClick={closeSidebar}
-                                  className={`group relative ml-2 flex-1 rounded-[23px] border pl-3 pr-4 py-2.5 transition-all duration-300 ${
-                                    isActive
-                                      ? 'border-[#3CC9F6]/70 bg-[#3CC9F6]/8 text-[#3CC9F6] shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20'
-                                      : 'border-transparent bg-sidebar-surface/70 text-sidebar-muted transition-transform hover:scale-[1.02] hover:border-[#08f2ff]/50 hover:bg-sidebar-surface/80'
-                                  }`}
-                                >
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  ))
+                ) : (
+                  filteredMenuSections.map((section, sectionIndex) => {
+                    const isExpanded = expandedSections[section.title] ?? false;
+                    return (
+                      <div key={sectionIndex} className="rounded-[32px] border border-white/10 bg-white/5 px-2 py-2 backdrop-blur-2xl shadow-inner shadow-black/20">
+                        {/* Header del bloque - clickeable */}
+                        <button
+                          onClick={() => toggleSection(section.title)}
+                          className="w-full flex items-center justify-between px-1.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors group"
+                        >
+                          <h3 className="text-xs font-bold tracking-[0.2em] text-[#bdab62] uppercase">
+                            {section.title}
+                          </h3>
+                          {isExpanded ? (
+                            <ChevronDown size={16} className="text-[#bdab62] transition-transform duration-300" />
+                          ) : (
+                            <ChevronRight size={16} className="text-[#bdab62] transition-transform duration-300" />
+                          )}
+                        </button>
+
+                        {/* Contenido desplegable */}
+                        <div
+                          className={`overflow-hidden transition-all duration-300 ${
+                            isExpanded ? 'max-h-[2000px] opacity-100 mt-3' : 'max-h-0 opacity-0'
+                          }`}
+                        >
+                          <ul className="space-y-3">
+                            {section.items.map((item) => {
+                              const isActive = location.pathname === item.path;
+                              return (
+                                <li key={item.path} className="group flex items-center px-1">
                                   <span
-                                    className={`text-sm font-semibold tracking-wide transition-colors duration-300 ${
+                                    className={`relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
                                       isActive
-                                        ? 'text-[#3CC9F6]'
-                                        : 'text-[#ffffff] group-hover:text-[#3CC9F6]'
+                                        ? 'border-[#3CC9F6]/70 bg-[#3CC9F6]/12 text-[#3CC9F6] shadow-[0_0_10px_rgba(60,201,246,0.45)]'
+                                        : 'border-white/12 bg-sidebar-pill/60 text-sidebar-icon group-hover:border-sidebar-active-green/60 group-hover:bg-sidebar-active-green/8 group-hover:text-sidebar-active-green'
                                     }`}
                                   >
-                                    {item.label}
+                                    {item.icon}
                                   </span>
-                                </Link>
-                              </li>
-                            );
-                          })}
-                        </ul>
+                                  <Link
+                                    to={item.path}
+                                    onClick={closeSidebar}
+                                    className={`group relative ml-2 flex-1 rounded-[23px] border pl-3 pr-4 py-2.5 transition-all duration-300 ${
+                                      isActive
+                                        ? 'border-[#3CC9F6]/70 bg-[#3CC9F6]/8 text-[#3CC9F6] shadow-[0_0_14px_rgba(60,201,246,0.35)] ring-1 ring-[#3CC9F6]/20'
+                                        : 'border-transparent bg-sidebar-surface/70 text-sidebar-muted transition-transform hover:scale-[1.02] hover:border-[#08f2ff]/50 hover:bg-sidebar-surface/80'
+                                    }`}
+                                  >
+                                    <span
+                                      className={`text-sm font-semibold tracking-wide transition-colors duration-300 ${
+                                        isActive
+                                          ? 'text-[#3CC9F6]'
+                                          : 'text-[#ffffff] group-hover:text-[#3CC9F6]'
+                                      }`}
+                                    >
+                                      {item.label}
+                                    </span>
+                                  </Link>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })
+                    );
+                  })
+                )
               ) : (
                 /* Lista plana para búsqueda o caballerizo */
                 <div className="rounded-[32px] border border-white/10 bg-white/5 px-4 py-5 backdrop-blur-2xl shadow-inner shadow-black/20">

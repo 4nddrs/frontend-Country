@@ -4,11 +4,19 @@ import { Card } from '../../components/ui/card';
 import UserHeader from '../../components/UserHeader';
 import { useCurrentUser, useOwnerData, useOwnerHorses } from '../../hooks/useUserData';
 import {
-  getHorseNutritionalPlan,
-  getHorseTotalControl,
-  getNutritionalPlanById,
   type Horse,
 } from '../../services/userService';
+
+interface Race {
+  idRace: number;
+  nameRace: string;
+}
+
+interface NutritionalPlan {
+  idNutritionalPlan: number;
+  planName: string;
+  description?: string;
+}
 
 interface MiCaballoProps {}
 
@@ -25,6 +33,8 @@ export function UserHorses(_: MiCaballoProps) {
   const [selectedHorse, setSelectedHorse] = useState<Horse | null>(null);
   const [selectedHorseDetails, setSelectedHorseDetails] = useState<HorseDetails | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  const [races, setRaces] = useState<Race[]>([]);
+  const [nutritionalPlans, setNutritionalPlans] = useState<NutritionalPlan[]>([]);
 
   const { data: user } = useCurrentUser();
   const { data: ownerData, isLoading: ownerLoading } = useOwnerData(user?.id);
@@ -32,6 +42,55 @@ export function UserHorses(_: MiCaballoProps) {
 
   const loading = ownerLoading || horsesLoading;
   const horsesList = horses as Horse[];
+
+  // Cargar razas
+  useEffect(() => {
+    const fetchRaces = async () => {
+      try {
+        const res = await fetch('https://api.countryclub.doc-ia.cloud/race/');
+        if (res.ok) {
+          const data = await res.json();
+          setRaces(data);
+        }
+      } catch (error) {
+        console.error('Error fetching races:', error);
+      }
+    };
+    fetchRaces();
+  }, []);
+
+  // Cargar planes nutricionales
+  useEffect(() => {
+    const fetchNutritionalPlans = async () => {
+      try {
+        const res = await fetch('https://api.countryclub.doc-ia.cloud/nutritional-plans/');
+        if (res.ok) {
+          const data = await res.json();
+          setNutritionalPlans(data);
+        }
+      } catch (error) {
+        console.error('Error fetching nutritional plans:', error);
+      }
+    };
+    fetchNutritionalPlans();
+  }, []);
+
+  const getRaceName = (fk_idRace?: number): string => {
+    if (!fk_idRace) return 'Sin especificar';
+    const race = races.find((r) => r.idRace === fk_idRace);
+    return race?.nameRace ?? 'Sin especificar';
+  };
+
+  const getNutritionalPlanInfo = (planId?: number): { planName: string; description?: string } => {
+    if (!planId) {
+      return { planName: 'Sin plan asignado' };
+    }
+    const plan = nutritionalPlans.find((p) => p.idNutritionalPlan === planId);
+    return {
+      planName: plan?.planName ?? 'Sin plan asignado',
+      description: plan?.description,
+    };
+  };
 
   const calculateAge = (birthdate?: string): string => {
     if (!birthdate) return 'No especificada';
@@ -75,30 +134,21 @@ export function UserHorses(_: MiCaballoProps) {
         let hasBox = false;
         let boxPeriod: string | undefined;
 
-        const relation = await getHorseNutritionalPlan(selectedHorse.idHorse);
-        const relationRecord = Array.isArray(relation) ? relation[0] : relation;
-        const planId = relationRecord?.fk_idNutritionalPlan;
+        // Obtener plan del caballo directamente
+        const planId = (selectedHorse as any).fl_idNutritionalPlan;
 
-        if (planId) {
-          const plan = await getNutritionalPlanById(planId);
-          if (plan?.planName) {
-            planName = plan.planName;
-            planDescription = plan.description || undefined;
-          }
-        }
+        const planInfo = getNutritionalPlanInfo(planId);
+        planName = planInfo.planName;
+        planDescription = planInfo.description;
 
-        const controlInfo = await getHorseTotalControl(selectedHorse.idHorse);
-        if (controlInfo && controlInfo.box !== undefined && controlInfo.box !== null) {
-          hasBox = true;
-          boxLabel = `Box #${controlInfo.box}`;
-          boxPeriod = controlInfo.period || undefined;
-        } else if (selectedHorse.box) {
+        // Usar info del box del caballo directamente
+        if (selectedHorse.box) {
           hasBox = true;
           boxLabel = 'Con box';
         }
 
         const details: HorseDetails = {
-          raceName: selectedHorse.race?.nameRace || 'Sin especificar',
+          raceName: getRaceName(selectedHorse.fk_idRace),
           planName,
           planDescription,
           boxLabel,
@@ -113,7 +163,7 @@ export function UserHorses(_: MiCaballoProps) {
         console.error('Error fetching horse details:', error);
         if (!cancelled) {
           setSelectedHorseDetails({
-            raceName: selectedHorse.race?.nameRace || 'Sin especificar',
+            raceName: getRaceName(selectedHorse.fk_idRace),
             planName: 'Sin plan asignado',
             boxLabel: selectedHorse.box ? 'Con box' : 'Sin box',
             hasBox: Boolean(selectedHorse.box),
@@ -131,7 +181,7 @@ export function UserHorses(_: MiCaballoProps) {
     return () => {
       cancelled = true;
     };
-  }, [selectedHorse]);
+  }, [selectedHorse, races, nutritionalPlans]);
 
   if (loading) {
     return (
@@ -221,7 +271,7 @@ export function UserHorses(_: MiCaballoProps) {
                                 <div className="flex items-center justify-between gap-3">
                                   <div className="min-w-0">
                                     <p className="text-sm font-semibold text-white truncate">{horse.horseName}</p>
-                                    <p className="text-xs text-slate-400 truncate">{horse.race?.nameRace || 'Sin raza'}</p>
+                                    <p className="text-xs text-slate-400 truncate">{getRaceName(horse.fk_idRace)}</p>
                                   </div>
                                   <ChevronRight className={`w-4 h-4 flex-shrink-0 ${isSelected ? 'text-cyan-300' : 'text-slate-500'}`} />
                                 </div>
@@ -264,7 +314,7 @@ export function UserHorses(_: MiCaballoProps) {
                     </div>
                     <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
                       <p className="text-xs text-slate-500 mb-1">Raza</p>
-                      <p className="text-white font-medium">{selectedHorseDetails?.raceName || selectedHorse.race?.nameRace || 'Sin especificar'}</p>
+                      <p className="text-white font-medium">{selectedHorseDetails?.raceName || 'Sin especificar'}</p>
                     </div>
                     <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
                       <p className="text-xs text-slate-500 mb-1">Edad</p>
@@ -333,25 +383,7 @@ export function UserHorses(_: MiCaballoProps) {
                 </Card>
               </div>
 
-              <Card className="relative overflow-hidden bg-gradient-to-br from-slate-800/45 to-slate-900/45 border-slate-700/50 backdrop-blur-sm shadow-[0_12px_36px_rgba(0,0,0,0.35)]">
-                <div className="p-5 md:p-6">
-                  <h3 className="text-sm uppercase tracking-[0.2em] text-slate-400 mb-4">Información adicional</h3>
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
-                      <p className="text-xs text-slate-500 mb-1">Box actual</p>
-                      <p className="text-white">{selectedHorseDetails?.boxLabel || 'No asignado'}</p>
-                    </div>
-                    <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
-                      <p className="text-xs text-slate-500 mb-1">Raza</p>
-                      <p className="text-white">{selectedHorseDetails?.raceName || 'Sin especificar'}</p>
-                    </div>
-                    <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
-                      <p className="text-xs text-slate-500 mb-1">Plan nutricional</p>
-                      <p className="text-white">{selectedHorseDetails?.planName || 'Sin plan asignado'}</p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
+             
             </>
           )}
         </div>

@@ -267,9 +267,12 @@ export default function App() {
       console.log(`✅ Login detectado - Redirigiendo al home del rol ${role}`);
       
       // Redirigir según el rol
-      if (role === 6 || role === 8) {
-        // Admin o Staff -> Dashboard administrativo
+      if (role === 6) {
+        // Admin -> Dashboard administrativo
         navigate('/', { replace: true });
+      } else if (role === 8) {
+        // Veterinario -> Home veterinaria
+        navigate('/vet/home', { replace: true });
       } else if (role === 7) {
         // Usuario Propietario -> Home de usuario
         navigate('/user/home', { replace: true });

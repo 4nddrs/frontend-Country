@@ -566,7 +566,7 @@ const TipPaymentPage: React.FC = () => {
 
       {/* === Sección superior: formulario + gráfico === */}
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Propina</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[#bdab62]">Agregar Propina</h2>
 
         {/* Fila 1 — 3 columnas: Monto | Estado | Fecha */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -723,7 +723,7 @@ const TipPaymentPage: React.FC = () => {
 
       {/* === Exportar PDF === */}
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Exportar PDF de Propinas</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[#bdab62]">Exportar PDF de Propinas</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
             <label>Empleado</label>

@@ -233,7 +233,7 @@ const MedicinesManagement = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Medicamentos</h1>
 
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nuevo Medicamento</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[#bdab62]">Agregar Nuevo Medicamento</h2>
         <div className="grid grid-cols-4 gap-4 mb-4">
           <div>
             <label className="block mb-1">Nombre del medicamento</label>

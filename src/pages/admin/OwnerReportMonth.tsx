@@ -1069,7 +1069,7 @@ const OwnerReportMonthManagement = () => {
 
       <div className="bg-white/5 p-6 rounded-2xl mb-8 text-[#F8F4E3] border border-slate-700">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-teal-300">Agregar Nuevo Reporte Mensual</h2>
+          <h2 className="text-xl font-semibold text-[#bdab62]">Agregar Nuevo Reporte Mensual</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">

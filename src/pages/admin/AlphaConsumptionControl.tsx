@@ -285,7 +285,7 @@ const AlphaConsumptionControl: React.FC = () => {
       {/* Filtros */}
       <AdminSection>
         <div className="flex items-center justify-between gap-4 mb-4">
-          <h2 className="text-xl font-semibold">Filtros</h2>
+          <h2 className="text-xl font-semibold text-[#bdab62]">Filtros</h2>
 
           {/* Botón Exportar PDF */}
           <ExportButton

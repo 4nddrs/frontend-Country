@@ -149,7 +149,7 @@ const EmployeeAbsencesManagement = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Ausencias de Empleados</h1>
 
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar Nueva Ausencia</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[#bdab62]">Agregar Nueva Ausencia</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="flex flex-col">
             <label className="block text-gray-400 mb-1">Fecha de Inicio</label>

@@ -173,7 +173,7 @@ const EmployeesShiftemManagement = () => {
       <h1 className="text-3xl font-bold mb-6 text-center text-[#bdab62]">Gestión de Empleados-Turnos</h1>
 
       <AdminSection>
-        <h2 className="text-xl font-semibold mb-4 text-teal-400">Agregar asignación de Turno a un Empleado</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[#bdab62]">Agregar asignación de Turno a un Empleado</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block mb-1 text-sm text-slate-300">Empleado</label>
