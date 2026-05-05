@@ -68,7 +68,7 @@ export default function SidebarCaballerizo() {
         {/* Header */}
         <div className="p-6 border-b border-slate-800/50 flex items-center justify-between">
           <h2 className="text-xl text-white tracking-wide font-semibold">
-            Area Caballerizo
+            Área Caballerizo
           </h2>
         </div>
 

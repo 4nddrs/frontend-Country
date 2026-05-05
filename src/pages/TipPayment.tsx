@@ -62,7 +62,7 @@ function fmtDateView(value?: string | null) {
 }
 
 function monthLabel(dateStr: string | null | undefined): string {
-    if (!dateStr) return "sin fecha";
+    if (!dateStr) return "Sin fecha";
     const d = new Date(dateStr);
     return d.toLocaleDateString("es-ES", { month: "long", year: "numeric" });
 }

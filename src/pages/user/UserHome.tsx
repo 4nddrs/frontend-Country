@@ -192,7 +192,7 @@ export function UserHome({ setCurrentView }: HomeProps) {
                         <Video className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <p className="text-white font-semibold">Camara del establo</p>
+                        <p className="text-white font-semibold">Cámara del establo</p>
                         <p className="text-xs text-slate-400">Monitoreo en tiempo real</p>
                       </div>
                     </div>

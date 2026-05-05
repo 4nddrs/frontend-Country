@@ -57,7 +57,7 @@ const empleadosSection: MenuItem[] = [
   { label: 'Empleados', icon: <User size={18} />, path: '/employee', roles: ADMIN_ROLES },
   { label: 'Categorías de Tareas', icon: <List size={18} />, path: '/task-categories', roles: ADMIN_ROLES },
   { label: 'Tareas', icon: <Calendar size={18} />, path: '/tasks', roles: ADMIN_ROLES },
-  { label: 'Asignacion de Caballos', icon: <ClipboardList size={18} />, path: '/HorseAssignmentsManagement', roles: ADMIN_ROLES },
+  { label: 'Asignación de Caballos', icon: <ClipboardList size={18} />, path: '/HorseAssignmentsManagement', roles: ADMIN_ROLES },
   { label: 'Ausencias de Empleados', icon: <Calendar size={18} />, path: '/employee-absences', roles: ADMIN_ROLES },
   
 ];
@@ -78,15 +78,6 @@ const finanzasSection: MenuItem[] = [
   { label: 'Control Total', icon: <ClipboardList size={18} />, path: '/TotalControl', roles: ADMIN_ROLES },
 ];
 
-// Sección: Salud y Sanidad
-const saludSection: MenuItem[] = [
-  { label: 'Medicamentos', icon: <Syringe size={18} />, path: '/medicines', roles: [...ADMIN_ROLES, ...VETERINARIO_ROLES] },
-  { label: 'Atención a Caballos', icon: <Trophy size={18} />, path: '/attentionHorses', roles: ADMIN_ROLES },
-  { label: 'Gestión del Plan Sanitario (Vacunas)', icon: <Syringe size={18} />, path: '/VaccinationPlan', roles: [...ADMIN_ROLES, ...VETERINARIO_ROLES] },
-  { label: 'Procedimientos Sanitarios Programados', icon: <Syringe size={18} />, path: '/scheduled-procedures', roles: [...ADMIN_ROLES, ...VETERINARIO_ROLES] },
-  { label: 'Ejecución de Procedimientos Sanitarios', icon: <Syringe size={18} />, path: '/application-procedures', roles: [...ADMIN_ROLES, ...VETERINARIO_ROLES] },
-];
-
 // Sección: Salud y Sanidad (solo para veterinarios)
 const saludVetSection: MenuItem[] = [
   { label: 'Medicamentos', icon: <Syringe size={18} />, path: '/medicines', roles: VETERINARIO_ROLES },
@@ -101,18 +92,6 @@ const alimentacionSection: MenuItem[] = [
   { label: 'Stock de Comida', icon: <ClipboardList size={18} />, path: '/food-stocks', roles: ADMIN_ROLES },
   { label: 'Control de Alfalfa', icon: <Package size={18} />, path: '/alfalfa-control', roles: ADMIN_ROLES },
   { label: 'Control de Consumo de Alfalfa', icon: <Package size={18} />, path: '/AlphaConsumptionControl', roles: ADMIN_ROLES },
-];
-
-// Sección: Sistema
-const sistemaSection: MenuItem[] = [
-  { label: 'Roles de Usuario ERP', icon: <Briefcase size={18} />, path: '/UserRole', roles: ADMIN_ROLES },
-  { label: 'Usuarios ERP', icon: <User size={18} />, path: '/ErpUsers', roles: ADMIN_ROLES },
-];
-
-// Sección: Caballos (vista limitada para veterinarios)
-const caballosVetSection: MenuItem[] = [
-  { label: 'Caballos', icon: <Flag size={18} />, path: '/horses', roles: VETERINARIO_ROLES },
-  { label: 'Atención a Caballos', icon: <Trophy size={18} />, path: '/attentionHorses', roles: VETERINARIO_ROLES },
 ];
 
 const veterinarioMenuSections: MenuSection[] = [

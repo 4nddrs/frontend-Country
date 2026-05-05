@@ -413,7 +413,7 @@ export function UserCamera() {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen p-4 md:p-6 lg:p-8">
-      <UserHeader title="Camara del Establo" />
+      <UserHeader title="Cámara del Establo" />
 
       <div className="space-y-6">
 

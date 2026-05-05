@@ -287,7 +287,7 @@ export default function AuthForm() {
           throw new Error(ownerError.message);
         }
 
-        setSuccess("Tu cuenta fue creada y queda pendiente de aprobacion por un administrador.");
+        setSuccess("Tu cuenta fue creada y queda pendiente de aprobación por un administrador.");
         setError("");
         setReg({
           username: "",

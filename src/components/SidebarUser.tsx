@@ -22,8 +22,8 @@ type MenuItem = {
 const menuItems: MenuItem[] = [
   { label: "Inicio", icon: <Home size={18} />, path: "/user/home" },
   { label: "Mi Caballo", icon: <Flag size={18} />, path: "/user/horses" },
-  { label: "Camara del Establo", icon: <Video size={18} />, path: "/user/camera" },
-  { label: "Pagos y Estado Economico", icon: <DollarSign size={18} />, path: "/user/payments" },
+  { label: "Cámara del Establo", icon: <Video size={18} />, path: "/user/camera" },
+  { label: "Pagos y Estado Económico", icon: <DollarSign size={18} />, path: "/user/payments" },
   { label: "Perfil", icon: <User size={18} />, path: "/user/profile" },
 ];
 

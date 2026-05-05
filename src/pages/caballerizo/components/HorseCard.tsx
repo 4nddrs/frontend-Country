@@ -76,7 +76,7 @@ export function HorseCard({ assignment, horse }: HorseCardProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-transparent to-transparent" />
           <div className="absolute left-3 bottom-3 flex items-center gap-2 text-xs text-white/90">
             <Trophy className="w-4 h-4 text-emerald-300" />
-            Asignacion #{assignment.idHorseAssignments}
+            Asignación #{assignment.idHorseAssignments}
           </div>
         </div>
 
