@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader } from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
+import { isNonEmptyString, isEndDateAfterStart } from '../../utils/validation';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud/nutritional-plans/';
@@ -109,6 +110,15 @@ const NutritionalPlansManagement = () => {
   }, []);
 
   const createPlan = async () => {
+    if (!isNonEmptyString(newPlan.name, 200)) {
+      toast.error('El nombre del plan es obligatorio y debe tener máximo 200 caracteres.');
+      return;
+    }
+    if (newPlan.assignmentDate && newPlan.endDate && !isEndDateAfterStart(newPlan.assignmentDate, newPlan.endDate)) {
+      toast.error('La Fecha de Asignación no puede ser posterior a la Fecha de Finalización.');
+      return;
+    }
+
     const planToCreate = {
       ...newPlan,
       state: computeState(newPlan.assignmentDate, newPlan.endDate),
@@ -130,6 +140,15 @@ const NutritionalPlansManagement = () => {
 
   const updatePlan = async (id: number) => {
     if (!editingData) return;
+    if (!isNonEmptyString(editingData.name, 200)) {
+      toast.error('El nombre del plan es obligatorio y debe tener máximo 200 caracteres.');
+      return;
+    }
+    if (editingData.assignmentDate && editingData.endDate && !isEndDateAfterStart(editingData.assignmentDate, editingData.endDate)) {
+      toast.error('La Fecha de Asignación no puede ser posterior a la Fecha de Finalización.');
+      return;
+    }
+
     const planToUpdate = {
       ...editingData,
       state: computeState(editingData.assignmentDate, editingData.endDate),
