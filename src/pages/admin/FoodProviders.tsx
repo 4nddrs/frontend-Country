@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader } from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
+import { isNonEmptyString, isNumeric } from '../../utils/validation';
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud/food-providers/';
 
@@ -49,6 +50,14 @@ const FoodProvidersManagement = () => {
   useEffect(() => { fetchProviders(); }, []);
 
   const createProvider = async () => {
+    if (!isNonEmptyString(newProvider.supplierName, 150)) {
+      toast.error('El nombre del proveedor es obligatorio');
+      return;
+    }
+    if (newProvider.cellphoneNumber && !isNumeric(String(newProvider.cellphoneNumber))) {
+      toast.error('Número de celular inválido.');
+      return;
+    }
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
@@ -66,6 +75,14 @@ const FoodProvidersManagement = () => {
 
   const updateProvider = async (id: number) => {
     if (!editingData) return;
+    if (!isNonEmptyString(editingData.supplierName, 150)) {
+      toast.error('El nombre del proveedor es obligatorio');
+      return;
+    }
+    if (editingData.cellphoneNumber && !isNumeric(String(editingData.cellphoneNumber))) {
+      toast.error('Número de celular inválido.');
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}${id}`, {
         method: 'PUT',
@@ -124,6 +141,7 @@ const FoodProvidersManagement = () => {
               placeholder="Ej: Distribuidora La Paz"
               value={newProvider.supplierName}
               onChange={e => setNewProvider({ ...newProvider, supplierName: e.target.value })}
+              maxLength={150}
               className="w-full"
             />
           </div>
@@ -146,6 +164,7 @@ const FoodProvidersManagement = () => {
               placeholder="Ej: Proveedor de carnes y embutidos"
               value={newProvider.generalDescription}
               onChange={e => setNewProvider({ ...newProvider, generalDescription: e.target.value })}
+              maxLength={300}
               className="w-full"
             />
           </div>
@@ -242,6 +261,7 @@ const FoodProvidersManagement = () => {
                     type="text"
                     value={editingData.supplierName}
                     onChange={e => setEditingData({ ...editingData, supplierName: e.target.value })}
+                    maxLength={150}
                     className="w-full p-2 rounded-md bg-gray-700"
                   />
                 </div>
@@ -260,6 +280,7 @@ const FoodProvidersManagement = () => {
                     type="text"
                     value={editingData.generalDescription || ''}
                     onChange={e => setEditingData({ ...editingData, generalDescription: e.target.value })}
+                    maxLength={300}
                     className="w-full p-2 rounded-md bg-gray-700"
                   />
                 </div>

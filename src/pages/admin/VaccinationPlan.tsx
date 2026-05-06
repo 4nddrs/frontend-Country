@@ -5,6 +5,7 @@ import {
   Edit, Trash2, Loader, AlertTriangle, Download, Info, X, Syringe, Calendar,
 } from 'lucide-react';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
+import { isNonEmptyString } from '../../utils/validation';
 import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud/vaccination_plan/';
@@ -609,6 +610,20 @@ const VaccinationPlanManagement = () => {
   });
 
   const createPlan = async () => {
+    // Client-side validations
+    if (!isNonEmptyString(newPlan.planName, 100)) {
+      toast.error('El nombre del tratamiento es obligatorio');
+      return;
+    }
+    const months = Object.values(newPlan.scheduledMonths || {});
+    if (!Array.isArray(months) || months.length === 0) {
+      toast.error('Debes seleccionar al menos un mes para el plan.');
+      return;
+    }
+    if (!newPlan.fk_idMedicine || newPlan.fk_idMedicine === 0) {
+      toast.error('Debes seleccionar un medicamento.');
+      return;
+    }
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
@@ -626,6 +641,20 @@ const VaccinationPlanManagement = () => {
 
   const updatePlan = async (id: number) => {
     if (!editingPlanData) return;
+    // Validations on edit
+    if (!isNonEmptyString(editingPlanData.planName, 100)) {
+      toast.error('El nombre del tratamiento es obligatorio');
+      return;
+    }
+    const months = Object.values(editingPlanData.scheduledMonths || {});
+    if (!Array.isArray(months) || months.length === 0) {
+      toast.error('Debes seleccionar al menos un mes para el plan.');
+      return;
+    }
+    if (!editingPlanData.fk_idMedicine || editingPlanData.fk_idMedicine === 0) {
+      toast.error('Debes seleccionar un medicamento.');
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}${id}`, {
         method: 'PUT',

@@ -14,6 +14,7 @@ import {
 import { ExportButton, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
 import noPhoto from '../../assets/noPhoto.png';
+import { isNonEmptyString, isEndDateAfterStart } from '../../utils/validation';
 
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud';
@@ -106,6 +107,8 @@ const Employees = () => {
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [editingPhoto, setEditingPhoto] = useState<File | null>(null);
   const [creatingAccount, setCreatingAccount] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const PAGE_SIZE = 5;
 
   const newFileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
@@ -169,6 +172,12 @@ const Employees = () => {
     fetchData();
   }, []);
 
+  // Ajustar página actual si cambian los empleados
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(employees.length / PAGE_SIZE));
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [employees.length]);
+
   // Escape key closes edit modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -183,6 +192,18 @@ const Employees = () => {
   // Crear empleado (solo desde el formulario principal)
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validaciones: nombre obligatorio y límite de caracteres
+    if (!isNonEmptyString(newEmployee.fullName, 150)) {
+      toast.error('El nombre completo es obligatorio');
+      return;
+    }
+
+    // Validación: fecha fin >= fecha inicio
+    if (newEmployee.startContractDate && newEmployee.endContractDate && !isEndDateAfterStart(newEmployee.startContractDate, newEmployee.endContractDate)) {
+      toast.error('La fecha de fin de contrato debe ser igual o posterior a la fecha de inicio.');
+      return;
+    }
 
     if (Number(newEmployee.salary) >= 100000) {
       toast.error("El salario debe ser menor a 100,000 BOB");
@@ -297,6 +318,18 @@ const Employees = () => {
   // Actualizar empleado (desde el modal)
   const handleUpdate = async () => {
     if (!editingId || !editingData) return;
+    // Validaciones: nombre obligatorio y límite de caracteres
+    if (!isNonEmptyString(editingData.fullName, 150)) {
+      toast.error('El nombre completo es obligatorio');
+      return;
+    }
+
+    // Validación: fecha fin >= fecha inicio
+    if (editingData.startContractDate && editingData.endContractDate && !isEndDateAfterStart(editingData.startContractDate, editingData.endContractDate)) {
+      toast.error('La fecha de fin de contrato debe ser igual o posterior a la fecha de inicio.');
+      return;
+    }
+
     if (Number(editingData.salary) >= 100000) {
       toast.error("El salario debe ser menor a 100,000 BOB");
       return;
@@ -592,7 +625,7 @@ const Employees = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label htmlFor="fullName">Nombre Completo</label>
-            <input type="text" placeholder="" id="fullName" name="fullName" value={newEmployee.fullName} onChange={handleInputChange} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
+            <input type="text" placeholder="" id="fullName" name="fullName" value={newEmployee.fullName} onChange={handleInputChange} maxLength={150} className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500" required />
           </div>
           <div>
             <label htmlFor="ci">C.I.</label>
@@ -874,7 +907,10 @@ const Employees = () => {
               </tr>
             </thead>
             <tbody className="bg-slate-800 divide-y divide-slate-700">
-              {employees.map((employee) => {
+              {(() => {
+                const startIdx = (currentPage - 1) * PAGE_SIZE;
+                const paginated = employees.slice(startIdx, startIdx + PAGE_SIZE);
+                return paginated.map((employee) => {
                 const positionName = positions.find(p => p.idPositionEmployee === employee.fk_idPositionEmployee)?.namePosition || 'Desconocido';
                 return (
                   <tr key={employee.idEmployee} className="hover:bg-slate-700 transition-colors">
@@ -921,9 +957,35 @@ const Employees = () => {
                     </td>
                   </tr>
                 );
-              })}
+                });
+              })()}
             </tbody>
           </table>
+          {/* Paginación */}
+          <div className="flex items-center justify-between p-4 bg-slate-900/40 border-t border-slate-700">
+            <div className="text-sm text-slate-300">
+              {employees.length === 0 ? 'No hay empleados' : `Mostrando ${(employees.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1)} - ${Math.min(currentPage * PAGE_SIZE, employees.length)} de ${employees.length}`}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 rounded bg-slate-800 text-slate-200 disabled:opacity-40"
+              >Anterior</button>
+              {Array.from({ length: Math.max(1, Math.ceil(employees.length / PAGE_SIZE)) }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setCurrentPage(p)}
+                  className={`px-3 py-1 rounded ${p === currentPage ? 'bg-amber-400 text-slate-900 font-semibold' : 'bg-slate-800 text-slate-200'}`}
+                >{p}</button>
+              ))}
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(Math.max(1, Math.ceil(employees.length / PAGE_SIZE)), p + 1))}
+                disabled={currentPage >= Math.ceil(employees.length / PAGE_SIZE)}
+                className="px-3 py-1 rounded bg-slate-800 text-slate-200 disabled:opacity-40"
+              >Siguiente</button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -956,6 +1018,7 @@ const Employees = () => {
                   name="fullName"
                   value={editingData.fullName}
                   onChange={handleEditingDataChange}
+                  maxLength={150}
                   className="w-full p-2 rounded-md bg-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
               </div>

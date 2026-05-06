@@ -107,6 +107,10 @@ const EmployeesShiftemManagement = () => {
   };
 
   const createEmp = async () => {
+    if (!newEmp.fk_idEmployee || !newEmp.fk_idShiftEmployees) {
+      toast.error('Empleado y turno son obligatorios.');
+      return;
+    }
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
@@ -124,6 +128,10 @@ const EmployeesShiftemManagement = () => {
 
   const updateEmp = async (id: number) => {
     if (!editingData) return;
+    if (!editingData.fk_idEmployee || !editingData.fk_idShiftEmployees) {
+      toast.error('Empleado y turno son obligatorios.');
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}${id}`, {
         method: 'PUT',

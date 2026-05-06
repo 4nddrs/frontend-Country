@@ -7,6 +7,21 @@ import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud/shift_employeds/';
 
+const isDateTimeNotPast = (dateTime: string): boolean => {
+  if (!dateTime) return false;
+  const input = new Date(dateTime);
+  if (Number.isNaN(input.getTime())) return false;
+  return input >= new Date();
+};
+
+const isDateTimeRangeValid = (startDateTime: string, endDateTime: string): boolean => {
+  if (!startDateTime || !endDateTime) return false;
+  const start = new Date(startDateTime);
+  const end = new Date(endDateTime);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return false;
+  return end >= start;
+};
+
 interface ShiftEmployed {
   idShiftEmployed?: number;
   startDateTime: string;
@@ -68,6 +83,18 @@ const ShiftEmployedsManagement = () => {
   }, []);
 
   const createShift = async () => {
+    if (!newShift.startDateTime || !newShift.endDateTime || !newShift.fk_idShiftType) {
+      toast.error('Inicio, fin y tipo de turno son obligatorios.');
+      return;
+    }
+    if (!isDateTimeNotPast(newShift.startDateTime)) {
+      toast.error('La fecha/hora de inicio no puede ser anterior al momento actual.');
+      return;
+    }
+    if (!isDateTimeRangeValid(newShift.startDateTime, newShift.endDateTime)) {
+      toast.error('La fecha/hora de fin debe ser igual o posterior al inicio.');
+      return;
+    }
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
@@ -85,6 +112,18 @@ const ShiftEmployedsManagement = () => {
 
   const updateShift = async (id: number) => {
     if (!editingData) return;
+    if (!editingData.startDateTime || !editingData.endDateTime || !editingData.fk_idShiftType) {
+      toast.error('Inicio, fin y tipo de turno son obligatorios.');
+      return;
+    }
+    if (!isDateTimeNotPast(editingData.startDateTime)) {
+      toast.error('La fecha/hora de inicio no puede ser anterior al momento actual.');
+      return;
+    }
+    if (!isDateTimeRangeValid(editingData.startDateTime, editingData.endDateTime)) {
+      toast.error('La fecha/hora de fin debe ser igual o posterior al inicio.');
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}${id}`, {
         method: 'PUT',

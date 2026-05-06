@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader, ChevronUp, ChevronDown } from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
+import { isNonEmptyString } from '../../utils/validation';
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud/food-stock/';
 
@@ -31,7 +32,7 @@ const FoodStocksManagement = () => {
     unitMeasurement: 1,
     minStock: 0,
     maxStock: 0,
-    fk_idFoodProvider: 1,
+    fk_idFoodProvider: 0,
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingData, setEditingData] = useState<FoodStock | null>(null);
@@ -63,6 +64,12 @@ const FoodStocksManagement = () => {
       list.sort((a, b) => (b.idFood ?? 0) - (a.idFood ?? 0));
       setStocks(list);
       setFoodProviders(providersData);
+      if (Array.isArray(providersData) && providersData.length > 0) {
+        setNewStock((prev) => ({
+          ...prev,
+          fk_idFoodProvider: providersData[0].idFoodProvider ?? prev.fk_idFoodProvider ?? 0,
+        }));
+      }
     } catch (error) {
       toast.error('No se pudo cargar stocks o proveedores.');
     } finally {
@@ -75,6 +82,22 @@ const FoodStocksManagement = () => {
   }, []);
 
   const createStock = async () => {
+    if (!isNonEmptyString(newStock.foodName, 120)) {
+      toast.error('El nombre del alimento es obligatorio');
+      return;
+    }
+    if (!newStock.fk_idFoodProvider) {
+      toast.error('Debes seleccionar un proveedor.');
+      return;
+    }
+    if (newStock.stock < 0 || newStock.minStock < 0 || newStock.maxStock < 0) {
+      toast.error('Los valores numéricos no pueden ser negativos.');
+      return;
+    }
+    if (newStock.maxStock < newStock.minStock) {
+      toast.error('El stock máximo no puede ser menor al stock mínimo.');
+      return;
+    }
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
@@ -83,7 +106,14 @@ const FoodStocksManagement = () => {
       });
       if (!res.ok) throw new Error('Error al crear stock');
       toast.success('Stock creado!');
-      setNewStock({ foodName: '', stock: 0, unitMeasurement: 1, minStock: 0, maxStock: 0, fk_idFoodProvider: 1 });
+      setNewStock({
+        foodName: '',
+        stock: 0,
+        unitMeasurement: 1,
+        minStock: 0,
+        maxStock: 0,
+        fk_idFoodProvider: foodProviders[0]?.idFoodProvider || 0,
+      });
       fetchStocks();
     } catch (err) {
       toast.error('No se pudo crear stock.');
@@ -92,6 +122,22 @@ const FoodStocksManagement = () => {
 
   const updateStock = async (id: number) => {
     if (!editingData) return;
+    if (!isNonEmptyString(editingData.foodName, 120)) {
+      toast.error('El nombre del alimento es obligatorio');
+      return;
+    }
+    if (!editingData.fk_idFoodProvider) {
+      toast.error('Debes seleccionar un proveedor.');
+      return;
+    }
+    if (editingData.stock < 0 || editingData.minStock < 0 || editingData.maxStock < 0) {
+      toast.error('Los valores numéricos no pueden ser negativos.');
+      return;
+    }
+    if (editingData.maxStock < editingData.minStock) {
+      toast.error('El stock máximo no puede ser menor al stock mínimo.');
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}${id}`, {
         method: 'PUT',
@@ -146,7 +192,7 @@ const FoodStocksManagement = () => {
           <div>
             <label className="block mb-1 text-sm font-medium">Nombre del alimento</label>
             <input type="text" name="foodName" placeholder="Ej: Arroz" value={newStock.foodName}
-              onChange={e => setNewStock({ ...newStock, foodName: e.target.value })} className="w-full" />
+              onChange={e => setNewStock({ ...newStock, foodName: e.target.value })} maxLength={120} className="w-full" />
           </div>
           <div>
             <label className="block mb-1 text-sm font-medium">Cantidad en stock</label>
@@ -294,6 +340,7 @@ const FoodStocksManagement = () => {
                   <label className="block mb-1 text-sm font-medium">Nombre del alimento</label>
                   <input type="text" value={editingData.foodName}
                     onChange={e => setEditingData({ ...editingData, foodName: e.target.value })}
+                    maxLength={120}
                     className="w-full p-2 rounded-md bg-gray-700" />
                 </div>
                 <div>

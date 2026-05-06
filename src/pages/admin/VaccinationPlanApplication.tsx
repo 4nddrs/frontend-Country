@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader } from 'lucide-react';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
+import { isDateNotPast, validateMaxLength } from '../../utils/validation';
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud/vaccination_plan_application/';
 const BASE_URL = 'https://api.countryclub.doc-ia.cloud';
@@ -99,6 +100,18 @@ const VaccinationPlanApplicationManagement = () => {
   }, []);
 
   const createApplication = async () => {
+    if (!newApplication.applicationDate || !newApplication.fk_idVaccinationPlan || !newApplication.fk_idHorse || !newApplication.fk_idEmployee) {
+      toast.error('Fecha, plan, caballo y empleado son obligatorios.');
+      return;
+    }
+    if (!isDateNotPast(newApplication.applicationDate)) {
+      toast.error('La fecha de aplicación no puede ser anterior a hoy.');
+      return;
+    }
+    if (!validateMaxLength(newApplication.observation ?? '', 300)) {
+      toast.error('La observación debe tener máximo 300 caracteres.');
+      return;
+    }
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
@@ -122,6 +135,18 @@ const VaccinationPlanApplicationManagement = () => {
 
   const updateApplication = async (id: number) => {
     if (!editingData) return;
+    if (!editingData.applicationDate || !editingData.fk_idVaccinationPlan || !editingData.fk_idHorse || !editingData.fk_idEmployee) {
+      toast.error('Fecha, plan, caballo y empleado son obligatorios.');
+      return;
+    }
+    if (!isDateNotPast(editingData.applicationDate)) {
+      toast.error('La fecha de aplicación no puede ser anterior a hoy.');
+      return;
+    }
+    if (!validateMaxLength(editingData.observation ?? '', 300)) {
+      toast.error('La observación debe tener máximo 300 caracteres.');
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}${id}`, {
         method: 'PUT',
@@ -187,6 +212,7 @@ const VaccinationPlanApplicationManagement = () => {
               placeholder="Observación (Opcional)"
               value={newApplication.observation}
               onChange={e => setNewApplication({ ...newApplication, observation: e.target.value })}
+              maxLength={300}
               className="w-full"
             />
           </div>
@@ -327,6 +353,7 @@ const VaccinationPlanApplicationManagement = () => {
                     type="text"
                     value={editingData!.observation || ''}
                     onChange={e => setEditingData({ ...editingData!, observation: e.target.value })}
+                    maxLength={300}
                     className="w-full p-2 rounded-md bg-gray-700"
                   />
                 </div>

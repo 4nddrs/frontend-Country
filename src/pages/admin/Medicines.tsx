@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader, ChevronUp, ChevronDown } from 'lucide-react';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
+import { isNonEmptyString, isDateNotPast } from '../../utils/validation';
 import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud/medicines/';
@@ -141,8 +142,16 @@ const MedicinesManagement = () => {
   }, [isEditModalOpen]);
 
   const createMedicine = async () => {
+    if (!isNonEmptyString(newMedicine.name, 200)) {
+      toast.error('El nombre del medicamento es obligatorio y debe tener máximo 200 caracteres.');
+      return;
+    }
     if (newMedicine.source === 'Del Caballo' && !newMedicine.fk_idHorse) {
       toast.error('Selecciona un caballo cuando el origen es Del Caballo.');
+      return;
+    }
+    if (newMedicine.boxExpirationDate && !isDateNotPast(newMedicine.boxExpirationDate)) {
+      toast.error('La fecha de vencimiento no puede ser anterior a hoy.');
       return;
     }
     try {
@@ -164,6 +173,14 @@ const MedicinesManagement = () => {
 
   const updateMedicine = async (id: number) => {
     if (!editingData) return;
+    if (!isNonEmptyString(editingData.name, 200)) {
+      toast.error('El nombre del medicamento es obligatorio y debe tener máximo 200 caracteres.');
+      return;
+    }
+    if (editingData.boxExpirationDate && !isDateNotPast(editingData.boxExpirationDate)) {
+      toast.error('La fecha de vencimiento no puede ser anterior a hoy.');
+      return;
+    }
     try {
       const sanitized = sanitizeNumericFields(editingData);
       const res = await fetch(`${API_URL}${id}`, {
@@ -242,6 +259,7 @@ const MedicinesManagement = () => {
               placeholder="Nombre"
               value={newMedicine.name}
               onChange={e => setNewMedicine({ ...newMedicine, name: e.target.value })}
+              maxLength={200}
               className="select-field placeholder-gray-400 w-full"
             />
           </div>
@@ -252,6 +270,7 @@ const MedicinesManagement = () => {
               placeholder="Descripción"
               value={newMedicine.description}
               onChange={e => setNewMedicine({ ...newMedicine, description: e.target.value })}
+              maxLength={500}
               className="select-field placeholder-gray-400 w-full"
             />
           </div>
@@ -493,6 +512,7 @@ const MedicinesManagement = () => {
                     type="text"
                     value={editingData!.name}
                     onChange={e => setEditingData(prev => prev ? { ...prev, name: e.target.value } : null)}
+                    maxLength={200}
                     className="w-full p-2 rounded-md bg-gray-700"
                   />
                 </div>
@@ -502,6 +522,7 @@ const MedicinesManagement = () => {
                     type="text"
                     value={editingData!.description || ''}
                     onChange={e => setEditingData(prev => prev ? { ...prev, description: e.target.value } : null)}
+                    maxLength={500}
                     className="w-full p-2 rounded-md bg-gray-700"
                   />
                 </div>

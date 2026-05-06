@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader } from 'lucide-react';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
+import { isNonEmptyString } from '../../utils/validation';
 import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud/shift_types/';
@@ -52,6 +53,10 @@ const ShiftTypesManagement = () => {
   }, []);
 
   const createShiftType = async () => {
+    if (!isNonEmptyString(newShiftType.shiftName, 100)) {
+      toast.error('El nombre del turno es obligatorio.');
+      return;
+    }
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
@@ -69,6 +74,10 @@ const ShiftTypesManagement = () => {
 
   const updateShiftType = async (id: number) => {
     if (!editingData) return;
+    if (!isNonEmptyString(editingData.shiftName, 100)) {
+      toast.error('El nombre del turno es obligatorio y debe tener máximo 100 caracteres.');
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}${id}`, {
         method: 'PUT',
@@ -128,6 +137,7 @@ const ShiftTypesManagement = () => {
               placeholder="Ej: Mañana..."
               value={newShiftType.shiftName}
               onChange={e => setNewShiftType({ ...newShiftType, shiftName: e.target.value })}
+              maxLength={100}
               className="select-field w-full placeholder-gray-400"
             />
           </div>
@@ -139,6 +149,7 @@ const ShiftTypesManagement = () => {
               placeholder="Ej: Turno de 06:00 a 14:00..."
               value={newShiftType.description}
               onChange={e => setNewShiftType({ ...newShiftType, description: e.target.value })}
+              maxLength={300}
               className="select-field w-full placeholder-gray-400"
             />
           </div>
@@ -233,6 +244,7 @@ const ShiftTypesManagement = () => {
                     type="text"
                     value={editingData.shiftName}
                     onChange={e => setEditingData({ ...editingData, shiftName: e.target.value })}
+                    maxLength={100}
                     className="w-full p-2 rounded-md bg-gray-700"
                   />
                 </div>
@@ -242,6 +254,7 @@ const ShiftTypesManagement = () => {
                     type="text"
                     value={editingData.description || ''}
                     onChange={e => setEditingData({ ...editingData, description: e.target.value })}
+                    maxLength={300}
                     className="w-full p-2 rounded-md bg-gray-700"
                   />
                 </div>

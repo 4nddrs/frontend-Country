@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader } from 'lucide-react';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
+import { isNonEmptyString } from '../../utils/validation';
 import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud/task-categories/';
@@ -48,6 +49,10 @@ const TaskCategoriesManagement = () => {
   }, []);
 
   const createCategory = async () => {
+    if (!isNonEmptyString(newCategory.categoryName, 50)) {
+      toast.error('El nombre de la categoría es obligatorio');
+      return;
+    }
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
@@ -65,6 +70,10 @@ const TaskCategoriesManagement = () => {
 
   const updateCategory = async (id: number) => {
     if (!editingData) return;
+    if (!isNonEmptyString(editingData.categoryName, 50)) {
+      toast.error('El nombre de la categoría es obligatorio.');
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}${id}`, {
         method: 'PUT',
@@ -124,6 +133,7 @@ const TaskCategoriesManagement = () => {
               placeholder="Ej: Alimentación..."
               value={newCategory.categoryName}
               onChange={e => setNewCategory({ ...newCategory, categoryName: e.target.value })}
+              maxLength={100}
               className="select-field w-full placeholder-gray-400"
             />
           </div>
@@ -135,6 +145,7 @@ const TaskCategoriesManagement = () => {
               placeholder="Ej: Tareas relacionadas con la alimentación..."
               value={newCategory.description}
               onChange={e => setNewCategory({ ...newCategory, description: e.target.value })}
+              maxLength={300}
               className="select-field w-full placeholder-gray-400"
             />
           </div>
@@ -229,6 +240,7 @@ const TaskCategoriesManagement = () => {
                     type="text"
                     value={editingData.categoryName}
                     onChange={e => setEditingData({ ...editingData, categoryName: e.target.value })}
+                    maxLength={100}
                     className="w-full p-2 rounded-md bg-gray-700"
                   />
                 </div>
@@ -238,6 +250,7 @@ const TaskCategoriesManagement = () => {
                     type="text"
                     value={editingData.description || ''}
                     onChange={e => setEditingData({ ...editingData, description: e.target.value })}
+                    maxLength={300}
                     className="w-full p-2 rounded-md bg-gray-700"
                   />
                 </div>

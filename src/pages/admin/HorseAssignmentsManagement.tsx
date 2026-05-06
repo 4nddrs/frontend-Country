@@ -12,6 +12,7 @@ import { AddButton, ExportButton, ClearButton, AdminSection, SaveButton, CancelB
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import dayjs from "dayjs";
+import { isDateNotPast, isEndDateAfterStart } from '../../utils/validation';
 
 const API_URL = "https://api.countryclub.doc-ia.cloud/horse_assignments/";
 const EMPLOYEES_URL = "https://api.countryclub.doc-ia.cloud/employees/";
@@ -154,6 +155,14 @@ const HorseAssignmentsManagement = () => {
             toast.error("Todos los campos marcados con * son obligatorios.");
             return;
         }
+        if (!isDateNotPast(form.assignmentDate)) {
+          toast.error("La fecha de asignación no puede ser anterior a hoy.");
+          return;
+        }
+        if (!isEndDateAfterStart(form.assignmentDate, form.endDate)) {
+          toast.error("La fecha fin debe ser igual o posterior a la fecha de asignación.");
+          return;
+        }
 
         // ✅ Validar roles prohibidos
         const emp = employees.find(
@@ -228,6 +237,14 @@ const HorseAssignmentsManagement = () => {
             toast.error("Todos los campos marcados con * son obligatorios.");
             return;
         }
+      if (!isDateNotPast(editForm.assignmentDate)) {
+        toast.error("La fecha de asignación no puede ser anterior a hoy.");
+        return;
+      }
+      if (!isEndDateAfterStart(editForm.assignmentDate, editForm.endDate)) {
+        toast.error("La fecha fin debe ser igual o posterior a la fecha de asignación.");
+        return;
+      }
         const emp = employees.find((e) => e.idEmployee === Number(editForm.fk_idEmployee));
         const role = emp?.employee_position?.namePosition?.toLowerCase().trim() || "";
         if (EXCLUDED_ROLES.includes(role)) {

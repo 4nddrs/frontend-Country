@@ -5,6 +5,7 @@ import { Edit, Trash2, Upload, RotateCcw } from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
 import noPhoto from '../../assets/noPhoto.png';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
+import { isNonEmptyString, validateMaxLength } from '../../utils/validation';
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud/owner/';
 
@@ -155,8 +156,12 @@ const OwnersManagement = () => {
   };
 
   const createOwner = async () => {
-    if (!newOwner.name || !newOwner.FirstName || !newOwner.ci) {
+    if (!isNonEmptyString(newOwner.name, 100) || !isNonEmptyString(newOwner.FirstName, 100) || !newOwner.ci) {
       toast.error('Por favor, completa Apellido, Primer Nombre y C.I.');
+      return;
+    }
+    if (!validateMaxLength(newOwner.SecondName, 100)) {
+      toast.error('El segundo apellido debe tener máximo 100 caracteres.');
       return;
     }
     if (String(newOwner.ci).length !== 8) {
@@ -190,6 +195,14 @@ const OwnersManagement = () => {
 
   const updateOwner = async (id: number) => {
     if (!editingOwnerData) return;
+    if (!isNonEmptyString(editingOwnerData.name, 100) || !isNonEmptyString(editingOwnerData.FirstName, 100)) {
+      toast.error('Nombre y primer apellido son obligatorios y deben tener máximo 100 caracteres.');
+      return;
+    }
+    if (!validateMaxLength(editingOwnerData.SecondName ?? '', 100)) {
+      toast.error('El segundo apellido debe tener máximo 100 caracteres.');
+      return;
+    }
     if (String(editingOwnerData.ci).length !== 8) {
       toast.error('El C.I. debe tener exactamente 8 dígitos.');
       return;
@@ -269,18 +282,21 @@ const OwnersManagement = () => {
             <label className="block text-sm text-slate-300 mb-1">Nombre</label>
             <input type="text" placeholder="Nombre" value={newOwner.name}
               onChange={e => setNewOwner({ ...newOwner, name: e.target.value })}
+              maxLength={100}
               className="w-full p-2 rounded-md bg-gray-700" />
           </div>
           <div>
             <label className="block text-sm text-slate-300 mb-1">Primer Apellido</label>
             <input type="text" placeholder="Primer Apellido" value={newOwner.FirstName}
               onChange={e => setNewOwner({ ...newOwner, FirstName: e.target.value })}
+              maxLength={100}
               className="w-full p-2 rounded-md bg-gray-700" />
           </div>
           <div>
             <label className="block text-sm text-slate-300 mb-1">Segundo Apellido <span className="text-slate-500">(Opcional)</span></label>
             <input type="text" placeholder="Segundo Apellido" value={newOwner.SecondName}
               onChange={e => setNewOwner({ ...newOwner, SecondName: e.target.value })}
+              maxLength={100}
               className="w-full p-2 rounded-md bg-gray-700" />
           </div>
         </div>
@@ -468,18 +484,21 @@ const OwnersManagement = () => {
                   <label className="block mb-1">Nombre</label>
                   <input type="text" value={editingOwnerData.name}
                     onChange={e => setEditingOwnerData({ ...editingOwnerData, name: e.target.value })}
+                    maxLength={100}
                     className="w-full p-2 rounded-md bg-gray-700" />
                 </div>
                 <div>
                   <label className="block mb-1">Primer Apellido</label>
                   <input type="text" value={editingOwnerData.FirstName}
                     onChange={e => setEditingOwnerData({ ...editingOwnerData, FirstName: e.target.value })}
+                    maxLength={100}
                     className="w-full p-2 rounded-md bg-gray-700" />
                 </div>
                 <div>
                   <label className="block mb-1">Segundo Apellido</label>
                   <input type="text" value={editingOwnerData.SecondName || ''}
                     onChange={e => setEditingOwnerData({ ...editingOwnerData, SecondName: e.target.value })}
+                    maxLength={100}
                     className="w-full p-2 rounded-md bg-gray-700" />
                 </div>
                 <div>

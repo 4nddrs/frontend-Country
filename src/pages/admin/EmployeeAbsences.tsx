@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader, ChevronUp, ChevronDown } from 'lucide-react';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
+import { isDateNotPast, isEndDateAfterStart, validateMaxLength } from '../../utils/validation';
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud/employee_absences/';
 
@@ -79,6 +80,22 @@ const EmployeeAbsencesManagement = () => {
   }, []);
 
   const createAbsence = async () => {
+    if (!newAbsence.startDate || !newAbsence.endDate || !newAbsence.fk_idEmployee) {
+      toast.error('Fecha de inicio, fecha de fin y empleado son obligatorios.');
+      return;
+    }
+    if (!isDateNotPast(newAbsence.startDate)) {
+      toast.error('La fecha de inicio no puede ser anterior a hoy.');
+      return;
+    }
+    if (!isEndDateAfterStart(newAbsence.startDate, newAbsence.endDate)) {
+      toast.error('La fecha de fin debe ser igual o posterior a la fecha de inicio.');
+      return;
+    }
+    if (!validateMaxLength(newAbsence.observation, 300)) {
+      toast.error('La observación debe tener máximo 300 caracteres.');
+      return;
+    }
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
@@ -96,6 +113,22 @@ const EmployeeAbsencesManagement = () => {
 
   const updateAbsence = async (id: number) => {
     if (!editingData) return;
+    if (!editingData.startDate || !editingData.endDate || !editingData.fk_idEmployee) {
+      toast.error('Fecha de inicio, fecha de fin y empleado son obligatorios.');
+      return;
+    }
+    if (!isDateNotPast(editingData.startDate)) {
+      toast.error('La fecha de inicio no puede ser anterior a hoy.');
+      return;
+    }
+    if (!isEndDateAfterStart(editingData.startDate, editingData.endDate)) {
+      toast.error('La fecha de fin debe ser igual o posterior a la fecha de inicio.');
+      return;
+    }
+    if (!validateMaxLength(editingData.observation, 300)) {
+      toast.error('La observación debe tener máximo 300 caracteres.');
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}${id}`, {
         method: 'PUT',
@@ -209,6 +242,7 @@ const EmployeeAbsencesManagement = () => {
               placeholder="Observación"
               value={newAbsence.observation}
               onChange={e => setNewAbsence({ ...newAbsence, observation: e.target.value })}
+              maxLength={300}
               className="w-full"
             />
           </div>
@@ -382,6 +416,7 @@ const EmployeeAbsencesManagement = () => {
                     type="text"
                     value={editingData!.observation}
                     onChange={e => setEditingData({ ...editingData!, observation: e.target.value })}
+                    maxLength={300}
                     className="w-full p-2 rounded-md bg-gray-700"
                   />
                 </div>

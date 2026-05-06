@@ -5,6 +5,7 @@ import {
   Edit, Trash2, Loader, AlertTriangle, Calendar, X, ClipboardList, Download,
 } from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
+import { isNonEmptyString } from '../../utils/validation';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud/scheduled_procedures/';
@@ -331,8 +332,17 @@ const ScheduledProceduresManagement = () => {
   };
 
   const createProcedure = async () => {
+    // Validaciones cliente
+    if (!isNonEmptyString(newProc.name, 150)) {
+      toast.error('El nombre del procedimiento es obligatorio');
+      return;
+    }
+    const selectedMonths = parseMonths(newProc.scheduledMonths);
+    if (!Array.isArray(selectedMonths) || selectedMonths.length === 0) {
+      toast.error('Debes seleccionar al menos un mes para el procedimiento.');
+      return;
+    }
     try {
-      const selectedMonths = parseMonths(newProc.scheduledMonths);
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -349,8 +359,17 @@ const ScheduledProceduresManagement = () => {
 
   const updateProcedure = async (id: number) => {
     if (!editProc) return;
+    // Validaciones en edición
+    if (!isNonEmptyString(editProc.name, 150)) {
+      toast.error('El nombre del procedimiento es obligatorio');
+      return;
+    }
+    const selectedMonths = parseMonths(editProc.scheduledMonths);
+    if (!Array.isArray(selectedMonths) || selectedMonths.length === 0) {
+      toast.error('Debes seleccionar al menos un mes para el procedimiento.');
+      return;
+    }
     try {
-      const selectedMonths = parseMonths(editProc.scheduledMonths);
       const res = await fetch(`${API_URL}${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

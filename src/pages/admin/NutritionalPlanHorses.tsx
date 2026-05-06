@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader } from 'lucide-react';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import { confirmDialog } from '../../utils/confirmDialog';
+import { isDateNotPast } from '../../utils/validation';
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud/nutritional-plan-horses/';
 
@@ -79,6 +80,14 @@ const NutritionalPlanHorsesManagement = () => {
   }, []);
 
   const createAssignment = async () => {
+    if (!newAssignment.assignmentDate || !newAssignment.fk_idNutritionalPlan || !newAssignment.fk_idHorse) {
+      toast.error('Fecha, plan nutricional y caballo son obligatorios.');
+      return;
+    }
+    if (!isDateNotPast(newAssignment.assignmentDate)) {
+      toast.error('La fecha de asignación no puede ser anterior a hoy.');
+      return;
+    }
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
@@ -96,6 +105,14 @@ const NutritionalPlanHorsesManagement = () => {
 
   const updateAssignment = async (id: number) => {
     if (!editingData) return;
+    if (!editingData.assignmentDate || !editingData.fk_idNutritionalPlan || !editingData.fk_idHorse) {
+      toast.error('Fecha, plan nutricional y caballo son obligatorios.');
+      return;
+    }
+    if (!isDateNotPast(editingData.assignmentDate)) {
+      toast.error('La fecha de asignación no puede ser anterior a hoy.');
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}${id}`, {
         method: 'PUT',

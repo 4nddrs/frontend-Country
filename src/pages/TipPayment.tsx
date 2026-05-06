@@ -4,6 +4,7 @@ import { Plus, Save, X } from "lucide-react";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
+import { isNonEmptyString, sanitizeNumericInput } from '../utils/validation';
 
 
 const API_URL = "https://api.countryclub.doc-ia.cloud/tip_payments/";
@@ -278,6 +279,8 @@ const SalaryPayments: React.FC = () => {
         try {
             if (!form.state.trim()) return toast.error("Estado es requerido.");
             if (!form.fk_idEmployee) return toast.error("Empleado es requerido.");
+            if (!isNonEmptyString(form.description, 300)) return toast.error("La descripción es obligatoria y debe tener máximo 300 caracteres.");
+            if (Number(form.amount) <= 0) return toast.error("El monto debe ser mayor a 0.");
 
             setSaving(true);
             const payload: TipPaymentCreate = { ...form, amount: Number(form.amount) };
@@ -305,12 +308,18 @@ const SalaryPayments: React.FC = () => {
     async function updateItem() {
         if (!editingRow) return;
         try {
+            if (!form.state.trim()) return toast.error("Estado es requerido.");
+            if (!form.fk_idEmployee) return toast.error("Empleado es requerido.");
+            if (!isNonEmptyString(form.description, 300)) return toast.error("La descripción es obligatoria y debe tener máximo 300 caracteres.");
+            if (Number(form.amount) <= 0) return toast.error("El monto debe ser mayor a 0.");
+
             setSaving(true);
             const payload: TipPaymentUpdate = {
                 amount: Number(form.amount),
                 state: form.state,
                 paymentDate: form.paymentDate,
                 fk_idEmployee: form.fk_idEmployee,
+                description: form.description,
             };
 
             const res = await fetch(`${API_URL}${editingRow.idTipPayment}`, {
@@ -368,7 +377,7 @@ const SalaryPayments: React.FC = () => {
                         placeholder="0,00"
                         value={amountInput}
                         onChange={(e) => {
-                            const raw = e.target.value;
+                            const raw = sanitizeNumericInput(e.target.value).replace(/\-/g, "");
                             setAmountInput(raw);
                             const parsed = parseFloat(raw.replace(",", "."));
                             setForm((prev) => ({
@@ -423,6 +432,7 @@ const SalaryPayments: React.FC = () => {
                             placeholder="Motivo de la propina"
                             value={form.description || ""}
                             onChange={(e) => onChangeForm("description", e.target.value)}
+                            maxLength={300}
                             className="w-full"
                         />
                     </div>

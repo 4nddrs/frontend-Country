@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader, ChevronUp, ChevronDown } from 'lucide-react';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
+import { isNonEmptyString, isDateNotPast, isEndDateAfterStart } from '../../utils/validation';
 import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud/tasks/';
@@ -123,6 +124,19 @@ const TasksManagement = () => {
   }, []);
 
   const createTask = async () => {
+    // Validaciones básicas
+    if (!isNonEmptyString(newTask.taskName, 150)) {
+      toast.error('El nombre de la tarea es obligatorio y debe tener máximo 150 caracteres.');
+      return;
+    }
+    if (!isDateNotPast(newTask.assignmentDate)) {
+      toast.error('La fecha de asignación no puede ser anterior a hoy.');
+      return;
+    }
+    if (!isEndDateAfterStart(newTask.assignmentDate, newTask.completionDate)) {
+      toast.error('La fecha de finalización debe ser igual o posterior a la fecha de asignación.');
+      return;
+    }
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
@@ -148,6 +162,18 @@ const TasksManagement = () => {
 
   const updateTask = async (id: number) => {
     if (!editingData) return;
+    if (!isNonEmptyString(editingData.taskName, 150)) {
+      toast.error('El nombre de la tarea es obligatorio y debe tener máximo 150 caracteres.');
+      return;
+    }
+    if (!isDateNotPast(editingData.assignmentDate)) {
+      toast.error('La fecha de asignación no puede ser anterior a hoy.');
+      return;
+    }
+    if (!isEndDateAfterStart(editingData.assignmentDate, editingData.completionDate)) {
+      toast.error('La fecha de finalización debe ser igual o posterior a la fecha de asignación.');
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}${id}`, {
         method: 'PUT',
@@ -208,6 +234,7 @@ const TasksManagement = () => {
             <input type="text" name="taskName" value={newTask.taskName}
               placeholder="Ej: Alimentar caballos..."
               onChange={e => setNewTask({ ...newTask, taskName: e.target.value })}
+              maxLength={150}
               className="select-field w-full placeholder-gray-400" />
           </div>
           <div>
@@ -215,6 +242,7 @@ const TasksManagement = () => {
             <input type="text" name="description" value={newTask.description}
               placeholder="Ej: Descripción de la tarea..."
               onChange={e => setNewTask({ ...newTask, description: e.target.value })}
+              maxLength={500}
               className="select-field w-full placeholder-gray-400" />
           </div>
           <div>

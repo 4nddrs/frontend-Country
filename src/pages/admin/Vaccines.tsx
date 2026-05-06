@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader } from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
+import { isNonEmptyString } from '../../utils/validation';
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud/vaccines/';
 
@@ -51,6 +52,14 @@ const VaccinesManagement = () => {
   }, []);
 
   const createVaccine = async () => {
+    if (!isNonEmptyString(newVaccine.vaccineName, 150)) {
+      toast.error('El nombre de la vacuna es obligatorio y debe tener máximo 150 caracteres.');
+      return;
+    }
+    if (!isNonEmptyString(newVaccine.vaccineType, 150)) {
+      toast.error('El tipo de vacuna es obligatorio y debe tener máximo 150 caracteres.');
+      return;
+    }
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
@@ -68,6 +77,14 @@ const VaccinesManagement = () => {
 
   const updateVaccine = async (id: number) => {
     if (!editingData) return;
+    if (!isNonEmptyString(editingData.vaccineName, 150)) {
+      toast.error('El nombre de la vacuna es obligatorio y debe tener máximo 150 caracteres.');
+      return;
+    }
+    if (!isNonEmptyString(editingData.vaccineType, 150)) {
+      toast.error('El tipo de vacuna es obligatorio y debe tener máximo 150 caracteres.');
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}${id}`, {
         method: 'PUT',
@@ -124,6 +141,7 @@ const VaccinesManagement = () => {
             placeholder="Nombre de la vacuna"
             value={newVaccine.vaccineName}
             onChange={e => setNewVaccine({ ...newVaccine, vaccineName: e.target.value })}
+            maxLength={150}
             className="select-field flex-1 placeholder-gray-400"
           />
           <input
@@ -132,6 +150,7 @@ const VaccinesManagement = () => {
             placeholder="Tipo de vacuna"
             value={newVaccine.vaccineType}
             onChange={e => setNewVaccine({ ...newVaccine, vaccineType: e.target.value })}
+            maxLength={150}
             className="select-field flex-1 placeholder-gray-400"
           />
           <AddButton onClick={createVaccine} />

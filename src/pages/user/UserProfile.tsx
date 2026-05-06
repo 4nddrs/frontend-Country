@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { Camera, Edit2, Loader, Mail, Save, User, X, Heart, BedDouble, Apple } from 'lucide-react';
+import { Camera, Edit2, Loader, Mail, Save, User, X, Heart, BedDouble } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import UserHeader from '../../components/UserHeader';
 import { useCurrentUser, useOwnerData, useOwnerHorses } from '../../hooks/useUserData';
+import { isNumeric } from '../../utils/validation';
 import {
   getHorseNutritionalPlan,
   getHorseTotalControl,
@@ -149,11 +150,24 @@ export function UserProfile(_: PerfilProps) {
   const handleSave = async () => {
     if (!owner) return;
 
+    // Validate phone number
+    if (editForm.phoneNumber.trim() === '') {
+      toast.error('El número de teléfono es obligatorio.');
+      return;
+    }
+    if (editForm.phoneNumber.length !== 8) {
+      toast.error('El número de teléfono debe tener exactamente 8 dígitos.');
+      return;
+    }
+    if (!isNumeric(editForm.phoneNumber)) {
+      toast.error('El número de teléfono debe contener solo dígitos.');
+      return;
+    }
+
     try {
       setSaving(true);
 
       await updateOwner(owner.idOwner, {
-        email: editForm.email,
         phoneNumber: editForm.phoneNumber,
       });
 
@@ -262,7 +276,7 @@ export function UserProfile(_: PerfilProps) {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-white">Datos de contacto</h3>
-                    <p className="text-sm text-slate-400">Solo email, teléfono y foto son editables</p>
+                    <p className="text-sm text-slate-400">Solo teléfono y foto son editables</p>
                   </div>
                 </div>
 
@@ -285,26 +299,23 @@ export function UserProfile(_: PerfilProps) {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Email</label>
-                      {isEditing ? (
-                        <Input
-                          type="email"
-                          value={editForm.email}
-                          onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                          className="w-full bg-slate-950/50 border-slate-700 text-white"
-                        />
-                      ) : (
-                        <div className="rounded-2xl border border-white/8 bg-white/5 px-4 py-3 text-white break-all">
-                          {ownerEmail}
-                        </div>
-                      )}
+                      <div className="rounded-2xl border border-white/8 bg-white/5 px-4 py-3 text-white break-all">
+                        {ownerEmail}
+                      </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Teléfono</label>
+                      <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Teléfono (8 dígitos)</label>
                       {isEditing ? (
                         <Input
+                          type="tel"
                           value={editForm.phoneNumber}
-                          onChange={(e) => setEditForm({ ...editForm, phoneNumber: e.target.value })}
+                          onChange={(e) => {
+                            const digits = e.target.value.replace(/\D/g, '').slice(0, 8);
+                            setEditForm({ ...editForm, phoneNumber: digits });
+                          }}
+                          placeholder="Ej: 76543210"
+                          maxLength={8}
                           className="w-full bg-slate-950/50 border-slate-700 text-white"
                         />
                       ) : (
@@ -465,34 +476,7 @@ export function UserProfile(_: PerfilProps) {
             </Card>
           </div>
 
-          <Card className="border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/60 backdrop-blur-sm shadow-[0_12px_36px_rgba(0,0,0,0.35)]">
-            <div className="p-5 md:p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="h-10 w-10 rounded-2xl bg-cyan-500/15 border border-cyan-400/20 flex items-center justify-center">
-                  <Apple className="w-5 h-5 text-cyan-300" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-white">Resumen del rol Dueño</h3>
-                  <p className="text-sm text-slate-400">Acceso de consulta a caballos y edición limitada a contacto</p>
-                </div>
-              </div>
-
-              <div className="grid sm:grid-cols-3 gap-3">
-                <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400 mb-1">Nombre</p>
-                  <p className="text-white">Solo lectura</p>
-                </div>
-                <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400 mb-1">Cédula</p>
-                  <p className="text-white">Solo lectura</p>
-                </div>
-                <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400 mb-1">Contacto</p>
-                  <p className="text-white">Editable</p>
-                </div>
-              </div>
-            </div>
-          </Card>
+        
         </div>
       </div>
     </div>

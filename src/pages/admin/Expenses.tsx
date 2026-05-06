@@ -10,6 +10,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import AnimatedBackground from '../../components/ui/AnimatedBackground';
+import { isNonEmptyString, sanitizeNumericInput } from '../../utils/validation';
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud/expenses/';
 
@@ -98,6 +99,11 @@ const ExpensesManagement = () => {
     }
 
     try {
+      if (!isNonEmptyString(newExpense.description, 300)) {
+        toast.error('La descripción es obligatoria y debe tener máximo 300 caracteres.');
+        return;
+      }
+
       const cleanedAmount = (() => {
         let value = String(newExpense.AmountBsCaptureType).trim();
         if (value.includes(",")) {
@@ -106,6 +112,10 @@ const ExpensesManagement = () => {
         const parsed = parseFloat(value);
         return isNaN(parsed) ? 0 : parsed;
       })();
+      if (cleanedAmount <= 0) {
+        toast.error('El monto debe ser mayor a 0.');
+        return;
+      }
 
       const res = await fetch(API_URL, {
         method: "POST",
@@ -139,6 +149,11 @@ const ExpensesManagement = () => {
     }
 
     try {
+      if (!isNonEmptyString(updatedExpense.description, 300)) {
+        toast.error('La descripción es obligatoria y debe tener máximo 300 caracteres.');
+        return;
+      }
+
       const cleanedAmount = (() => {
         let value = String(updatedExpense.AmountBsCaptureType).trim();
         if (value.includes(",")) {
@@ -147,6 +162,10 @@ const ExpensesManagement = () => {
         const parsed = parseFloat(value);
         return isNaN(parsed) ? 0 : parsed;
       })();
+      if (cleanedAmount <= 0) {
+        toast.error('El monto debe ser mayor a 0.');
+        return;
+      }
 
       const res = await fetch(`${API_URL}${id}`, {
         method: "PUT",
@@ -325,6 +344,7 @@ const ExpensesManagement = () => {
               placeholder="Descripción"
               value={newExpense.description}
               onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
+              maxLength={300}
               className="select-field w-full"
             />
           </div>
@@ -343,7 +363,7 @@ const ExpensesManagement = () => {
                 }
               }}
               onChange={(e) =>
-                setNewExpense({ ...newExpense, AmountBsCaptureType: e.target.value as any })
+                setNewExpense({ ...newExpense, AmountBsCaptureType: sanitizeNumericInput(e.target.value).replace(/\-/g, '') as any })
               }
               className="select-field w-full"
             />
@@ -559,6 +579,7 @@ const ExpensesManagement = () => {
                   placeholder="Descripción"
                   value={editingExpense.description}
                   onChange={(e) => setEditingExpense({ ...editingExpense, description: e.target.value })}
+                  maxLength={300}
                   className="select-field"
                   style={{ width: '50ch' }}
                 />
@@ -569,7 +590,7 @@ const ExpensesManagement = () => {
                   type="text"
                   placeholder="Ej: 1.000,50"
                   value={editingExpense.AmountBsCaptureType}
-                  onChange={(e) => setEditingExpense({ ...editingExpense, AmountBsCaptureType: e.target.value as any })}
+                  onChange={(e) => setEditingExpense({ ...editingExpense, AmountBsCaptureType: sanitizeNumericInput(e.target.value).replace(/\-/g, '') as any })}
                   className="select-field"
                 />
               </div>

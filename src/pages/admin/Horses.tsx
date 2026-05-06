@@ -8,6 +8,7 @@ import autoTable from 'jspdf-autotable';
 import dayjs from 'dayjs';
 import { confirmDialog } from '../../utils/confirmDialog';
 import noPhoto from '../../assets/noPhoto.png';
+import { isNonEmptyString, validateMaxLength } from '../../utils/validation';
 
 
 // URL de tu API backend
@@ -200,6 +201,18 @@ const HorsesManagement = () => {
       toast.error('Completa los campos obligatorios (Nombre, Fecha, Sexo, Color).');
       return;
     }
+    if (!isNonEmptyString(newHorse.horseName, 120)) {
+      toast.error('El nombre del caballo es obligatorio');
+      return;
+    }
+    if (!isNonEmptyString(newHorse.color, 80)) {
+      toast.error('El color es obligatorio');
+      return;
+    }
+    if (!validateMaxLength(newHorse.generalDescription, 300)) {
+      toast.error('La descripción general debe tener máximo 300 caracteres.');
+      return;
+    }
     if (!newHorse.state) {
       toast.error('Selecciona el estado.');
       return;
@@ -265,6 +278,18 @@ const HorsesManagement = () => {
 
   const updateHorse = async (id: number) => {
     if (!editingHorseData) return;
+    if (!isNonEmptyString(editingHorseData.horseName, 120)) {
+      toast.error('El nombre del caballo es obligatorio y debe tener máximo 120 caracteres.');
+      return;
+    }
+    if (!isNonEmptyString(editingHorseData.color, 80)) {
+      toast.error('El color es obligatorio');
+      return;
+    }
+    if (!validateMaxLength(editingHorseData.generalDescription, 300)) {
+      toast.error('La descripción general debe tener máximo 300 caracteres.');
+      return;
+    }
     if (!editingHorseData.state) {
       toast.error('Selecciona el estado.');
       return;
@@ -522,6 +547,7 @@ const HorsesManagement = () => {
           type="text"
           value={newHorse.horseName}
           onChange={e => setNewHorse({ ...newHorse, horseName: e.target.value })}
+          maxLength={120}
           className="w-full p-2 rounded-md bg-gray-700"
         />
       </div>
@@ -555,6 +581,7 @@ const HorsesManagement = () => {
           type="text"
           value={newHorse.color}
           onChange={e => setNewHorse({ ...newHorse, color: e.target.value })}
+          maxLength={80}
           className="w-full p-2 rounded-md bg-gray-700"
         />
       </div>
@@ -565,6 +592,7 @@ const HorsesManagement = () => {
           type="text"
           value={newHorse.generalDescription}
           onChange={e => setNewHorse({ ...newHorse, generalDescription: e.target.value })}
+          maxLength={300}
           className="w-full p-2 rounded-md bg-gray-700"
         />
       </div>
@@ -937,7 +965,7 @@ const HorsesManagement = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <label className="block mb-1">Nombre del Caballo</label>
-                  <input type="text" value={editingHorseData.horseName} onChange={e => setEditingHorseData({ ...editingHorseData, horseName: e.target.value })} className="w-full p-2 rounded-md bg-gray-700" />
+                  <input type="text" value={editingHorseData.horseName} onChange={e => setEditingHorseData({ ...editingHorseData, horseName: e.target.value })} maxLength={120} className="w-full p-2 rounded-md bg-gray-700" />
                 </div>
                 <div>
                   <label className="block mb-1">Fecha de Nacimiento</label>
@@ -953,7 +981,7 @@ const HorsesManagement = () => {
                 </div>
                 <div>
                   <label className="block mb-1">Color</label>
-                  <input type="text" value={editingHorseData.color} onChange={e => setEditingHorseData({ ...editingHorseData, color: e.target.value })} className="w-full p-2 rounded-md bg-gray-700" />
+                  <input type="text" value={editingHorseData.color} onChange={e => setEditingHorseData({ ...editingHorseData, color: e.target.value })} maxLength={80} className="w-full p-2 rounded-md bg-gray-700" />
                 </div>
                 <div>
                   <label className="block mb-1">Numero de Pasaporte</label>
@@ -974,7 +1002,7 @@ const HorsesManagement = () => {
                 </div>
                 <div className="lg:col-span-3">
                   <label className="block mb-1">Descripcion General</label>
-                  <input type="text" value={editingHorseData.generalDescription} onChange={e => setEditingHorseData({ ...editingHorseData, generalDescription: e.target.value })} className="w-full p-2 rounded-md bg-gray-700" />
+                  <input type="text" value={editingHorseData.generalDescription} onChange={e => setEditingHorseData({ ...editingHorseData, generalDescription: e.target.value })} maxLength={300} className="w-full p-2 rounded-md bg-gray-700" />
                 </div>
                 <div>
                   <label className="block mb-1">Dueño</label>

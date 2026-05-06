@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader } from 'lucide-react';
 import { confirmDialog } from '../../utils/confirmDialog';
 import { AddButton, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
+import { isNonEmptyString } from '../../utils/validation';
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud/race/';
 
@@ -47,6 +48,11 @@ const RacesManagement = () => {
   }, []);
 
   const createRace = async () => {
+    // Validación cliente
+    if (!isNonEmptyString(newRace.nameRace, 50)) {
+      toast.error('El nombre de la raza es obligatorio');
+      return;
+    }
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
@@ -64,6 +70,10 @@ const RacesManagement = () => {
 
   const updateRace = async (id: number) => {
     if (!editingData) return;
+    if (!isNonEmptyString(editingData.nameRace, 50)) {
+      toast.error('El nombre de la raza es obligatorio');
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}${id}`, {
         method: 'PUT',
@@ -124,6 +134,7 @@ const RacesManagement = () => {
               placeholder="Nombre de la raza"
               value={newRace.nameRace}
               onChange={e => setNewRace({ nameRace: e.target.value })}
+              maxLength={100}
               className="w-full placeholder-gray-400"
             />
           </div>
@@ -212,6 +223,7 @@ const RacesManagement = () => {
                     type="text"
                     value={editingData.nameRace}
                     onChange={e => setEditingData({ ...editingData, nameRace: e.target.value })}
+                    maxLength={100}
                     className="w-full p-2 rounded-md bg-gray-700"
                   />
                 </div>

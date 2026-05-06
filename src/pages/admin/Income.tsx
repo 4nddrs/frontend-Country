@@ -10,6 +10,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import AnimatedBackground from '../../components/ui/AnimatedBackground';
+import { isNonEmptyString, sanitizeNumericInput } from '../../utils/validation';
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud/income/';
 
@@ -98,6 +99,11 @@ const IncomeManagement = () => {
     }
 
     try {
+      if (!isNonEmptyString(newIncome.description, 300)) {
+        toast.error('La descripción es obligatoria y debe tener máximo 300 caracteres.');
+        return;
+      }
+
       const cleanedAmount = (() => {
         let value = String(newIncome.amountBsCaptureType).trim();
         if (value.includes(",")) {
@@ -106,6 +112,10 @@ const IncomeManagement = () => {
         const parsed = parseFloat(value);
         return isNaN(parsed) ? 0 : parsed;
       })();
+      if (cleanedAmount <= 0) {
+        toast.error('El monto debe ser mayor a 0.');
+        return;
+      }
 
       const res = await fetch(API_URL, {
         method: "POST",
@@ -139,6 +149,11 @@ const IncomeManagement = () => {
     }
 
     try {
+      if (!isNonEmptyString(updatedIncome.description, 300)) {
+        toast.error('La descripción es obligatoria y debe tener máximo 300 caracteres.');
+        return;
+      }
+
       const cleanedAmount = (() => {
         let value = String(updatedIncome.amountBsCaptureType).trim();
         if (value.includes(",")) {
@@ -147,6 +162,10 @@ const IncomeManagement = () => {
         const parsed = parseFloat(value);
         return isNaN(parsed) ? 0 : parsed;
       })();
+      if (cleanedAmount <= 0) {
+        toast.error('El monto debe ser mayor a 0.');
+        return;
+      }
 
       const res = await fetch(`${API_URL}${id}`, {
         method: "PUT",
@@ -326,6 +345,7 @@ const IncomeManagement = () => {
               placeholder="Descripción"
               value={newIncome.description}
               onChange={(e) => setNewIncome({ ...newIncome, description: e.target.value })}
+              maxLength={300}
               className="select-field w-full"
             />
           </div>
@@ -344,7 +364,7 @@ const IncomeManagement = () => {
                 }
               }}
               onChange={(e) =>
-                setNewIncome({ ...newIncome, amountBsCaptureType: e.target.value as any })
+                setNewIncome({ ...newIncome, amountBsCaptureType: sanitizeNumericInput(e.target.value).replace(/\-/g, '') as any })
               }
               className="select-field w-full"
             />
@@ -564,6 +584,7 @@ const IncomeManagement = () => {
                   placeholder="Descripción"
                   value={editingIncome.description}
                   onChange={(e) => setEditingIncome({ ...editingIncome, description: e.target.value })}
+                  maxLength={300}
                   className="select-field"
                   style={{ width: '50ch' }}
                 />
@@ -574,7 +595,7 @@ const IncomeManagement = () => {
                   type="text"
                   placeholder="Ej: 1.000,50"
                   value={editingIncome.amountBsCaptureType}
-                  onChange={(e) => setEditingIncome({ ...editingIncome, amountBsCaptureType: e.target.value as any })}
+                  onChange={(e) => setEditingIncome({ ...editingIncome, amountBsCaptureType: sanitizeNumericInput(e.target.value).replace(/\-/g, '') as any })}
                   className="select-field"
                 />
               </div>

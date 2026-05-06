@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import { Edit, Trash2, Loader } from 'lucide-react';
 import { AddButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
+import { isNonEmptyString } from '../../utils/validation';
 import { confirmDialog } from '../../utils/confirmDialog';
 
 const API_URL = 'https://api.countryclub.doc-ia.cloud/employee_positions/';
@@ -45,6 +46,10 @@ const PositionManagement = () => {
   useEffect(() => { fetchPositions(); }, []);
 
   const createPosition = async () => {
+    if (!isNonEmptyString(newPosition.namePosition, 50)) {
+      toast.error('El nombre de la posición es obligatorio');
+      return;
+    }
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
@@ -62,6 +67,10 @@ const PositionManagement = () => {
 
   const updatePosition = async (id: number) => {
     if (!editingData) return;
+    if (!isNonEmptyString(editingData.namePosition, 50)) {
+      toast.error('El nombre de la posición es obligatorio');
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}${id}`, {
         method: 'PUT',
@@ -120,6 +129,7 @@ const PositionManagement = () => {
               placeholder="Ej: Caballerizo...."
               value={newPosition.namePosition}
               onChange={e => setNewPosition({ namePosition: e.target.value })}
+              maxLength={100}
               className="select-field w-full placeholder-gray-400"
             />
           </div>
@@ -206,6 +216,7 @@ const PositionManagement = () => {
                     type="text"
                     value={editingData.namePosition}
                     onChange={e => setEditingData({ ...editingData, namePosition: e.target.value })}
+                    maxLength={100}
                     className="w-full p-2 rounded-md bg-gray-700"
                   />
                 </div>
