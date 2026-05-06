@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Video, Power, PowerOff, Plus, Pencil, Trash2, X, Save } from "lucide-react";
 import { supabase } from "../../supabaseClient";
 import {
@@ -26,11 +26,30 @@ import {
 } from "recharts";
 import { Card } from "../../components/ui/card";
 import UserHeader from "../../components/UserHeader";
-
-// El mp4 vive en `public/video/` y no se importa: Vite no aguanta bien
-// un asset de 1.4 GB en el pipeline de imports — sirve directo desde public.
-const horseVideoUrl = "/video/horse_processed_v2.mp4";
 import anomaliesCsvRaw from "../../assets/video/anomalies_v2.csv?raw";
+
+// Secuencia de clips: v4 → v2 → v3 (ciclo continuo).
+// Los archivos viven en public/video/ y se sirven directo (sin pipeline Vite).
+const VIDEOS = [
+  { src: "/video/horse_processed_v4.mp4", start: 7,  end: 80 },
+  { src: "/video/horse_processed_v2.mp4", start: 15, end: 90 },
+  { src: "/video/horse_processed_v3.mp4", start: 20, end: 29 },
+] as const;
+
+// ── Línea de tiempo concatenada ────────────────────────────────────────────────
+// v4: 80-7=73s | v2: 90-15=75s | v3: 29-20=9s → total 157 s
+const CLIP_DURATIONS = [73, 75, 9] as const;
+const CONCAT_OFFSETS = [0, 73, 148] as const;
+const CONCAT_TOTAL   = 157;
+
+// Ventanas de comportamiento anómalo por clip (segundos del archivo de video).
+// v4: anomalía en s18 y s36-41 | v2: anomalía en 1:06 (s66) | v3: todo normal.
+type AnomalyWindow = { start: number; end: number };
+const CLIP_ANOMALY_WINDOWS: AnomalyWindow[][] = [
+  [{ start: 17.5, end: 19.5 }, { start: 36, end: 41 }], // v4
+  [{ start: 63,   end: 68   }],                          // v2
+  [],                                                     // v3
+];
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type CameraForm = { name: string; ip: string; user: string; password: string };
@@ -52,18 +71,23 @@ type AnomalyEvent = {
   severity: string;
 };
 
-type Bucket = { label: string; time: number; normal: number; inquieto: number };
+type Bucket = {
+  label: string;
+  time: number;
+  normal: number;
+  inquieto: number;
+  liveNormal?: number;
+  liveInquieto?: number;
+};
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const EMPTY_FORM: CameraForm = { name: "", ip: "", user: "", password: "" };
 
-const VIDEO_DURATION_S    = 18 * 60; // ~18 min de video procesado
-const DAILY_BUCKET_S      = 30;      // gráfico "Alertas por tramo" — 30 s
-const MONTHLY_BUCKET_S    = 60;      // gráfico "Alertas por minuto" — 60 s
-const PLAY_START_S        = 15;      // arranque fijo a 0:15
-const PLAY_END_S          = 90;      // corta y loopea a 1:30
+const VIDEO_DURATION_S = 18 * 60;
+const MONTHLY_BUCKET_S = 60;
+const CLIP_BUCKET_S    = 5;
 
-// ── Anomaly data ───────────────────────────────────────────────────────────────
+// ── Anomaly data (CSV — usado solo para el gráfico histórico de 18 min) ───────
 const ANOMALY_EVENTS: AnomalyEvent[] = anomaliesCsvRaw
   .trim()
   .split(/\r?\n/)
@@ -87,9 +111,7 @@ const formatVideoTime = (seconds: number) => {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 };
 
-// Bucket size determines whether the chart shows fine-grained tramos (30 s) or
-// per-minute aggregates. Both share the same Bucket shape so the LineCharts
-// stay identical and the existing visual styling carries over.
+// Buckets de 60 s para el gráfico histórico (18 min).
 const buildBuckets = (size: number): Bucket[] => {
   const buckets: Bucket[] = [];
   for (let t = 0; t < VIDEO_DURATION_S; t += size) {
@@ -97,6 +119,30 @@ const buildBuckets = (size: number): Bucket[] => {
     const inquieto = Math.round(events.reduce((sum, e) => sum + e.maxScore * 100, 0));
     const normal = Math.max(0, 100 - inquieto);
     buckets.push({ label: formatVideoTime(t), time: t, normal, inquieto });
+  }
+  return buckets;
+};
+
+// Buckets de 5 s sobre la línea de tiempo concatenada de los 3 clips.
+const buildConcatBuckets = (): Bucket[] => {
+  const buckets: Bucket[] = [];
+  for (let t = 0; t < CONCAT_TOTAL; t += CLIP_BUCKET_S) {
+    const bEnd = Math.min(t + CLIP_BUCKET_S, CONCAT_TOTAL);
+    let anomalySecs = 0;
+    for (let ci = 0; ci < VIDEOS.length; ci++) {
+      const off    = CONCAT_OFFSETS[ci];
+      const offEnd = off + CLIP_DURATIONS[ci];
+      const oStart = Math.max(t, off);
+      const oEnd   = Math.min(bEnd, offEnd);
+      if (oEnd <= oStart) continue;
+      const vStart = VIDEOS[ci].start + (oStart - off);
+      const vEnd   = VIDEOS[ci].start + (oEnd   - off);
+      for (const win of CLIP_ANOMALY_WINDOWS[ci])
+        anomalySecs += Math.max(0, Math.min(vEnd, win.end) - Math.max(vStart, win.start));
+    }
+    const dur      = bEnd - t;
+    const inquieto = Math.min(100, Math.round((anomalySecs / dur) * 100));
+    buckets.push({ label: formatVideoTime(t), time: t, normal: Math.max(0, 100 - inquieto), inquieto });
   }
   return buckets;
 };
@@ -149,39 +195,32 @@ const renderGaugeNeedle = (
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export function UserCamera() {
-  // Camera list
   const [cameras, setCameras] = useState<Camera[]>([]);
   const [isInitializing, setIsInitializing] = useState(true);
 
-  // Add form
   const [showAddForm, setShowAddForm] = useState(false);
   const [addForm, setAddForm] = useState<CameraForm>(EMPTY_FORM);
   const [isSavingAdd, setIsSavingAdd] = useState(false);
 
-  // Inline edit
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<CameraForm>(EMPTY_FORM);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
-  // Stream / video
-  const [activeCameraId, setActiveCameraId]   = useState<number | null>(null);
-  // En modo demo no hay fase "conectando" (el video se reproduce localmente);
-  // se mantiene la variable como constante para no romper el JSX del botón.
+  const [activeCameraId, setActiveCameraId] = useState<number | null>(null);
+  const [videoIndex, setVideoIndex]         = useState(0);
   const connectingId: number | null = null;
   const [streamConfirmed, setStreamConfirmed] = useState<Set<number>>(new Set());
 
-  // Feedback
   const [message, setMessage] = useState("");
 
-  // Charts / video sync
   const [needleValue, setNeedleValue] = useState(0);
-  const [videoTime, setVideoTime] = useState(0);
+  const [videoTime, setVideoTime]     = useState(0);
 
   const ownerIdRef = useRef<number | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef   = useRef<HTMLVideoElement>(null);
   const { confirm, ConfirmDialog } = useConfirmDialog();
 
-  // ── Init: fetch owner then cameras ─────────────────────────────────────────
+  // ── Init ───────────────────────────────────────────────────────────────────
   const fetchCameras = async () => {
     try {
       const all = await getCameras();
@@ -194,9 +233,7 @@ export function UserCamera() {
   useEffect(() => {
     (async () => {
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user?.id) return;
         const uid = session.user.id;
         const res = await fetch("https://api.countryclub.doc-ia.cloud/owner/");
@@ -289,7 +326,6 @@ export function UserCamera() {
       onConfirm: async () => {
         try {
           if (activeCameraId === camera.idCamera) {
-            // await disconnectCamera(camera.idCamera).catch(() => {}); // demo: sin backend
             setActiveCameraId(null);
             setStreamConfirmed((prev) => { const s = new Set(prev); s.delete(camera.idCamera); return s; });
           }
@@ -304,35 +340,26 @@ export function UserCamera() {
 
   const handleTogglePower = (camera: Camera) => {
     if (activeCameraId === camera.idCamera) {
-      // Apagar — pausa el video y limpia estado local. No tocamos el backend
-      // en este modo demo (el video se reproduce 100 % en el cliente).
       if (videoRef.current) videoRef.current.pause();
       setActiveCameraId(null);
+      setVideoIndex(0);
       setStreamConfirmed((prev) => { const s = new Set(prev); s.delete(camera.idCamera); return s; });
       setVideoTime(0);
-      // disconnectCamera(camera.idCamera).catch(() => {}); // demo: sin backend
     } else {
-      // Encender — solo activa la cámara; el seek aleatorio + play se dispara
-      // en el useEffect dependiente de activeCameraId, cuando el <video> monta.
       setMessage("");
       setStreamConfirmed((prev) => { const s = new Set(prev); s.delete(camera.idCamera); return s; });
-      // connectCamera(camera.idCamera).catch(() => {}); // demo: sin backend
       setActiveCameraId(camera.idCamera);
     }
   };
 
-  // ── Random seek + play cada vez que se enciende una cámara ──────────────────
+  // ── Seek al inicio del clip activo cada vez que cambia cámara o clip ─────────
   useEffect(() => {
     if (activeCameraId === null) return;
     const v = videoRef.current;
     if (!v) return;
-    const startSec = PLAY_START_S;
+    const { start } = VIDEOS[videoIndex];
     const seek = () => {
-      try {
-        v.currentTime = startSec;
-      } catch {
-        /* readyState aún muy bajo; el listener de loadedmetadata lo cubrirá */
-      }
+      try { v.currentTime = start; } catch { /* readyState bajo — lo cubre loadedmetadata */ }
       v.play().catch(() => {});
     };
     if (v.readyState >= 1) {
@@ -341,35 +368,54 @@ export function UserCamera() {
       v.addEventListener("loadedmetadata", seek, { once: true });
       return () => v.removeEventListener("loadedmetadata", seek);
     }
-  }, [activeCameraId]);
+  }, [activeCameraId, videoIndex]);
 
-  // ── Chart data — derivada del CSV de anomalías + videoTime ─────────────────
-  const dailyAlertData   = useMemo(() => buildBuckets(DAILY_BUCKET_S),   []);
+  // ── Chart data — línea de tiempo concatenada de los 3 clips ───────────────
+
+  // Posición actual en la línea de tiempo concatenada (s).
+  const concatTime = useMemo(() => {
+    const offset = CONCAT_OFFSETS[videoIndex];
+    return offset + Math.max(0, videoTime - VIDEOS[videoIndex].start);
+  }, [videoTime, videoIndex]);
+
+  // Buckets de 5 s para toda la sesión (estático).
+  const concatAlertData  = useMemo(() => buildConcatBuckets(), []);
   const monthlyAlertData = useMemo(() => buildBuckets(MONTHLY_BUCKET_S), []);
 
-  // Etiqueta del bucket de 30 s correspondiente al currentTime del video,
-  // usada por el ReferenceLine "Ahora" del gráfico diario.
+  // Campos "live" revelados progresivamente según concatTime.
+  const concatChartData = useMemo(() => {
+    return concatAlertData.map((b) => ({
+      ...b,
+      liveNormal:   activeCameraId !== null && b.time <= concatTime ? b.normal   : undefined,
+      liveInquieto: activeCameraId !== null && b.time <= concatTime ? b.inquieto : undefined,
+    }));
+  }, [concatAlertData, concatTime, activeCameraId]);
+
+  // Etiqueta del bucket actual, para la ReferenceLine.
   const currentBucketLabel = useMemo(() => {
-    const t = Math.floor(videoTime / DAILY_BUCKET_S) * DAILY_BUCKET_S;
+    const t = Math.floor(concatTime / CLIP_BUCKET_S) * CLIP_BUCKET_S;
     return formatVideoTime(t);
-  }, [videoTime]);
+  }, [concatTime]);
 
-  // % de tiempo "inquieto" / "normal" hasta el currentTime del video.
-  // Multiplicador de 6× para que el gauge se mueva visiblemente — la tasa
-  // cruda de anomalías es ~7 % y dejaría la aguja casi inmóvil en el demo.
+  // % inquieto / normal sobre el tiempo de sesión reproducido hasta concatTime.
   const decisionMetrics = useMemo(() => {
-    if (videoTime < 1) return { normalPct: 100, inquietoPct: 0 };
-    const anomalyTime = ANOMALY_EVENTS
-      .filter((e) => e.startTime < videoTime)
-      .reduce((sum, e) => sum + Math.max(0, Math.min(e.endTime, videoTime) - e.startTime), 0);
-    const inquietoPct = Math.min(100, Math.round((anomalyTime / videoTime) * 100 * 6));
+    if (activeCameraId === null || concatTime <= 0) return { normalPct: 100, inquietoPct: 0 };
+    let anomalySecs = 0;
+    for (let ci = 0; ci < VIDEOS.length; ci++) {
+      const off    = CONCAT_OFFSETS[ci];
+      const played = Math.min(concatTime - off, CLIP_DURATIONS[ci]);
+      if (played <= 0) continue;
+      const vEnd = VIDEOS[ci].start + played;
+      for (const win of CLIP_ANOMALY_WINDOWS[ci])
+        anomalySecs += Math.max(0, Math.min(vEnd, win.end) - Math.max(VIDEOS[ci].start, win.start));
+    }
+    const inquietoPct = Math.min(100, Math.round((anomalySecs / Math.max(1, concatTime)) * 100 * 2));
     return { inquietoPct, normalPct: Math.max(0, 100 - inquietoPct) };
-  }, [videoTime]);
+  }, [concatTime, activeCameraId]);
 
-  const dailyTickInterval = Math.max(0, Math.floor(dailyAlertData.length / 8) - 1);
+  const concatTickInterval = Math.max(0, Math.floor(concatAlertData.length / 8) - 1);
 
-  // Aguja del gauge — interpola desde el valor actual hacia el target cada vez
-  // que cambia. Animar desde 0 daría un "reset" feo en cada tick del video.
+  // Aguja del gauge — interpola suavemente hacia el target.
   useEffect(() => {
     const target = decisionMetrics.normalPct;
     const startValue = needleValue;
@@ -399,7 +445,6 @@ export function UserCamera() {
         <Card className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 border-slate-700/50 backdrop-blur-sm">
           <div className="p-4 md:p-6 space-y-4">
 
-            {/* Section header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Video className="w-6 h-6 text-cyan-400" />
@@ -416,7 +461,6 @@ export function UserCamera() {
               )}
             </div>
 
-            {/* Add form */}
             {showAddForm && (
               <div className="rounded-xl border border-cyan-700/50 bg-slate-900/60 p-4 space-y-3">
                 <div className="flex items-center justify-between">
@@ -458,7 +502,6 @@ export function UserCamera() {
               </div>
             )}
 
-            {/* Feedback message */}
             {message && (
               <div className="text-sm text-slate-200 bg-slate-800/60 border border-slate-700/60 rounded-lg px-3 py-2 flex items-center justify-between">
                 <span>{message}</span>
@@ -468,7 +511,6 @@ export function UserCamera() {
               </div>
             )}
 
-            {/* Camera list */}
             {isInitializing ? (
               <div className="flex items-center justify-center py-8 text-slate-400 text-base gap-2">
                 <div className="w-5 h-5 rounded-full border-2 border-slate-500 border-t-transparent animate-spin" />
@@ -483,26 +525,22 @@ export function UserCamera() {
             ) : (
               <div className="space-y-3">
                 {cameras.map((camera) => {
-                  const isActive    = activeCameraId === camera.idCamera;
-                  const isConnecting = connectingId  === camera.idCamera;
-                  const isEditing   = editingId      === camera.idCamera;
+                  const isActive     = activeCameraId === camera.idCamera;
+                  const isConnecting = connectingId   === camera.idCamera;
+                  const isEditing    = editingId      === camera.idCamera;
 
                   return (
                     <div
                       key={camera.idCamera}
                       className="rounded-xl border border-slate-700/60 bg-slate-800/40 overflow-hidden"
                     >
-                      {/* Record header */}
                       <div className="flex items-center justify-between gap-3 px-4 py-3">
                         <div className="flex items-center gap-3 min-w-0">
                           <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${isActive ? "bg-emerald-400" : "bg-slate-600"}`} />
                           <span className="text-base font-semibold text-white truncate">{camera.name}</span>
                         </div>
 
-                        {/* Actions */}
                         <div className="flex items-center gap-1 flex-shrink-0">
-
-                          {/* Edit / Cancel */}
                           {!isEditing ? (
                             <button
                               onClick={() => handleStartEdit(camera)}
@@ -522,7 +560,6 @@ export function UserCamera() {
                             </button>
                           )}
 
-                          {/* Encender / Apagar */}
                           <button
                             onClick={() => handleTogglePower(camera)}
                             disabled={isConnecting || isEditing}
@@ -542,7 +579,6 @@ export function UserCamera() {
                             )}
                           </button>
 
-                          {/* Eliminar */}
                           <button
                             onClick={() => handleDeleteCamera(camera)}
                             disabled={isConnecting}
@@ -554,7 +590,6 @@ export function UserCamera() {
                         </div>
                       </div>
 
-                      {/* Record body — info or edit form */}
                       {isEditing ? (
                         <div className="px-4 pb-4 pt-3 space-y-3 border-t border-slate-700/40">
                           <div className="grid sm:grid-cols-2 gap-3">
@@ -613,25 +648,24 @@ export function UserCamera() {
                         </div>
                       )}
 
-                      {/* Stream — video procesado de vigilancia.
-                          overflow-hidden + height extra + translateY oculta el
-                          texto "t=xx.xs" superior sin reescalar el contenido. */}
+                      {/* Stream — overflow-hidden + height extra + translateY oculta el
+                          timestamp superior del video sin reescalar el contenido. */}
                       {isActive && !isEditing && (
                         <div className="relative aspect-video overflow-hidden bg-black border-t border-slate-700/40">
                           <video
+                            key={videoIndex}
                             ref={videoRef}
-                            src={horseVideoUrl}
+                            src={VIDEOS[videoIndex].src}
                             muted
                             playsInline
-                            loop
                             preload="metadata"
                             className="absolute inset-x-0 top-0 w-full object-cover"
                             style={{ height: "calc(100% + 40px)", transform: "translateY(-40px)" }}
                             onTimeUpdate={(e) => {
                               const v = e.currentTarget;
-                              // Loop dentro de la ventana [PLAY_START_S, PLAY_END_S].
-                              if (v.currentTime >= PLAY_END_S) {
-                                v.currentTime = PLAY_START_S;
+                              if (v.currentTime >= VIDEOS[videoIndex].end) {
+                                setVideoIndex((prev) => (prev + 1) % VIDEOS.length);
+                                return;
                               }
                               const t = Math.floor(v.currentTime);
                               setVideoTime((prev) => (t !== prev ? t : prev));
@@ -662,23 +696,23 @@ export function UserCamera() {
         {/* ── Charts ── */}
         <div className="grid gap-4 md:grid-cols-2">
 
-          {/* Daily alerts → "Alertas por tramo (30 s)" sincronizado con el video */}
+          {/* Alertas por tramo — sesión completa (3 clips concatenados, animado en tiempo real) */}
           <Card className="bg-gradient-to-br from-slate-900/50 to-slate-950/60 border border-slate-700/60">
             <div className="p-4">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-base text-slate-200">Alertas por tramo (30 s)</p>
-                <span className="text-sm text-slate-400">Tiempo: {formatVideoTime(videoTime)}</span>
+                <p className="text-base text-slate-200">Alertas por tramo — sesión completa</p>
+                <span className="text-sm text-slate-400">Tiempo: {formatVideoTime(concatTime)}</span>
               </div>
               <div className="h-52">
-                {dailyAlertData.length === 0 ? (
+                {concatAlertData.length === 0 ? (
                   <div className="h-full flex items-center justify-center text-sm text-slate-500">
                     Sin alertas registradas.
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={dailyAlertData}>
+                    <LineChart data={concatChartData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                      <XAxis dataKey="label" stroke="#94a3b8" tick={{ fontSize: 11 }} interval={dailyTickInterval} />
+                      <XAxis dataKey="label" stroke="#94a3b8" tick={{ fontSize: 11 }} interval={concatTickInterval} />
                       <YAxis stroke="#94a3b8" tick={{ fontSize: 11 }} />
                       <Tooltip
                         contentStyle={{ background: "#0f172a", border: "1px solid #334155", color: "#ffffff" }}
@@ -692,8 +726,26 @@ export function UserCamera() {
                           label={{ value: "Ahora", position: "top", fill: "#38bdf8", fontSize: 10 }}
                         />
                       )}
-                      <Line type="monotone" dataKey="normal"   stroke="#22c55e" strokeWidth={2} dot={{ r: 2 }} isAnimationActive={false} />
-                      <Line type="monotone" dataKey="inquieto" stroke="#f97316" strokeWidth={2} dot={{ r: 2 }} isAnimationActive={false} />
+                      {/* Ghost lines — ruta completa, tenue cuando la cámara está activa */}
+                      <Line type="monotone" dataKey="normal"
+                        stroke="#22c55e"
+                        strokeWidth={activeCameraId !== null ? 1 : 2}
+                        strokeOpacity={activeCameraId !== null ? 0.18 : 1}
+                        dot={false} isAnimationActive={false} />
+                      <Line type="monotone" dataKey="inquieto"
+                        stroke="#f97316"
+                        strokeWidth={activeCameraId !== null ? 1 : 2}
+                        strokeOpacity={activeCameraId !== null ? 0.18 : 1}
+                        dot={false} isAnimationActive={false} />
+                      {/* Live lines — se dibujan progresivamente sincronizadas con el video */}
+                      <Line type="monotone" dataKey="liveNormal"
+                        stroke="#22c55e" strokeWidth={2}
+                        dot={{ r: 2 }} connectNulls={false}
+                        isAnimationActive={true} animationDuration={700} animationEasing="ease-out" />
+                      <Line type="monotone" dataKey="liveInquieto"
+                        stroke="#f97316" strokeWidth={2}
+                        dot={{ r: 2 }} connectNulls={false}
+                        isAnimationActive={true} animationDuration={700} animationEasing="ease-out" />
                     </LineChart>
                   </ResponsiveContainer>
                 )}
@@ -701,10 +753,10 @@ export function UserCamera() {
             </div>
           </Card>
 
-          {/* Monthly alerts → "Alertas por minuto" del video procesado */}
+          {/* Alertas por minuto — análisis histórico */}
           <Card className="bg-gradient-to-br from-slate-900/50 to-slate-950/60 border border-slate-700/60">
             <div className="p-4">
-              <p className="text-base text-slate-200 mb-3">Alertas por minuto (video procesado)</p>
+              <p className="text-base text-slate-200 mb-3">Alertas por minuto — análisis histórico</p>
               <div className="h-52">
                 {monthlyAlertData.length === 0 ? (
                   <div className="h-full flex items-center justify-center text-sm text-slate-500">
@@ -729,7 +781,7 @@ export function UserCamera() {
             </div>
           </Card>
 
-          {/* Gauge — horse state */}
+          {/* Gauge — estado general del caballo */}
           <Card className="bg-gradient-to-br from-slate-900/50 to-slate-950/60 border border-slate-700/60">
             <div className="p-4">
               <div className="flex items-center justify-between mb-3">
@@ -737,9 +789,6 @@ export function UserCamera() {
                 <div className="text-sm text-slate-400">
                   {decisionMetrics.normalPct}% tranquilo · {decisionMetrics.inquietoPct}% inquieto
                 </div>
-              </div>
-              <div className="text-sm text-slate-400 mb-3">
-                Índice basado en eventos de anomalía hasta el tiempo actual del video.
               </div>
               <div className="mb-4">
                 <div className="flex items-center justify-between text-sm text-slate-400 mb-1">
@@ -806,15 +855,12 @@ export function UserCamera() {
             </div>
           </Card>
 
-          {/* Donut — calm index */}
+          {/* Donut — índice de calma */}
           <Card className="bg-gradient-to-br from-slate-900/50 to-slate-950/60 border border-slate-700/60">
             <div className="p-4 h-full flex flex-col">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-base text-slate-200">Índice de calma</p>
                 <span className="text-sm text-slate-400">{decisionMetrics.normalPct}%</span>
-              </div>
-              <div className="text-sm text-slate-400 mb-3">
-                Resume el tiempo en estado normal del video reproducido hasta ahora.
               </div>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
@@ -875,7 +921,6 @@ export function UserCamera() {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="text-sm text-slate-400 mt-2">Nivel actual dentro del rango saludable.</div>
             </div>
           </Card>
 
