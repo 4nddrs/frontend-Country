@@ -19,6 +19,58 @@ const MEDICATION_TYPE_OPTIONS = [
 const NUMBER_INPUT_CLASSES =
   'p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none';
 
+const computeMedicineExpiryStatus = (expirationDate: string): string => {
+  if (!expirationDate) return '';
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expiry = new Date(expirationDate);
+  expiry.setHours(0, 0, 0, 0);
+  const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return 'CADUCADO';
+  if (diffDays <= 30) return 'PRÓXIMO A VENCER';
+  return 'VIGENTE';
+};
+
+const MEDICINE_STATE_CONFIG: Record<string, { dot: string; text: string; bg: string; glow: string; pulse: boolean }> = {
+  VIGENTE: {
+    dot: 'bg-emerald-400',
+    text: 'text-emerald-300',
+    bg: 'bg-emerald-950/60 border border-emerald-500/30',
+    glow: 'shadow-[0_0_12px_rgba(16,185,129,0.25)]',
+    pulse: true,
+  },
+  'PRÓXIMO A VENCER': {
+    dot: 'bg-amber-400',
+    text: 'text-amber-300',
+    bg: 'bg-amber-950/60 border border-amber-500/30',
+    glow: 'shadow-[0_0_12px_rgba(245,158,11,0.25)]',
+    pulse: false,
+  },
+  CADUCADO: {
+    dot: 'bg-rose-400',
+    text: 'text-rose-300',
+    bg: 'bg-rose-950/60 border border-rose-500/30',
+    glow: 'shadow-[0_0_12px_rgba(244,63,94,0.25)]',
+    pulse: false,
+  },
+};
+
+const MedicineStateBadge = ({ state }: { state: string }) => {
+  const cfg = MEDICINE_STATE_CONFIG[state];
+  if (!cfg) return <span className="text-slate-500 text-xs">—</span>;
+  return (
+    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-semibold tracking-widest uppercase ${cfg.bg} ${cfg.glow} ${cfg.text}`}>
+      <span className="relative flex h-2 w-2 shrink-0">
+        {cfg.pulse && (
+          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-70 ${cfg.dot}`} />
+        )}
+        <span className={`relative inline-flex h-2 w-2 rounded-full ${cfg.dot}`} />
+      </span>
+      {state}
+    </span>
+  );
+};
+
 interface Medicine {
   idMedicine?: number;
   name: string;
@@ -424,6 +476,12 @@ const MedicinesManagement = () => {
                     <div className="space-y-2 text-center">
                       <p><span className="font-medium text-slate-400">Stock:</span> {med.stock ?? 0} <span className="text-xs">(min: {med.minStock ?? 0})</span></p>
                       <p><span className="font-medium text-slate-400">Vencimiento:</span> {med.boxExpirationDate?.slice(0, 10) || '-'}</p>
+                      {med.boxExpirationDate && (
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="font-medium text-slate-400">Estado:</span>
+                          <MedicineStateBadge state={computeMedicineExpiryStatus(med.boxExpirationDate)} />
+                        </div>
+                      )}
                     </div>
 
                     <button
@@ -445,7 +503,6 @@ const MedicinesManagement = () => {
                     {isExpanded && (
                       <div className="rounded-xl border border-slate-800/80 bg-slate-900/70 p-4 text-xs leading-relaxed">
                         <ul className="space-y-1">
-                          <li><strong>Estado vencimiento:</strong> {med.expiryStatus || '-'}</li>
                           <li><strong>Estado stock:</strong> {med.stockStatus || '-'}</li>
                           <li><strong>Aviso:</strong> {med.notifyDaysBefore ?? 0} sem. antes</li>
                           <li><strong>Origen:</strong> {med.source || '-'}</li>
