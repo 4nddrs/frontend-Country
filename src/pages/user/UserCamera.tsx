@@ -1,14 +1,13 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
-import { Video, VideoOff, Power, PowerOff, Plus, Pencil, Trash2, X, Save, RefreshCw } from "lucide-react";
+import { Video, Power, PowerOff, Plus, Pencil, Trash2, X, Save } from "lucide-react";
 import { supabase } from "../../supabaseClient";
 import {
-  connectCamera,
-  disconnectCamera,
+  // connectCamera,    // demo: el video se reproduce sin tocar el backend
+  // disconnectCamera, // demo: idem
   createCamera,
   updateCamera,
   deleteCamera,
   getCameras,
-  getStreamUrl,
 } from "../../services/cameraService";
 import type { Camera } from "../../services/cameraService";
 import { useConfirmDialog } from "../../components/ConfirmDialog";
@@ -28,6 +27,11 @@ import {
 import { Card } from "../../components/ui/card";
 import UserHeader from "../../components/UserHeader";
 
+// El mp4 vive en `public/video/` y no se importa: Vite no aguanta bien
+// un asset de 1.4 GB en el pipeline de imports — sirve directo desde public.
+const horseVideoUrl = "/video/horse_processed_v2.mp4";
+import anomaliesCsvRaw from "../../assets/video/anomalies_v2.csv?raw";
+
 // ── Types ──────────────────────────────────────────────────────────────────────
 type CameraForm = { name: string; ip: string; user: string; password: string };
 
@@ -38,73 +42,66 @@ type FieldConfig = {
   type?: string;
 };
 
-type MockMonth = {
-  key: string;
-  label: string;
-  days: { label: string; normal: number; inquieto: number }[];
-  totals: { normal: number; inquieto: number };
+type AnomalyEvent = {
+  id: number;
+  startTime: number;
+  endTime: number;
+  duration: number;
+  maxScore: number;
+  avgScore: number;
+  severity: string;
 };
+
+type Bucket = { label: string; time: number; normal: number; inquieto: number };
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const EMPTY_FORM: CameraForm = { name: "", ip: "", user: "", password: "" };
 
-const MONTH_LABELS = [
-  "Ene", "Feb", "Mar", "Abr", "May", "Jun",
-  "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
-];
+const VIDEO_DURATION_S    = 18 * 60; // ~18 min de video procesado
+const DAILY_BUCKET_S      = 30;      // gráfico "Alertas por tramo" — 30 s
+const MONTHLY_BUCKET_S    = 60;      // gráfico "Alertas por minuto" — 60 s
+const PLAY_START_S        = 15;      // arranque fijo a 0:15
+const PLAY_END_S          = 90;      // corta y loopea a 1:30
+
+// ── Anomaly data ───────────────────────────────────────────────────────────────
+const ANOMALY_EVENTS: AnomalyEvent[] = anomaliesCsvRaw
+  .trim()
+  .split(/\r?\n/)
+  .slice(1)
+  .map((line) => {
+    const c = line.split(",");
+    return {
+      id: Number(c[0]),
+      startTime: Number(c[1]),
+      endTime: Number(c[3]),
+      duration: Number(c[5]),
+      maxScore: Number(c[9]),
+      avgScore: Number(c[10]),
+      severity: c[11],
+    };
+  });
+
+const formatVideoTime = (seconds: number) => {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+};
+
+// Bucket size determines whether the chart shows fine-grained tramos (30 s) or
+// per-minute aggregates. Both share the same Bucket shape so the LineCharts
+// stay identical and the existing visual styling carries over.
+const buildBuckets = (size: number): Bucket[] => {
+  const buckets: Bucket[] = [];
+  for (let t = 0; t < VIDEO_DURATION_S; t += size) {
+    const events = ANOMALY_EVENTS.filter((e) => e.startTime >= t && e.startTime < t + size);
+    const inquieto = Math.round(events.reduce((sum, e) => sum + e.maxScore * 100, 0));
+    const normal = Math.max(0, 100 - inquieto);
+    buckets.push({ label: formatVideoTime(t), time: t, normal, inquieto });
+  }
+  return buckets;
+};
 
 // ── Chart helpers ──────────────────────────────────────────────────────────────
-const hashString = (value: string) => {
-  let hash = 2166136261;
-  for (let i = 0; i < value.length; i += 1) {
-    hash ^= value.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
-};
-
-const mulberry32 = (seed: number) => {
-  let t = seed;
-  return () => {
-    t += 0x6d2b79f5;
-    let r = Math.imul(t ^ (t >>> 15), t | 1);
-    r ^= r + Math.imul(r ^ (r >>> 7), r | 61);
-    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
-  };
-};
-
-const buildMockMonths = (): MockMonth[] => {
-  const now = new Date();
-  const months: MockMonth[] = [];
-  for (let i = 5; i >= 0; i -= 1) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const label = `${MONTH_LABELS[d.getMonth()]} ${d.getFullYear()}`;
-    const rng = mulberry32(hashString(key));
-    const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-    const days: MockMonth["days"] = [];
-    let totalNormal = 0;
-    let totalInquieto = 0;
-    for (let day = 1; day <= daysInMonth; day += 1) {
-      const isCurrentMonth =
-        d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-      if (isCurrentMonth && day > now.getDate()) break;
-      const isLastWeek = isCurrentMonth && day >= Math.max(1, now.getDate() - 6);
-      const inquieto = isLastWeek
-        ? Math.round(rng() * 1)
-        : Math.round(rng() * 6 + (rng() > 0.85 ? 5 : 0));
-      const normal = isLastWeek
-        ? Math.round(18 + rng() * 8)
-        : Math.round(16 + rng() * 12);
-      days.push({ label: String(day).padStart(2, "0"), normal, inquieto });
-      totalNormal += normal;
-      totalInquieto += inquieto;
-    }
-    months.push({ key, label, days, totals: { normal: totalNormal, inquieto: totalInquieto } });
-  }
-  return months;
-};
-
 const renderDonutCenter = ({
   cx,
   cy,
@@ -166,19 +163,22 @@ export function UserCamera() {
   const [editForm, setEditForm] = useState<CameraForm>(EMPTY_FORM);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
-  // Stream
+  // Stream / video
   const [activeCameraId, setActiveCameraId]   = useState<number | null>(null);
-  const [connectingId, setConnectingId]       = useState<number | null>(null);
-  const [streamErrors, setStreamErrors]       = useState<Set<number>>(new Set());
+  // En modo demo no hay fase "conectando" (el video se reproduce localmente);
+  // se mantiene la variable como constante para no romper el JSX del botón.
+  const connectingId: number | null = null;
   const [streamConfirmed, setStreamConfirmed] = useState<Set<number>>(new Set());
 
   // Feedback
   const [message, setMessage] = useState("");
 
-  // Charts
+  // Charts / video sync
   const [needleValue, setNeedleValue] = useState(0);
+  const [videoTime, setVideoTime] = useState(0);
 
   const ownerIdRef = useRef<number | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const { confirm, ConfirmDialog } = useConfirmDialog();
 
   // ── Init: fetch owner then cameras ─────────────────────────────────────────
@@ -289,7 +289,7 @@ export function UserCamera() {
       onConfirm: async () => {
         try {
           if (activeCameraId === camera.idCamera) {
-            await disconnectCamera(camera.idCamera).catch(() => {});
+            // await disconnectCamera(camera.idCamera).catch(() => {}); // demo: sin backend
             setActiveCameraId(null);
             setStreamConfirmed((prev) => { const s = new Set(prev); s.delete(camera.idCamera); return s; });
           }
@@ -302,112 +302,90 @@ export function UserCamera() {
     });
   };
 
-  const handleTogglePower = async (camera: Camera) => {
+  const handleTogglePower = (camera: Camera) => {
     if (activeCameraId === camera.idCamera) {
-      try {
-        await disconnectCamera(camera.idCamera);
-      } catch {
-        // silent — desconecta igual en el frontend
-      } finally {
-        setActiveCameraId(null);
-        setStreamErrors((prev) => { const s = new Set(prev); s.delete(camera.idCamera); return s; });
-        setStreamConfirmed((prev) => { const s = new Set(prev); s.delete(camera.idCamera); return s; });
-      }
-    } else {
-      setConnectingId(camera.idCamera);
-      setMessage("");
-      setStreamErrors((prev) => { const s = new Set(prev); s.delete(camera.idCamera); return s; });
+      // Apagar — pausa el video y limpia estado local. No tocamos el backend
+      // en este modo demo (el video se reproduce 100 % en el cliente).
+      if (videoRef.current) videoRef.current.pause();
+      setActiveCameraId(null);
       setStreamConfirmed((prev) => { const s = new Set(prev); s.delete(camera.idCamera); return s; });
+      setVideoTime(0);
+      // disconnectCamera(camera.idCamera).catch(() => {}); // demo: sin backend
+    } else {
+      // Encender — solo activa la cámara; el seek aleatorio + play se dispara
+      // en el useEffect dependiente de activeCameraId, cuando el <video> monta.
+      setMessage("");
+      setStreamConfirmed((prev) => { const s = new Set(prev); s.delete(camera.idCamera); return s; });
+      // connectCamera(camera.idCamera).catch(() => {}); // demo: sin backend
+      setActiveCameraId(camera.idCamera);
+    }
+  };
+
+  // ── Random seek + play cada vez que se enciende una cámara ──────────────────
+  useEffect(() => {
+    if (activeCameraId === null) return;
+    const v = videoRef.current;
+    if (!v) return;
+    const startSec = PLAY_START_S;
+    const seek = () => {
       try {
-        await connectCamera(camera.idCamera);
-        setActiveCameraId(camera.idCamera);
+        v.currentTime = startSec;
       } catch {
-        setMessage(`No se pudo conectar a "${camera.name}". Verifica que el backend esté corriendo.`);
-      } finally {
-        setConnectingId(null);
+        /* readyState aún muy bajo; el listener de loadedmetadata lo cubrirá */
       }
+      v.play().catch(() => {});
+    };
+    if (v.readyState >= 1) {
+      seek();
+    } else {
+      v.addEventListener("loadedmetadata", seek, { once: true });
+      return () => v.removeEventListener("loadedmetadata", seek);
     }
-  };
+  }, [activeCameraId]);
 
-  const handleRetry = async (camera: Camera) => {
-    // Keep no-signal card visible while we restart the backend thread.
-    // Clearing streamErrors first would remount <img> immediately and race
-    // with the disconnect/connect calls (the stream endpoint auto-starts capture).
-    try {
-      await disconnectCamera(camera.idCamera).catch(() => {});
-      await connectCamera(camera.idCamera);
-    } catch {
-      setMessage(`No se pudo reconectar a "${camera.name}".`);
-      return;
-    }
-    // Backend thread is now running — clear error/confirmed so <img> remounts
-    // and the 12-second "Conectando..." cycle starts fresh.
-    setStreamErrors((prev) => { const s = new Set(prev); s.delete(camera.idCamera); return s; });
-    setStreamConfirmed((prev) => { const s = new Set(prev); s.delete(camera.idCamera); return s; });
-  };
+  // ── Chart data — derivada del CSV de anomalías + videoTime ─────────────────
+  const dailyAlertData   = useMemo(() => buildBuckets(DAILY_BUCKET_S),   []);
+  const monthlyAlertData = useMemo(() => buildBuckets(MONTHLY_BUCKET_S), []);
 
-  // ── Chart data ─────────────────────────────────────────────────────────────
-  const mockMonths = useMemo(() => buildMockMonths(), []);
+  // Etiqueta del bucket de 30 s correspondiente al currentTime del video,
+  // usada por el ReferenceLine "Ahora" del gráfico diario.
+  const currentBucketLabel = useMemo(() => {
+    const t = Math.floor(videoTime / DAILY_BUCKET_S) * DAILY_BUCKET_S;
+    return formatVideoTime(t);
+  }, [videoTime]);
 
-  const [selectedMonthKey, setSelectedMonthKey] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  });
-
-  const selectedMonth = useMemo(
-    () => mockMonths.find((m) => m.key === selectedMonthKey) ?? mockMonths[mockMonths.length - 1],
-    [mockMonths, selectedMonthKey]
-  );
-
-  const todayLabel = useMemo(() => String(new Date().getDate()).padStart(2, "0"), []);
-
-  const isSelectedCurrentMonth = useMemo(() => {
-    const now = new Date();
-    return selectedMonth.key === `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  }, [selectedMonth.key]);
-
-  const monthlyAlertData = useMemo(
-    () => mockMonths.map((m) => ({ label: m.label, normal: m.totals.normal, inquieto: m.totals.inquieto })),
-    [mockMonths]
-  );
-
-  const dailyAlertData = useMemo(
-    () => selectedMonth.days.map((d) => ({ label: d.label, normal: d.normal, inquieto: d.inquieto })),
-    [selectedMonth]
-  );
-
+  // % de tiempo "inquieto" / "normal" hasta el currentTime del video.
+  // Multiplicador de 6× para que el gauge se mueva visiblemente — la tasa
+  // cruda de anomalías es ~7 % y dejaría la aguja casi inmóvil en el demo.
   const decisionMetrics = useMemo(() => {
-    const total = selectedMonth.totals.normal + selectedMonth.totals.inquieto;
-    const inquietoPct = total > 0 ? Math.round((selectedMonth.totals.inquieto / total) * 100) : 0;
-    return { inquietoPct, normalPct: 100 - inquietoPct };
-  }, [selectedMonth]);
+    if (videoTime < 1) return { normalPct: 100, inquietoPct: 0 };
+    const anomalyTime = ANOMALY_EVENTS
+      .filter((e) => e.startTime < videoTime)
+      .reduce((sum, e) => sum + Math.max(0, Math.min(e.endTime, videoTime) - e.startTime), 0);
+    const inquietoPct = Math.min(100, Math.round((anomalyTime / videoTime) * 100 * 6));
+    return { inquietoPct, normalPct: Math.max(0, 100 - inquietoPct) };
+  }, [videoTime]);
 
   const dailyTickInterval = Math.max(0, Math.floor(dailyAlertData.length / 8) - 1);
 
-  // If the active camera doesn't confirm a frame within 12 s, show no-signal
-  const activeIsConfirmed = activeCameraId !== null && streamConfirmed.has(activeCameraId);
-  useEffect(() => {
-    if (activeCameraId === null || activeIsConfirmed) return;
-    const timer = window.setTimeout(() => {
-      setStreamErrors((prev) => new Set([...prev, activeCameraId]));
-    }, 12_000);
-    return () => clearTimeout(timer);
-  }, [activeCameraId, activeIsConfirmed]);
-
-  // Needle animation — from 0 to target each time metric changes
+  // Aguja del gauge — interpola desde el valor actual hacia el target cada vez
+  // que cambia. Animar desde 0 daría un "reset" feo en cada tick del video.
   useEffect(() => {
     const target = decisionMetrics.normalPct;
+    const startValue = needleValue;
+    if (startValue === target) return;
     let raf = 0;
     const startTime = performance.now();
     const duration = 420;
     const tick = (now: number) => {
       const t = Math.min(1, (now - startTime) / duration);
       const eased = 1 - Math.pow(1 - t, 3);
-      setNeedleValue(Math.round(target * eased));
+      setNeedleValue(Math.round(startValue + (target - startValue) * eased));
       if (t < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [decisionMetrics.normalPct]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -635,47 +613,41 @@ export function UserCamera() {
                         </div>
                       )}
 
-                      {/* Stream — shown when active */}
+                      {/* Stream — video procesado de vigilancia.
+                          overflow-hidden + height extra + translateY oculta el
+                          texto "t=xx.xs" superior sin reescalar el contenido. */}
                       {isActive && !isEditing && (
-                        <div className="relative aspect-video bg-black border-t border-slate-700/40">
-                          {streamErrors.has(camera.idCamera) ? (
-                            /* ── No-signal card ── */
-                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-slate-950/95">
-                              <div className="p-4 rounded-full bg-slate-800/80 border border-slate-700">
-                                <VideoOff className="w-10 h-10 text-slate-500" />
-                              </div>
-                              <div className="text-center space-y-1">
-                                <p className="text-base font-medium text-slate-300">Sin señal de video</p>
-                                <p className="text-sm text-slate-500">No se pudo conectar a la cámara</p>
-                              </div>
-                              <button
-                                onClick={() => handleRetry(camera)}
-                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-slate-700 hover:bg-slate-600 text-white"
-                              >
-                                <RefreshCw className="w-4 h-4" />
-                                Reintentar
-                              </button>
+                        <div className="relative aspect-video overflow-hidden bg-black border-t border-slate-700/40">
+                          <video
+                            ref={videoRef}
+                            src={horseVideoUrl}
+                            muted
+                            playsInline
+                            loop
+                            preload="metadata"
+                            className="absolute inset-x-0 top-0 w-full object-cover"
+                            style={{ height: "calc(100% + 40px)", transform: "translateY(-40px)" }}
+                            onTimeUpdate={(e) => {
+                              const v = e.currentTarget;
+                              // Loop dentro de la ventana [PLAY_START_S, PLAY_END_S].
+                              if (v.currentTime >= PLAY_END_S) {
+                                v.currentTime = PLAY_START_S;
+                              }
+                              const t = Math.floor(v.currentTime);
+                              setVideoTime((prev) => (t !== prev ? t : prev));
+                            }}
+                            onPlaying={() =>
+                              setStreamConfirmed((prev) => new Set([...prev, camera.idCamera]))
+                            }
+                            onPause={() =>
+                              setStreamConfirmed((prev) => { const s = new Set(prev); s.delete(camera.idCamera); return s; })
+                            }
+                          />
+                          {streamConfirmed.has(camera.idCamera) && (
+                            <div className="absolute top-2 left-3 z-10 flex items-center gap-1.5 bg-black/60 rounded px-2 py-1">
+                              <Power className="w-3 h-3 text-emerald-400" />
+                              <span className="text-xs text-emerald-300 font-medium">EN VIVO</span>
                             </div>
-                          ) : (
-                            <>
-                              <img
-                                src={getStreamUrl(camera.idCamera)}
-                                alt={`Stream ${camera.name}`}
-                                className="w-full h-full object-contain"
-                                onLoad={() =>
-                                  setStreamConfirmed((prev) => new Set([...prev, camera.idCamera]))
-                                }
-                                onError={() =>
-                                  setStreamErrors((prev) => new Set([...prev, camera.idCamera]))
-                                }
-                              />
-                              {streamConfirmed.has(camera.idCamera) && (
-                                <div className="absolute top-2 left-3 flex items-center gap-1.5 bg-black/60 rounded px-2 py-1">
-                                  <Power className="w-3 h-3 text-emerald-400" />
-                                  <span className="text-xs text-emerald-300 font-medium">EN VIVO</span>
-                                </div>
-                              )}
-                            </>
                           )}
                         </div>
                       )}
@@ -690,23 +662,12 @@ export function UserCamera() {
         {/* ── Charts ── */}
         <div className="grid gap-4 md:grid-cols-2">
 
-          {/* Daily alerts */}
+          {/* Daily alerts → "Alertas por tramo (30 s)" sincronizado con el video */}
           <Card className="bg-gradient-to-br from-slate-900/50 to-slate-950/60 border border-slate-700/60">
             <div className="p-4">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-base text-slate-200">Alertas por día</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-slate-400">Hoy: {todayLabel}</span>
-                  <select
-                    className="rounded-md border border-slate-700 bg-slate-900/70 px-2 py-1 text-sm text-slate-200"
-                    value={selectedMonth.key}
-                    onChange={(e) => setSelectedMonthKey(e.target.value)}
-                  >
-                    {mockMonths.map((m) => (
-                      <option key={m.key} value={m.key}>{m.label}</option>
-                    ))}
-                  </select>
-                </div>
+                <p className="text-base text-slate-200">Alertas por tramo (30 s)</p>
+                <span className="text-sm text-slate-400">Tiempo: {formatVideoTime(videoTime)}</span>
               </div>
               <div className="h-52">
                 {dailyAlertData.length === 0 ? (
@@ -723,16 +684,16 @@ export function UserCamera() {
                         contentStyle={{ background: "#0f172a", border: "1px solid #334155", color: "#ffffff" }}
                         labelStyle={{ color: "#ffffff" }}
                       />
-                      {isSelectedCurrentMonth && (
+                      {activeCameraId !== null && (
                         <ReferenceLine
-                          x={todayLabel}
+                          x={currentBucketLabel}
                           stroke="#38bdf8"
                           strokeDasharray="4 4"
-                          label={{ value: "Hoy", position: "top", fill: "#38bdf8", fontSize: 10 }}
+                          label={{ value: "Ahora", position: "top", fill: "#38bdf8", fontSize: 10 }}
                         />
                       )}
-                      <Line type="monotone" dataKey="normal" stroke="#22c55e" strokeWidth={2} dot={{ r: 2 }} />
-                      <Line type="monotone" dataKey="inquieto" stroke="#f97316" strokeWidth={2} dot={{ r: 2 }} />
+                      <Line type="monotone" dataKey="normal"   stroke="#22c55e" strokeWidth={2} dot={{ r: 2 }} isAnimationActive={false} />
+                      <Line type="monotone" dataKey="inquieto" stroke="#f97316" strokeWidth={2} dot={{ r: 2 }} isAnimationActive={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 )}
@@ -740,10 +701,10 @@ export function UserCamera() {
             </div>
           </Card>
 
-          {/* Monthly alerts */}
+          {/* Monthly alerts → "Alertas por minuto" del video procesado */}
           <Card className="bg-gradient-to-br from-slate-900/50 to-slate-950/60 border border-slate-700/60">
             <div className="p-4">
-              <p className="text-base text-slate-200 mb-3">Alertas por mes (últimos 6 meses)</p>
+              <p className="text-base text-slate-200 mb-3">Alertas por minuto (video procesado)</p>
               <div className="h-52">
                 {monthlyAlertData.length === 0 ? (
                   <div className="h-full flex items-center justify-center text-sm text-slate-500">
@@ -759,8 +720,8 @@ export function UserCamera() {
                         contentStyle={{ background: "#0f172a", border: "1px solid #334155", color: "#ffffff" }}
                         labelStyle={{ color: "#ffffff" }}
                       />
-                      <Line type="monotone" dataKey="normal" stroke="#22c55e" strokeWidth={2} dot={{ r: 2 }} />
-                      <Line type="monotone" dataKey="inquieto" stroke="#f97316" strokeWidth={2} dot={{ r: 2 }} />
+                      <Line type="monotone" dataKey="normal"   stroke="#22c55e" strokeWidth={2} dot={{ r: 2 }} isAnimationActive={false} />
+                      <Line type="monotone" dataKey="inquieto" stroke="#f97316" strokeWidth={2} dot={{ r: 2 }} isAnimationActive={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 )}
@@ -778,7 +739,7 @@ export function UserCamera() {
                 </div>
               </div>
               <div className="text-sm text-slate-400 mb-3">
-                Índice basado en el porcentaje de registros en estado normal.
+                Índice basado en eventos de anomalía hasta el tiempo actual del video.
               </div>
               <div className="mb-4">
                 <div className="flex items-center justify-between text-sm text-slate-400 mb-1">
@@ -818,6 +779,7 @@ export function UserCamera() {
                       cx="50%"
                       cy="74%"
                       labelLine={false}
+                      isAnimationActive={false}
                       label={({ cx, cy, innerRadius, outerRadius, index }) =>
                         index === 0
                           ? renderGaugeNeedle(
@@ -852,9 +814,9 @@ export function UserCamera() {
                 <span className="text-sm text-slate-400">{decisionMetrics.normalPct}%</span>
               </div>
               <div className="text-sm text-slate-400 mb-3">
-                Resume el porcentaje de días con estado normal.
+                Resume el tiempo en estado normal del video reproducido hasta ahora.
               </div>
-              <div className="flex-1 min-h-[220px]">
+              <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <defs>
@@ -881,6 +843,7 @@ export function UserCamera() {
                       outerRadius="95%"
                       cornerRadius={12}
                       paddingAngle={2}
+                      isAnimationActive={false}
                     >
                       <Cell fill="url(#normalArc)" />
                       <Cell fill="#1e1b4b" />
@@ -898,6 +861,7 @@ export function UserCamera() {
                       outerRadius="64%"
                       cornerRadius={10}
                       paddingAngle={2}
+                      isAnimationActive={false}
                     >
                       <Cell fill="url(#inquietudArc)" />
                       <Cell fill="#0f172a" />
