@@ -122,7 +122,7 @@ export function UserHome({ setCurrentView }: HomeProps) {
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-slate-400">Edad promedio</p>
-                  <p className="text-xl font-semibold text-white mt-1">{averageHorseAge} anos</p>
+                  <p className="text-xl font-semibold text-white mt-1">{averageHorseAge} años</p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-slate-400">Estado cuenta</p>
