@@ -1,0 +1,21 @@
+# SPA routing — sirve archivos/carpetas reales antes de reescribir a index.html
+RewriteEngine On
+RewriteBase /
+
+# Si la URL coincide con un archivo o directorio existente, servirlo tal cual.
+# Esto deja que /video/horse_processed_v2.mp4, /image/*, /assets/*, etc.
+# se entreguen como estáticos sin pasar por el rewrite del SPA.
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Cualquier otra ruta → index.html (para que React Router maneje la ruta).
+RewriteRule ^ index.html [L]
+
+# MIME explícito por si el server no lo deduce (Hostinger normalmente sí lo hace).
+AddType video/mp4 .mp4
+
+# Soporte de Range requests (clave para que el <video> haga seek/streaming).
+<IfModule mod_headers.c>
+  Header set Accept-Ranges bytes
+</IfModule>

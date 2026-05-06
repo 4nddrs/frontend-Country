@@ -2,7 +2,7 @@
 import { createPortal } from 'react-dom';
 import type { ChangeEvent } from 'react';
 import { toast } from 'react-hot-toast';
-import { Plus, Edit, Trash2, Loader, ChevronUp, ChevronDown } from 'lucide-react';
+import { Edit, Trash2, Loader, ChevronUp, ChevronDown } from 'lucide-react';
 import { AddButton, ExportButton, AdminSection, SaveButton, CancelButton } from '../../components/ui/admin-buttons';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
