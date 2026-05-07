@@ -39,12 +39,18 @@ export interface Horse {
 export interface HorseNutritionalPlan {
   idNutritionalPlan?: number;
   planName?: string;
+  name?: string; // La API retorna 'name' en lugar de 'planName'
   description?: string;
 }
 
 export interface HorseControlInfo {
   box?: number;
   period?: string;
+}
+
+export interface Race {
+  idRace: number;
+  nameRace: string;
 }
 
 export interface OwnerReport {
@@ -158,7 +164,13 @@ export const getHorseNutritionalPlan = async (horseId: number) => {
 };
 
 export const getNutritionalPlanById = async (planId: number): Promise<HorseNutritionalPlan | null> => {
-  const response = await fetch(`${API_URL}/nutritional_plans/${planId}`);
+  const response = await fetch(`${API_URL}/nutritional-plans/${planId}`);
+  if (!response.ok) return null;
+  return response.json();
+};
+
+export const getRaceById = async (raceId: number): Promise<Race | null> => {
+  const response = await fetch(`${API_URL}/race/${raceId}`);
   if (!response.ok) return null;
   return response.json();
 };

@@ -7,9 +7,8 @@ import UserHeader from '../../components/UserHeader';
 import { useCurrentUser, useOwnerData, useOwnerHorses } from '../../hooks/useUserData';
 import { isNumeric } from '../../utils/validation';
 import {
-  getHorseNutritionalPlan,
-  getHorseTotalControl,
   getNutritionalPlanById,
+  getRaceById,
   type Horse,
   updateOwner,
   uploadOwnerImage,
@@ -82,15 +81,14 @@ export function UserProfile(_: PerfilProps) {
           let planName = 'Sin plan asignado';
           let planDescription: string | undefined;
 
+          // Obtener plan nutricional directamente del objeto horse
           try {
-            const relation = await getHorseNutritionalPlan(horse.idHorse);
-            const relationRecord = Array.isArray(relation) ? relation[0] : relation;
-            const planId = relationRecord?.fk_idNutritionalPlan;
-
+            const planId = (horse as any)?.fl_idNutritionalPlan;
+            
             if (planId) {
               const plan = await getNutritionalPlanById(planId);
-              if (plan?.planName) {
-                planName = plan.planName;
+              if (plan?.name) {
+                planName = plan.name;
                 planDescription = plan.description || undefined;
               }
             }
@@ -102,26 +100,27 @@ export function UserProfile(_: PerfilProps) {
           let boxLabel = 'Sin box';
           let boxPeriod: string | undefined;
 
-          try {
-            const controlInfo = await getHorseTotalControl(horse.idHorse);
-            if (controlInfo && controlInfo.box !== undefined && controlInfo.box !== null) {
-              hasBox = true;
-              boxLabel = `Box #${controlInfo.box}`;
-              boxPeriod = controlInfo.period || undefined;
-            } else if (horse.box) {
-              hasBox = true;
-              boxLabel = 'Con box';
-            }
-          } catch (error) {
-            console.error('Error loading control info:', error);
-            if (horse.box) {
-              hasBox = true;
-              boxLabel = 'Con box';
+          // El box está guardado directamente en el objeto horse
+          if (horse.box) {
+            hasBox = true;
+            boxLabel = 'Con box';
+          }
+
+          // Obtener la raza
+          let raceName = 'Sin especificar';
+          if (horse.race?.nameRace) {
+            raceName = horse.race.nameRace;
+          } else if (horse.fk_idRace) {
+            try {
+              const race = await getRaceById(horse.fk_idRace);
+              raceName = race?.nameRace ?? 'Sin especificar';
+            } catch (error) {
+              console.error('Error loading race:', error);
             }
           }
 
           return [horse.idHorse, {
-            raceName: horse.race?.nameRace || 'Sin especificar',
+            raceName,
             planName,
             planDescription,
             hasBox,

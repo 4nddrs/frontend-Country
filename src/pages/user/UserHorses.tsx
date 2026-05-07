@@ -5,18 +5,9 @@ import UserHeader from '../../components/UserHeader';
 import { useCurrentUser, useOwnerData, useOwnerHorses } from '../../hooks/useUserData';
 import {
   type Horse,
+  getNutritionalPlanById,
+  getRaceById,
 } from '../../services/userService';
-
-interface Race {
-  idRace: number;
-  nameRace: string;
-}
-
-interface NutritionalPlan {
-  idNutritionalPlan: number;
-  planName: string;
-  description?: string;
-}
 
 interface MiCaballoProps {}
 
@@ -33,8 +24,7 @@ export function UserHorses(_: MiCaballoProps) {
   const [selectedHorse, setSelectedHorse] = useState<Horse | null>(null);
   const [selectedHorseDetails, setSelectedHorseDetails] = useState<HorseDetails | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
-  const [races, setRaces] = useState<Race[]>([]);
-  const [nutritionalPlans, setNutritionalPlans] = useState<NutritionalPlan[]>([]);
+  const [raceNames, setRaceNames] = useState<Record<number, string>>({});
 
   const { data: user } = useCurrentUser();
   const { data: ownerData, isLoading: ownerLoading } = useOwnerData(user?.id);
@@ -43,53 +33,23 @@ export function UserHorses(_: MiCaballoProps) {
   const loading = ownerLoading || horsesLoading;
   const horsesList = horses as Horse[];
 
-  // Cargar razas
-  useEffect(() => {
-    const fetchRaces = async () => {
-      try {
-        const res = await fetch('https://api.countryclub.doc-ia.cloud/race/');
-        if (res.ok) {
-          const data = await res.json();
-          setRaces(data);
-        }
-      } catch (error) {
-        console.error('Error fetching races:', error);
-      }
-    };
-    fetchRaces();
-  }, []);
-
-  // Cargar planes nutricionales
-  useEffect(() => {
-    const fetchNutritionalPlans = async () => {
-      try {
-        const res = await fetch('https://api.countryclub.doc-ia.cloud/nutritional-plans/');
-        if (res.ok) {
-          const data = await res.json();
-          setNutritionalPlans(data);
-        }
-      } catch (error) {
-        console.error('Error fetching nutritional plans:', error);
-      }
-    };
-    fetchNutritionalPlans();
-  }, []);
-
-  const getRaceName = (fk_idRace?: number): string => {
+  const getRaceName = async (fk_idRace?: number): Promise<string> => {
     if (!fk_idRace) return 'Sin especificar';
-    const race = races.find((r) => r.idRace === fk_idRace);
-    return race?.nameRace ?? 'Sin especificar';
-  };
-
-  const getNutritionalPlanInfo = (planId?: number): { planName: string; description?: string } => {
-    if (!planId) {
-      return { planName: 'Sin plan asignado' };
+    
+    // Intenta obtener del objeto horse primero (si la API devuelve la raza)
+    const horse = horsesList.find(h => h.fk_idRace === fk_idRace);
+    if (horse?.race?.nameRace) {
+      return horse.race.nameRace;
     }
-    const plan = nutritionalPlans.find((p) => p.idNutritionalPlan === planId);
-    return {
-      planName: plan?.planName ?? 'Sin plan asignado',
-      description: plan?.description,
-    };
+    
+    // Si no, obtén la raza de la API
+    try {
+      const race = await getRaceById(fk_idRace);
+      return race?.nameRace ?? 'Sin especificar';
+    } catch (error) {
+      console.error('Error fetching race:', error);
+      return 'Sin especificar';
+    }
   };
 
   const calculateAge = (birthdate?: string): string => {
@@ -103,6 +63,33 @@ export function UserHorses(_: MiCaballoProps) {
     }
     return `${age} años`;
   };
+
+  // Cargar nombres de razas para todos los caballos
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadRaceNames = async () => {
+      const names: Record<number, string> = {};
+      
+      for (const horse of horsesList) {
+        if (horse.fk_idRace) {
+          names[horse.idHorse] = await getRaceName(horse.fk_idRace);
+        }
+      }
+
+      if (!cancelled) {
+        setRaceNames(names);
+      }
+    };
+
+    if (horsesList.length > 0) {
+      loadRaceNames();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [horsesList]);
 
   useEffect(() => {
     if (horsesList.length === 0) {
@@ -130,25 +117,43 @@ export function UserHorses(_: MiCaballoProps) {
       try {
         let planName = 'Sin plan asignado';
         let planDescription: string | undefined;
-        let boxLabel = 'Sin box';
+
+        // Obtener plan nutricional directamente del objeto horse
+        try {
+          // El plan está guardado directamente en el objeto Horse
+          const planId = (selectedHorse as any)?.fl_idNutritionalPlan;
+          
+          console.log('Direct planId from horse:', planId);
+
+          if (planId) {
+            const plan = await getNutritionalPlanById(planId);
+            console.log('Plan details:', plan);
+            if (plan?.name) {
+              planName = plan.name;
+              planDescription = plan.description || undefined;
+            }
+          } else {
+            console.warn('No fl_idNutritionalPlan found in horse:', selectedHorse);
+          }
+        } catch (error) {
+          console.error('Error loading nutritional plan:', error);
+        }
+
         let hasBox = false;
+        let boxLabel = 'Sin box';
         let boxPeriod: string | undefined;
 
-        // Obtener plan del caballo directamente
-        const planId = (selectedHorse as any).fl_idNutritionalPlan;
-
-        const planInfo = getNutritionalPlanInfo(planId);
-        planName = planInfo.planName;
-        planDescription = planInfo.description;
-
-        // Usar info del box del caballo directamente
+        // El box está guardado directamente en el objeto horse
         if (selectedHorse.box) {
           hasBox = true;
           boxLabel = 'Con box';
         }
 
+        // Obtener el nombre de la raza
+        const raceName = await getRaceName(selectedHorse.fk_idRace);
+
         const details: HorseDetails = {
-          raceName: getRaceName(selectedHorse.fk_idRace),
+          raceName,
           planName,
           planDescription,
           boxLabel,
@@ -161,9 +166,10 @@ export function UserHorses(_: MiCaballoProps) {
         }
       } catch (error) {
         console.error('Error fetching horse details:', error);
+        const raceName = await getRaceName(selectedHorse.fk_idRace);
         if (!cancelled) {
           setSelectedHorseDetails({
-            raceName: getRaceName(selectedHorse.fk_idRace),
+            raceName,
             planName: 'Sin plan asignado',
             boxLabel: selectedHorse.box ? 'Con box' : 'Sin box',
             hasBox: Boolean(selectedHorse.box),
@@ -181,7 +187,7 @@ export function UserHorses(_: MiCaballoProps) {
     return () => {
       cancelled = true;
     };
-  }, [selectedHorse, races, nutritionalPlans]);
+  }, [selectedHorse]);
 
   if (loading) {
     return (
@@ -271,7 +277,7 @@ export function UserHorses(_: MiCaballoProps) {
                                 <div className="flex items-center justify-between gap-3">
                                   <div className="min-w-0">
                                     <p className="text-sm font-semibold text-white truncate">{horse.horseName}</p>
-                                    <p className="text-xs text-slate-400 truncate">{getRaceName(horse.fk_idRace)}</p>
+                                    <p className="text-xs text-slate-400 truncate">{raceNames[horse.idHorse] || 'Sin especificar'}</p>
                                   </div>
                                   <ChevronRight className={`w-4 h-4 flex-shrink-0 ${isSelected ? 'text-cyan-300' : 'text-slate-500'}`} />
                                 </div>
@@ -377,8 +383,7 @@ export function UserHorses(_: MiCaballoProps) {
                       <Activity className="w-5 h-5 text-emerald-400" />
                     </div>
                     <p className="text-xs text-slate-500 mb-2">Estado</p>
-                    <p className="text-sm text-white">Activo</p>
-                    <p className="text-xs text-emerald-400 mt-1">En cuidado</p>
+                    <p className="text-sm text-white">{selectedHorse?.state || 'Activo'}</p>
                   </div>
                 </Card>
               </div>
